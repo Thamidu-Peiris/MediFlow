@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const dotenv = require("dotenv");
 
 const authRoutes = require("./routes/auth.routes");
+const connectDB = require("./config/db");
 
 dotenv.config();
 
@@ -20,6 +21,8 @@ app.get("/health", (req, res) => {
 
 app.use("/", authRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Auth Service listening on ${PORT}`);
+connectDB().finally(() => {
+  app.listen(PORT, () => {
+    console.log(`Auth Service listening on ${PORT}`);
+  });
 });

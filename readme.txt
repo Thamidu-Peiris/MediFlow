@@ -13,6 +13,7 @@ MediFlow Deployment Steps
 3. Configure environments
    - Copy `.env.example` to `.env` at root (optional global)
    - In each service/frontend folder, copy `.env.example` to `.env` if needed
+   - Set valid `MONGODB_URI` from MongoDB Atlas for each backend service
 
 4. Run backend via Docker Compose
    - docker compose -f backend/docker-compose.yml up --build

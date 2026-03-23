@@ -12,9 +12,7 @@ MediFlow/
 │   ├── services/
 │   ├── docker-compose.yml
 │   └── k8s/
-├── submission.txt
 ├── readme.txt
-├── members.txt
 └── README.md
 ```
 
@@ -27,6 +25,13 @@ MediFlow/
    - `docker compose -f backend/docker-compose.yml up --build`
 3. Start frontend:
    - `cd frontend && npm install && npm run dev`
+
+## MongoDB Atlas
+
+- Create a cluster in MongoDB Atlas.
+- Add your IP to Network Access.
+- Create a DB user and password.
+- Set `MONGODB_URI` in each service `.env` (copy from `*.env.example`).
 
 ## Services
 

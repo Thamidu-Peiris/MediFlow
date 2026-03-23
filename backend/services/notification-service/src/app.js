@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const connectDB = require("./config/db");
 
 dotenv.config();
 const app = express();
@@ -13,4 +14,6 @@ app.get("/health", (req, res) => {
   res.status(200).json({ service: "notification-service", status: "ok" });
 });
 
-app.listen(PORT, () => console.log(`Notification Service listening on ${PORT}`));
+connectDB().finally(() => {
+  app.listen(PORT, () => console.log(`Notification Service listening on ${PORT}`));
+});
