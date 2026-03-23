@@ -25,6 +25,8 @@ MediFlow/
    - `docker compose -f backend/docker-compose.yml up --build`
 3. Start frontend:
    - `cd frontend && npm install && npm run dev`
+4. Gateway health:
+   - `http://localhost:8081/api/health`
 
 ## MongoDB Atlas
 

@@ -25,7 +25,7 @@ MediFlow Deployment Steps
 
 6. Access application
    - Frontend: http://localhost:5173
-   - API Gateway: http://localhost:8080/api/health
+   - API Gateway: http://localhost:8081/api/health
 
 7. Kubernetes (initial setup)
    - kubectl apply -f backend/k8s/namespace.yaml
