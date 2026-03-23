@@ -1,4 +1,3 @@
-# MediFlow
 # MediFlow - AI-Enabled Smart Healthcare Platform
 
 Starter monorepo for a microservices-based healthcare appointment and telemedicine system.
