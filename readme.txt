@@ -17,6 +17,9 @@ MediFlow Deployment Steps
 
 4. Run backend via Docker Compose
    - docker compose -f backend/docker-compose.yml up --build
+   - or from project root:
+     - npm run up
+     - npm run up:build
 
 5. Run frontend
    - cd frontend

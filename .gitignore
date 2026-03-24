@@ -19,6 +19,7 @@ pnpm-debug.log*
 .vscode/
 .cursor/
 backend/**/uploads/
+!backend/**/uploads/.gitkeep
 backend/**/tmp/
 *.zip
 *.tar
