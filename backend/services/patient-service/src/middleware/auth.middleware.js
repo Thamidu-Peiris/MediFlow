@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
-const config = require("../config");
 
-exports.verifyAuth = (req, res, next) => {
+const verifyAuth = (req, res, next) => {
   const authHeader = req.headers.authorization || "";
   const [scheme, token] = authHeader.split(" ");
 
@@ -10,7 +9,7 @@ exports.verifyAuth = (req, res, next) => {
   }
 
   try {
-    const payload = jwt.verify(token, config.jwtSecret);
+    const payload = jwt.verify(token, process.env.JWT_SECRET || "change_this_secret");
     req.user = payload;
     return next();
   } catch (error) {
@@ -18,9 +17,11 @@ exports.verifyAuth = (req, res, next) => {
   }
 };
 
-exports.requireAdmin = (req, res, next) => {
-  if (req.user?.role !== "admin") {
-    return res.status(403).json({ message: "Admin access required" });
+const requirePatientRole = (req, res, next) => {
+  if (req.user.role !== "patient" && req.user.role !== "admin") {
+    return res.status(403).json({ message: "Only patient/admin can access this endpoint" });
   }
   return next();
 };
+
+module.exports = { verifyAuth, requirePatientRole };

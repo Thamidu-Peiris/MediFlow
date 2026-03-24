@@ -1,0 +1,11 @@
+{
+  "name": "mediflow-root",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "up": "docker compose -f backend/docker-compose.yml up -d",
+    "up:build": "docker compose -f backend/docker-compose.yml up -d --build",
+    "down": "docker compose -f backend/docker-compose.yml down",
+    "logs": "docker compose -f backend/docker-compose.yml logs -f"
+  }
+}

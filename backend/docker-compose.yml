@@ -6,7 +6,7 @@ services:
     ports:
       - "8081:8080"
     env_file:
-      - ./api-gateway/.env.example
+      - ./api-gateway/.env
     depends_on:
       - auth-service
       - patient-service
@@ -22,53 +22,53 @@ services:
     ports:
       - "8001:8001"
     env_file:
-      - ./services/auth-service/.env.example
+      - ./services/auth-service/.env
 
   patient-service:
     build: ./services/patient-service
     ports:
       - "8002:8002"
     env_file:
-      - ./services/patient-service/.env.example
+      - ./services/patient-service/.env
 
   doctor-service:
     build: ./services/doctor-service
     ports:
       - "8003:8003"
     env_file:
-      - ./services/doctor-service/.env.example
+      - ./services/doctor-service/.env
 
   appointment-service:
     build: ./services/appointment-service
     ports:
       - "8004:8004"
     env_file:
-      - ./services/appointment-service/.env.example
+      - ./services/appointment-service/.env
 
   notification-service:
     build: ./services/notification-service
     ports:
       - "8005:8005"
     env_file:
-      - ./services/notification-service/.env.example
+      - ./services/notification-service/.env
 
   payment-service:
     build: ./services/payment-service
     ports:
       - "8006:8006"
     env_file:
-      - ./services/payment-service/.env.example
+      - ./services/payment-service/.env
 
   telemedicine-service:
     build: ./services/telemedicine-service
     ports:
       - "8007:8007"
     env_file:
-      - ./services/telemedicine-service/.env.example
+      - ./services/telemedicine-service/.env
 
   ai-service:
     build: ./services/ai-service
     ports:
       - "8008:8008"
     env_file:
-      - ./services/ai-service/.env.example
+      - ./services/ai-service/.env

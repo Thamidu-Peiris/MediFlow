@@ -28,6 +28,13 @@ MediFlow/
 4. Gateway health:
    - `http://localhost:8081/api/health`
 
+## Short Commands
+
+- `npm run up` - start backend containers
+- `npm run up:build` - rebuild and start backend containers
+- `npm run down` - stop/remove backend containers
+- `npm run logs` - follow backend logs
+
 ## MongoDB Atlas
 
 - Create a cluster in MongoDB Atlas.
@@ -46,6 +53,22 @@ MediFlow/
 - Payment Service
 - Telemedicine Service
 - AI Service (optional enhancement)
+
+## Implemented Module (Current)
+
+### Auth Service APIs
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me` (Bearer token)
+
+### Patient Service APIs
+
+- `GET /api/patients/profiles/me` (Bearer token)
+- `POST /api/patients/profiles/me` (Bearer token)
+- `PUT /api/patients/profiles/me` (Bearer token)
+- `GET /api/patients/reports` (Bearer token)
+- `POST /api/patients/reports/upload` (multipart file field: `report`)
 
 ## Deliverables Placeholders
 
