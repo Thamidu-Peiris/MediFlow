@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const doctors = [
@@ -44,6 +45,12 @@ function fallbackToPlaceholder(e, placeholder) {
 }
 
 export default function HomePage() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  function closeMobileMenu() {
+    setIsMobileMenuOpen(false);
+  }
+
   return (
     <main className="mf-page">
       <header className="mf-navbar">
@@ -66,6 +73,47 @@ export default function HomePage() {
             <Link className="mf-dark-btn" to="/doctors">
               Book Appointment
             </Link>
+          </div>
+          <button
+            type="button"
+            className={`mf-menu-toggle${isMobileMenuOpen ? " is-open" : ""}`}
+            aria-label="Toggle mobile menu"
+            aria-expanded={isMobileMenuOpen}
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
+        <div className={`mf-mobile-menu${isMobileMenuOpen ? " is-open" : ""}`}>
+          <div className="mf-container mf-mobile-menu-inner">
+            <a href="/" onClick={closeMobileMenu}>
+              Home
+            </a>
+            <Link to="/doctors" onClick={closeMobileMenu}>
+              Find Doctors
+            </Link>
+            <a href="#services" onClick={closeMobileMenu}>
+              Services
+            </a>
+            <a href="#about" onClick={closeMobileMenu}>
+              About
+            </a>
+            <a href="#contact" onClick={closeMobileMenu}>
+              Contact
+            </a>
+            <div className="mf-mobile-menu-actions">
+              <Link className="mf-link-btn" to="/login" onClick={closeMobileMenu}>
+                Login
+              </Link>
+              <Link className="mf-primary-btn" to="/register" onClick={closeMobileMenu}>
+                Register
+              </Link>
+              <Link className="mf-dark-btn" to="/doctors" onClick={closeMobileMenu}>
+                Book Appointment
+              </Link>
+            </div>
           </div>
         </div>
       </header>
