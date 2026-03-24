@@ -177,10 +177,56 @@ export default function HomePage() {
         <div className="mf-container">
           <h2 className="mf-title">How It Works</h2>
           <div className="mf-step-grid">
-            <article>1. Search doctor / enter symptoms</article>
-            <article>2. Book appointment</article>
-            <article>3. Join video consultation</article>
-            <article>4. Get digital prescription</article>
+            <article className="mf-step-card">
+              <div className="mf-step-icon">
+                <svg viewBox="0 0 64 64" role="img" aria-label="Search doctor">
+                  <circle cx="28" cy="28" r="14" />
+                  <line x1="39" y1="39" x2="54" y2="54" />
+                </svg>
+              </div>
+              <span className="mf-step-badge">Step 01</span>
+              <h3>Search doctor or enter symptoms</h3>
+              <p>Find specialists quickly or start with AI-based symptom guidance.</p>
+            </article>
+            <article className="mf-step-card">
+              <div className="mf-step-icon">
+                <svg viewBox="0 0 64 64" role="img" aria-label="Book appointment">
+                  <rect x="10" y="12" width="44" height="42" rx="8" />
+                  <line x1="10" y1="24" x2="54" y2="24" />
+                  <line x1="21" y1="8" x2="21" y2="18" />
+                  <line x1="43" y1="8" x2="43" y2="18" />
+                </svg>
+              </div>
+              <span className="mf-step-badge">Step 02</span>
+              <h3>Book appointment</h3>
+              <p>Select a time slot and confirm your consultation in seconds.</p>
+            </article>
+            <article className="mf-step-card">
+              <div className="mf-step-icon">
+                <svg viewBox="0 0 64 64" role="img" aria-label="Video consultation">
+                  <rect x="8" y="14" width="34" height="36" rx="7" />
+                  <polygon points="44,24 56,20 56,44 44,40" />
+                  <circle cx="25" cy="32" r="7" />
+                </svg>
+              </div>
+              <span className="mf-step-badge">Step 03</span>
+              <h3>Join video consultation</h3>
+              <p>Connect securely with your doctor from any device.</p>
+            </article>
+            <article className="mf-step-card">
+              <div className="mf-step-icon">
+                <svg viewBox="0 0 64 64" role="img" aria-label="Digital prescription">
+                  <rect x="14" y="8" width="36" height="48" rx="6" />
+                  <line x1="22" y1="22" x2="42" y2="22" />
+                  <line x1="22" y1="30" x2="42" y2="30" />
+                  <line x1="22" y1="38" x2="36" y2="38" />
+                  <polyline points="17,44 24,50 33,40" />
+                </svg>
+              </div>
+              <span className="mf-step-badge">Step 04</span>
+              <h3>Get digital prescription</h3>
+              <p>Receive prescriptions and follow-up instructions instantly.</p>
+            </article>
           </div>
         </div>
       </section>

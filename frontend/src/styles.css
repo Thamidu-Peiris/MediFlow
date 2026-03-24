@@ -712,6 +712,73 @@ button, .btn-primary {
     transform: translateY(0);
   }
 }
+.mf-step-grid {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+.mf-step-card {
+  position: relative;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  overflow: hidden;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+.mf-step-card::after {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.2) 0%, rgba(20, 184, 166, 0) 70%);
+  pointer-events: none;
+}
+.mf-step-card:hover {
+  transform: translateY(-6px);
+  border-color: #93c5fd;
+  box-shadow: 0 16px 28px rgba(30, 64, 175, 0.14);
+}
+.mf-step-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  display: grid;
+  place-items: center;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+.mf-step-icon svg {
+  width: 34px;
+  height: 34px;
+  fill: none;
+  stroke: #1e40af;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.mf-step-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+  background: #ccfbf1;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  padding: 5px 10px;
+  margin-bottom: 8px;
+}
+.mf-step-card h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+.mf-step-card p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.55;
+}
 
 .mf-doctor-grid {
   display: grid;
