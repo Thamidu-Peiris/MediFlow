@@ -13,6 +13,7 @@ import MedicalReportsPage from "./pages/MedicalReportsPage";
 import MedicalHistoryPage from "./pages/MedicalHistoryPage";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import AppointmentHistoryPage from "./pages/AppointmentHistoryPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 
 export default function App() {
   return (
@@ -24,6 +25,14 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/doctors" element={<DoctorsPage />} />
+      <Route
+        path="/admin/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminDashboardPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/patient/dashboard"
         element={

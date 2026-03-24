@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
       enum: ["patient", "doctor", "admin"],
       default: "patient"
     },
+    isDoctorVerified: { type: Boolean, default: false },
     resetTokenHash: { type: String, default: null },
     resetTokenExpiresAt: { type: Date, default: null }
   },

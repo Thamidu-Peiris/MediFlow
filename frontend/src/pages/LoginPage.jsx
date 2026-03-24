@@ -14,6 +14,8 @@ export default function LoginPage() {
       const loggedInUser = await login(form.email, form.password, form.role);
       if (loggedInUser.role === "patient") {
         navigate("/patient/dashboard");
+      } else if (loggedInUser.role === "admin") {
+        navigate("/admin/dashboard");
       } else {
         navigate("/doctors");
       }
