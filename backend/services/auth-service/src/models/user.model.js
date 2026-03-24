@@ -9,7 +9,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["patient", "doctor", "admin"],
       default: "patient"
-    }
+    },
+    resetTokenHash: { type: String, default: null },
+    resetTokenExpiresAt: { type: Date, default: null }
   },
   { timestamps: true }
 );

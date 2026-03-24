@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const User = require("../models/user.model");
 const { generateToken } = require("../services/auth.service");
 
@@ -81,5 +82,64 @@ exports.me = async (req, res) => {
     return res.status(200).json({ user });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch user details" });
+  }
+};
+
+exports.logout = async (req, res) => {
+  return res.status(200).json({ message: "Logged out successfully" });
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "email is required" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(200).json({ message: "If the email exists, a reset link has been sent" });
+    }
+
+    const token = crypto.randomBytes(24).toString("hex");
+    const resetTokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    user.resetTokenHash = resetTokenHash;
+    user.resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    return res.status(200).json({
+      message: "Reset link generated",
+      resetToken: token
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to process forgot password request" });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: "token and password are required" });
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      resetTokenHash: tokenHash,
+      resetTokenExpiresAt: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    user.passwordHash = await bcrypt.hash(password, 10);
+    user.resetTokenHash = null;
+    user.resetTokenExpiresAt = null;
+    await user.save();
+
+    return res.status(200).json({ message: "Password reset successful" });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to reset password" });
   }
 };

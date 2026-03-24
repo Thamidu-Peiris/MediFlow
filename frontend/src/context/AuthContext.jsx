@@ -31,8 +31,8 @@ export function AuthProvider({ children }) {
       .finally(() => setLoadingUser(false));
   }, [token, authHeaders]);
 
-  const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
+  const login = async (email, password, role) => {
+    const res = await api.post("/auth/login", { email, password, role });
     setToken(res.data.token);
     return res.data.user;
   };
@@ -44,13 +44,37 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    if (token) {
+      api.post("/auth/logout", {}, authHeaders).catch(() => {});
+    }
     setToken("");
     setUser(null);
   };
 
+  const forgotPassword = async (email) => {
+    const res = await api.post("/auth/forgot-password", { email });
+    return res.data;
+  };
+
+  const resetPassword = async (tokenValue, password) => {
+    const res = await api.post("/auth/reset-password", { token: tokenValue, password });
+    return res.data;
+  };
+
   return (
     <AuthContext.Provider
-      value={{ token, user, loadingUser, authHeaders, login, register, logout, setUser }}
+      value={{
+        token,
+        user,
+        loadingUser,
+        authHeaders,
+        login,
+        register,
+        logout,
+        forgotPassword,
+        resetPassword,
+        setUser
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,59 +1,25 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
-  const { register } = useAuth();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "patient" });
-  const [message, setMessage] = useState("");
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await register(form);
-      navigate("/doctors");
-    } catch (err) {
-      setMessage(err?.response?.data?.message || "Registration failed");
-    }
-  };
-
   return (
-    <main className="page">
-      <section className="form-card">
-        <h2>Register</h2>
-        {message ? <p className="error">{message}</p> : null}
-        <form onSubmit={onSubmit}>
-          <input
-            placeholder="Name"
-            value={form.name}
-            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-            required
-          />
-          <select
-            value={form.role}
-            onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value }))}
-          >
-            <option value="patient">Patient</option>
-            <option value="doctor">Doctor</option>
-          </select>
-          <button type="submit">Create Account</button>
-        </form>
-        <p className="muted">
+    <main className="auth-page">
+      <section className="auth-card auth-register-options">
+        <p className="auth-chip">Create Account</p>
+        <h2>Choose registration type</h2>
+        <p className="auth-note">
+          Admin accounts are created manually by system administrators.
+        </p>
+        <div className="auth-option-grid">
+          <Link to="/register/patient" className="auth-option-card">
+            <h3>Register as Patient</h3>
+            <p>Manage profile, reports, prescriptions and appointment history.</p>
+          </Link>
+          <Link to="/register/doctor" className="auth-option-card">
+            <h3>Register as Doctor</h3>
+            <p>Create doctor account to manage availability and patient consultations.</p>
+          </Link>
+        </div>
+        <p className="auth-note">
           Already have an account? <Link to="/login">Login</Link>
         </p>
       </section>

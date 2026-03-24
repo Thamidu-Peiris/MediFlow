@@ -1080,3 +1080,203 @@ button, .btn-primary {
   .mf-step-grid, .mf-testimonial-grid { grid-template-columns: 1fr; }
   .mf-mobile-visual img { max-height: 180px; }
 }
+
+/* Premium auth pages */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: radial-gradient(circle at 20% 10%, #dbeafe 0%, #f8fafc 44%, #eef2ff 100%);
+}
+.auth-card {
+  width: min(560px, 100%);
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.12);
+}
+.auth-chip {
+  display: inline-block;
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #1e40af;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+.auth-card h2 {
+  margin: 0 0 10px;
+}
+.auth-note {
+  color: #64748b;
+}
+.auth-row {
+  display: flex;
+  justify-content: flex-end;
+}
+.auth-register-options {
+  width: min(760px, 100%);
+}
+.auth-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+  gap: 12px;
+}
+.auth-option-card {
+  display: block;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  padding: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.auth-option-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.15);
+}
+.auth-option-card h3 {
+  margin: 0 0 8px;
+}
+.auth-option-card p {
+  margin: 0;
+  color: #64748b;
+}
+
+/* Patient portal */
+.pd-page {
+  min-height: 100vh;
+  padding: 16px;
+  background: #f8fafc;
+}
+.pd-topbar {
+  max-width: 1200px;
+  margin: 0 auto 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.pd-brand h1 {
+  margin: 0;
+  font-size: 24px;
+}
+.pd-brand p {
+  margin: 4px 0 0;
+  color: #64748b;
+}
+.pd-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+.pd-topbar-actions button {
+  background: #111827;
+  color: #fff;
+}
+.pd-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 14px;
+}
+.pd-sidebar {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 14px;
+  align-self: start;
+  position: sticky;
+  top: 88px;
+}
+.pd-sidebar h3 {
+  margin: 0 0 8px;
+}
+.pd-sidebar nav {
+  display: grid;
+  gap: 8px;
+}
+.pd-sidebar a {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  border-radius: 10px;
+  font-weight: 700;
+  padding: 9px 10px;
+}
+.pd-content-head h2 {
+  margin: 0 0 10px;
+}
+.pd-grid {
+  display: grid;
+  gap: 12px;
+}
+.pd-grid-2 {
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+.pd-grid-3 {
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+}
+.pd-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 16px;
+}
+.pd-card h3,
+.pd-card h4 {
+  margin: 0 0 8px;
+}
+.pd-card p {
+  margin: 0 0 8px;
+  color: #475569;
+}
+.pd-form {
+  display: grid;
+  gap: 10px;
+}
+.pd-form textarea {
+  min-height: 90px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 11px 12px;
+  resize: vertical;
+}
+.pd-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.pd-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 980px) {
+  .auth-option-grid,
+  .pd-layout,
+  .pd-grid-2,
+  .pd-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .pd-sidebar {
+    position: static;
+  }
+  .pd-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

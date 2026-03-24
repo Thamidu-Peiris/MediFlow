@@ -5,23 +5,28 @@ import { useAuth } from "../context/AuthContext";
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", role: "patient" });
   const [message, setMessage] = useState("");
 
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login(form.email, form.password);
-      navigate("/doctors");
+      const loggedInUser = await login(form.email, form.password, form.role);
+      if (loggedInUser.role === "patient") {
+        navigate("/patient/dashboard");
+      } else {
+        navigate("/doctors");
+      }
     } catch (err) {
       setMessage(err?.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <main className="page">
-      <section className="form-card">
-        <h2>Login</h2>
+    <main className="auth-page">
+      <section className="auth-card">
+        <p className="auth-chip">Welcome Back</p>
+        <h2>Login to MediFlow</h2>
         {message ? <p className="error">{message}</p> : null}
         <form onSubmit={onSubmit}>
           <input
@@ -38,9 +43,21 @@ export default function LoginPage() {
             onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
             required
           />
+          <select
+            value={form.role}
+            onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value }))}
+            required
+          >
+            <option value="patient">Patient</option>
+            <option value="doctor">Doctor</option>
+            <option value="admin">Admin</option>
+          </select>
+          <div className="auth-row">
+            <Link to="/forgot-password">Forgot Password?</Link>
+          </div>
           <button type="submit">Login</button>
         </form>
-        <p className="muted">
+        <p className="auth-note">
           No account? <Link to="/register">Create one</Link>
         </p>
       </section>

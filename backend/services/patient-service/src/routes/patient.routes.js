@@ -6,7 +6,12 @@ const {
   upsertProfile,
   getMyProfile,
   uploadReport,
-  listReports
+  listReports,
+  deleteReport,
+  deleteAccount,
+  getHistory,
+  getPrescriptions,
+  getAppointments
 } = require("../controllers/patient.controller");
 const { verifyAuth, requirePatientRole } = require("../middleware/auth.middleware");
 
@@ -21,10 +26,20 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+router.get("/me", verifyAuth, requirePatientRole, getMyProfile);
+router.put("/update-profile", verifyAuth, requirePatientRole, upsertProfile);
+router.delete("/delete-account", verifyAuth, requirePatientRole, deleteAccount);
+router.post("/upload-report", verifyAuth, requirePatientRole, upload.single("report"), uploadReport);
+router.get("/reports", verifyAuth, requirePatientRole, listReports);
+router.delete("/reports/:id", verifyAuth, requirePatientRole, deleteReport);
+router.get("/history", verifyAuth, requirePatientRole, getHistory);
+router.get("/prescriptions", verifyAuth, requirePatientRole, getPrescriptions);
+router.get("/appointments", verifyAuth, requirePatientRole, getAppointments);
+
+// Backward compatibility with previously used endpoints
 router.get("/profiles/me", verifyAuth, requirePatientRole, getMyProfile);
 router.post("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
 router.put("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
-router.get("/reports", verifyAuth, requirePatientRole, listReports);
 router.post("/reports/upload", verifyAuth, requirePatientRole, upload.single("report"), uploadReport);
 
 module.exports = router;
