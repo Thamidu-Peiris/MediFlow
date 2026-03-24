@@ -35,6 +35,8 @@ const doctorFallback =
   "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=700&q=80";
 const bannerFallback =
   "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1200&q=80";
+const testimonialFallback =
+  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80";
 
 function fallbackToPlaceholder(e, placeholder) {
   e.currentTarget.onerror = null;
@@ -235,17 +237,65 @@ export default function HomePage() {
         <div className="mf-container">
           <h2 className="mf-title">Testimonials</h2>
           <div className="mf-testimonial-grid">
-            <article>
-              <p>"Easy booking and helpful doctors."</p>
-              <strong>- Patient Review</strong>
+            <article className="mf-testimonial-card">
+              <div className="mf-testimonial-top">
+                <img
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80"
+                  alt="Nadeesha Perera"
+                  onError={(e) => fallbackToPlaceholder(e, testimonialFallback)}
+                />
+                <div>
+                  <h4>Nadeesha Perera</h4>
+                  <span>Patient - Colombo</span>
+                </div>
+              </div>
+              <div className="mf-stars" aria-label="5 star rating">
+                ★★★★★
+              </div>
+              <p>
+                "The booking flow is smooth and the doctor joined on time. I got my prescription
+                right after the consultation."
+              </p>
             </article>
-            <article>
-              <p>"Smooth consultation flow and clear records."</p>
-              <strong>- Doctor Review</strong>
+            <article className="mf-testimonial-card">
+              <div className="mf-testimonial-top">
+                <img
+                  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80"
+                  alt="Dr. Charith Mendis"
+                  onError={(e) => fallbackToPlaceholder(e, testimonialFallback)}
+                />
+                <div>
+                  <h4>Dr. Charith Mendis</h4>
+                  <span>Consultant Physician</span>
+                </div>
+              </div>
+              <div className="mf-stars" aria-label="5 star rating">
+                ★★★★★
+              </div>
+              <p>
+                "MediFlow gives clear patient history, uploaded reports, and a reliable video
+                channel for consultations."
+              </p>
             </article>
-            <article>
-              <p>"A trusted platform for online care."</p>
-              <strong>- Patient Review</strong>
+            <article className="mf-testimonial-card">
+              <div className="mf-testimonial-top">
+                <img
+                  src="https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?auto=format&fit=crop&w=300&q=80"
+                  alt="Thilini Fernando"
+                  onError={(e) => fallbackToPlaceholder(e, testimonialFallback)}
+                />
+                <div>
+                  <h4>Thilini Fernando</h4>
+                  <span>Patient - Kandy</span>
+                </div>
+              </div>
+              <div className="mf-stars" aria-label="4.5 star rating">
+                ★★★★☆
+              </div>
+              <p>
+                "I can manage appointments and reports in one place. The interface is clean and
+                very easy to use on mobile."
+              </p>
             </article>
           </div>
         </div>
