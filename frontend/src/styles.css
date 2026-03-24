@@ -666,6 +666,52 @@ button, .btn-primary {
 .mf-service-grid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .mf-service-grid h3 { margin: 0 0 6px; }
 .mf-service-grid p { margin: 0; color: #6b7280; }
+.mf-service-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  animation: serviceFadeIn 500ms ease both;
+}
+.mf-service-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -20% -60% auto;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.16) 0%, rgba(37, 99, 235, 0) 70%);
+  pointer-events: none;
+}
+.mf-service-card:hover {
+  transform: translateY(-6px);
+  border-color: #93c5fd;
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.16);
+}
+.mf-service-grid .mf-service-card:nth-child(1) { animation-delay: 0ms; }
+.mf-service-grid .mf-service-card:nth-child(2) { animation-delay: 60ms; }
+.mf-service-grid .mf-service-card:nth-child(3) { animation-delay: 120ms; }
+.mf-service-grid .mf-service-card:nth-child(4) { animation-delay: 180ms; }
+.mf-service-grid .mf-service-card:nth-child(5) { animation-delay: 240ms; }
+.mf-service-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  margin-bottom: 10px;
+}
+@keyframes serviceFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 .mf-doctor-grid {
   display: grid;

@@ -105,24 +105,29 @@ export default function HomePage() {
         <div className="mf-container">
           <h2 className="mf-title">Quick Services</h2>
           <div className="mf-service-grid">
-            <article>
-              <h3>📅 Book Appointment</h3>
+            <article className="mf-service-card">
+              <div className="mf-service-icon">📅</div>
+              <h3>Book Appointment</h3>
               <p>Choose doctor, date, and time in seconds.</p>
             </article>
-            <article>
-              <h3>🎥 Video Consultation</h3>
+            <article className="mf-service-card">
+              <div className="mf-service-icon">🎥</div>
+              <h3>Video Consultation</h3>
               <p>Secure telemedicine sessions from anywhere.</p>
             </article>
-            <article>
-              <h3>🤖 AI Symptom Checker</h3>
+            <article className="mf-service-card">
+              <div className="mf-service-icon">🤖</div>
+              <h3>AI Symptom Checker</h3>
               <p>Get instant preliminary health suggestions.</p>
             </article>
-            <article>
-              <h3>📄 Upload Medical Reports</h3>
+            <article className="mf-service-card">
+              <div className="mf-service-icon">📄</div>
+              <h3>Upload Medical Reports</h3>
               <p>Store reports and share with doctors quickly.</p>
             </article>
-            <article>
-              <h3>💊 Digital Prescriptions</h3>
+            <article className="mf-service-card">
+              <div className="mf-service-icon">💊</div>
+              <h3>Digital Prescriptions</h3>
               <p>Receive and review prescriptions online.</p>
             </article>
           </div>
