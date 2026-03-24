@@ -304,28 +304,110 @@ export default function HomePage() {
       <section className="mf-section mf-soft">
         <div className="mf-container">
           <h2 className="mf-title">Why Choose Us</h2>
-          <div className="mf-step-grid">
-            <article>Secure & private consultations</article>
-            <article>Verified doctors</article>
-            <article>Fast booking</article>
-            <article>Online payments</article>
+          <div className="mf-why-grid">
+            <article className="mf-why-card">
+              <img
+                className="mf-why-vector"
+                src="https://cdn-icons-png.flaticon.com/512/3063/3063822.png"
+                alt="Secure and private consultations"
+              />
+              <h3>Secure & private consultations</h3>
+              <p>Encrypted sessions and protected medical data for complete peace of mind.</p>
+            </article>
+            <article className="mf-why-card">
+              <img
+                className="mf-why-vector"
+                src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png"
+                alt="Verified doctors"
+              />
+              <h3>Verified doctors</h3>
+              <p>Consult trusted, qualified professionals across multiple specialties.</p>
+            </article>
+            <article className="mf-why-card">
+              <img
+                className="mf-why-vector"
+                src="https://cdn-icons-png.flaticon.com/512/2920/2920349.png"
+                alt="Fast booking"
+              />
+              <h3>Fast booking</h3>
+              <p>Find available slots quickly and confirm appointments in a few taps.</p>
+            </article>
+            <article className="mf-why-card">
+              <img
+                className="mf-why-vector"
+                src="https://cdn-icons-png.flaticon.com/512/2331/2331941.png"
+                alt="Online payments"
+              />
+              <h3>Online payments</h3>
+              <p>Pay consultation fees securely with seamless digital transactions.</p>
+            </article>
           </div>
         </div>
       </section>
 
       <section className="mf-section">
-        <div className="mf-container mf-mobile-box">
-          <h2>Access Anywhere - Web & Mobile</h2>
-          <p>Use MediFlow on desktop and mobile for uninterrupted healthcare access.</p>
+        <div className="mf-container mf-mobile-box mf-mobile-premium">
+          <div className="mf-mobile-content">
+            <span className="mf-chip">Cross Platform Access</span>
+            <h2>Access Anywhere - Web & Mobile</h2>
+            <p>
+              Use MediFlow on desktop and mobile for uninterrupted healthcare access. Manage
+              appointments, reports, and consultations anytime with a seamless experience across
+              devices.
+            </p>
+            <div className="mf-row">
+              <button type="button" className="mf-primary-btn">
+                Download App
+              </button>
+              <button type="button" className="mf-secondary-btn">
+                Open Web Portal
+              </button>
+            </div>
+          </div>
+          <div className="mf-mobile-visual">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/4140/4140037.png"
+              alt="Mobile healthcare access"
+            />
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/4474/4474288.png"
+              alt="Healthcare app usage"
+            />
+          </div>
         </div>
       </section>
 
       <section id="contact" className="mf-section mf-soft">
-        <div className="mf-container mf-contact">
-          <h2>Contact / Support</h2>
-          <p>Email: support@mediflow.lk</p>
-          <p>Phone: +94 11 234 5678</p>
-          <p>Help Center: help.mediflow.lk</p>
+        <div className="mf-container mf-contact mf-contact-premium">
+          <div className="mf-contact-main">
+            <span className="mf-chip">24/7 Assistance</span>
+            <h2>Contact / Support</h2>
+            <p>
+              Our care support team is ready to help with appointments, video consultation access,
+              billing, and technical issues.
+            </p>
+            <div className="mf-contact-actions">
+              <a href="mailto:support@mediflow.lk">support@mediflow.lk</a>
+              <a href="tel:+94112345678">+94 11 234 5678</a>
+              <a href="https://help.mediflow.lk" target="_blank" rel="noreferrer">
+                help.mediflow.lk
+              </a>
+            </div>
+          </div>
+          <div className="mf-contact-cards">
+            <article>
+              <h4>Average Response</h4>
+              <p>Under 5 minutes</p>
+            </article>
+            <article>
+              <h4>Support Channels</h4>
+              <p>Email, Phone, Help Center</p>
+            </article>
+            <article>
+              <h4>Availability</h4>
+              <p>24 hours, 7 days</p>
+            </article>
+          </div>
         </div>
       </section>
 
