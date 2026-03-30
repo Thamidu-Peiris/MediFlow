@@ -7,7 +7,10 @@ const connectDB = async () => {
     return;
   }
   try {
-    await mongoose.connect(mongoUri);
+    mongoose.set("bufferCommands", false);
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 5000
+    });
     console.log("Doctor service connected to MongoDB Atlas");
   } catch (error) {
     console.error("Doctor service MongoDB connection failed:", error.message);
