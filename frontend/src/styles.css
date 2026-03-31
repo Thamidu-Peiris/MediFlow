@@ -653,7 +653,7 @@ button, .btn-primary {
 .mf-hero { 
   padding: 80px 0 100px; 
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #fef3c7 100%);
 }
 .mf-hero-bg-shapes {
@@ -900,6 +900,7 @@ button, .btn-primary {
 .mf-hero-visual {
   position: relative;
   animation: fadeInRight 1s ease-out 0.4s both;
+  overflow: visible;
 }
 @keyframes fadeInRight {
   from {
@@ -914,7 +915,7 @@ button, .btn-primary {
 .mf-hero-image-wrapper {
   position: relative;
   border-radius: 24px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
 .mf-hero-main-image {
@@ -925,48 +926,55 @@ button, .btn-primary {
 }
 .mf-floating-card {
   position: absolute;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 16px;
-  padding: 16px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px 24px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 20px rgba(0, 0, 0, 0.08);
   z-index: 2;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 240px;
+}
+.mf-floating-card:hover {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2), 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 .mf-floating-card strong {
-  font-size: 14px;
-  color: #111827;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
   display: block;
-  margin: 0;
+  margin: 0 0 4px;
 }
 .mf-floating-card span {
-  font-size: 12px;
+  font-size: 14px;
   color: #64748b;
+  display: block;
 }
 .mf-card-icon {
-  font-size: 28px;
+  font-size: 36px;
   line-height: 1;
+  flex-shrink: 0;
 }
 .mf-float-1 {
-  top: 20px;
-  right: -20px;
+  top: 5%;
+  right: -8%;
   animation: floatCard1 6s ease-in-out infinite;
 }
 .mf-float-2 {
-  bottom: 40px;
-  left: -30px;
+  bottom: 10%;
+  left: -10%;
   animation: floatCard2 7s ease-in-out infinite;
 }
 @keyframes floatCard1 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(2deg); }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
 }
 @keyframes floatCard2 {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(-2deg); }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
 }
 
 .mf-section { padding: 54px 0; }

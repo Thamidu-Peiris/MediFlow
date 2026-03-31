@@ -35,7 +35,7 @@ const doctors = [
 const doctorFallback =
   "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=700&q=80";
 const bannerFallback =
-  "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1200&q=80";
+  "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80";
 const testimonialFallback =
   "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80";
 
@@ -217,8 +217,8 @@ export default function HomePage() {
               </div>
               <img
                 className="mf-hero-main-image"
-                src="https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?q=80&w=1083&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                alt="Doctor consultation"
+                src="/assets/hero-doctor.png"
+                alt="Pharmacist with prescription"
                 onError={(e) => fallbackToPlaceholder(e, bannerFallback)}
               />
             </div>
