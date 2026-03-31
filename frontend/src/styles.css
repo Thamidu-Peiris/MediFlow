@@ -2161,9 +2161,239 @@ button, .btn-primary {
   margin-bottom: 4px;
 }
 .ap-admin-note svg { flex-shrink: 0; color: #94a3b8; }
+/* Input validation states */
+.ap-input-wrap.ap-input-error input,
+.ap-input-wrap.ap-input-error select {
+  border-color: #ef4444;
+}
+.ap-input-wrap.ap-input-error input:focus,
+.ap-input-wrap.ap-input-error select:focus {
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+}
+.ap-input-wrap.ap-input-ok input,
+.ap-input-wrap.ap-input-ok select {
+  border-color: #10b981;
+}
+.ap-input-wrap.ap-input-ok input:focus,
+.ap-input-wrap.ap-input-ok select:focus {
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+}
+.ap-input-check {
+  position: absolute;
+  right: 14px;
+  color: #10b981;
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.ap-field-err {
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 500;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+/* Password strength meter */
+.rr-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.rr-strength-bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.rr-strength-bar {
+  height: 4px;
+  flex: 1;
+  border-radius: 99px;
+  transition: background 0.3s ease;
+}
+.rr-strength span {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 44px;
+}
+/* Password rules */
+.rr-pwd-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.rr-rule {
+  font-size: 11px;
+  color: #9ca3af;
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.rr-rule.rr-rule-ok {
+  color: #10b981;
+  background: #ecfdf5;
+}
+/* Step wizard indicator */
+.rr-steps {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.rr-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.rr-step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s, color 0.3s;
+}
+.rr-step-active .rr-step-dot {
+  color: #fff;
+}
+.rr-step span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+}
+.rr-step-active span {
+  color: #374151;
+}
+.rr-step-line {
+  flex: 1;
+  height: 2px;
+  background: #e5e7eb;
+  margin: 0 8px;
+  margin-bottom: 16px;
+  transition: background 0.3s;
+}
+/* Back button + button row */
+.rr-btn-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.rr-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 20px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.rr-back-btn:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+/* Section divider */
+.rr-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0;
+}
+.rr-section-divider::before,
+.rr-section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+.rr-section-divider span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+.rr-required {
+  color: #ef4444;
+  font-size: 13px;
+  margin-left: 2px;
+}
+.rr-optional {
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 4px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+/* Textarea input wrap */
+.ap-textarea-wrap {
+  align-items: flex-start;
+}
+.ap-textarea-wrap textarea {
+  width: 100%;
+  padding: 13px 14px 13px 44px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #111827;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.ap-textarea-wrap textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+/* Register Role Perks */
+.rr-perks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.rr-perk {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+.rr-perk svg { flex-shrink: 0; }
+.rr-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 /* Responsive */
 @media (max-width: 768px) {
   .ap-page { grid-template-columns: 1fr; }
   .ap-panel { display: none; }
   .ap-form-panel { padding: 32px 20px; }
+  .rr-perks { grid-template-columns: 1fr; }
 }
