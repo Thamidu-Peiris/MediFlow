@@ -226,18 +226,6 @@ export default function RegisterRolePage() {
             </div>
           </div>
 
-          {/* Perks only on step 1 for doctor */}
-          {selectedRole === "doctor" && step === 1 && (
-            <div className="rr-perks">
-              {cfg.perks.map((p) => (
-                <div key={p} className="rr-perk">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                  <span>{p}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
           {serverError && (
             <div className="ap-error">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
