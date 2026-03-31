@@ -238,7 +238,7 @@ export default function RegisterRolePage() {
           <form onSubmit={onSubmit} className="ap-form" noValidate>
 
             {/* ── STEP 1: Account Details ── */}
-            {(selectedRole === "patient" || step === 1) && (
+            {step === 1 && (
               <>
                 <div className="ap-field" style={{ marginTop: "12px" }}>
                   <label>Full Name</label>
