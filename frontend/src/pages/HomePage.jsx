@@ -273,15 +273,29 @@ export default function HomePage() {
           <div className="mf-doctor-grid">
             {doctors.map((doctor) => (
               <article key={doctor.name} className="mf-doctor-card">
-                <img
-                  src={doctor.image}
-                  alt={doctor.name}
-                  onError={(e) => fallbackToPlaceholder(e, doctorFallback)}
-                />
-                <h4>{doctor.name}</h4>
-                <p>{doctor.specialty}</p>
-                <small>⭐ {doctor.rating}</small>
-                <button type="button">Book Now</button>
+                <div className="mf-doctor-img-wrap">
+                  <img
+                    src={doctor.image}
+                    alt={doctor.name}
+                    onError={(e) => fallbackToPlaceholder(e, doctorFallback)}
+                  />
+                  <div className="mf-doctor-specialty-badge">{doctor.specialty}</div>
+                  <div className="mf-doctor-rating-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    {doctor.rating}
+                  </div>
+                </div>
+                <div className="mf-doctor-info">
+                  <h4>{doctor.name}</h4>
+                  <Link className="mf-doctor-book-btn" to="/doctors">
+                    Book Now
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </Link>
+                </div>
               </article>
             ))}
           </div>
@@ -296,7 +310,7 @@ export default function HomePage() {
               Describe your symptoms and get instant suggestions powered by AI before consulting a
               doctor.
             </p>
-            <button type="button">Try Now</button>
+            <button type="button" className="mf-try-now-btn">Try Now →</button>
           </div>
           <img
             src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80"
