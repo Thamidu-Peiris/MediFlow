@@ -49,7 +49,13 @@ const SPECIALIZATIONS = [
   "Pulmonology", "Radiology", "Surgery", "Urology"
 ];
 
-function validate(form, confirmPassword, doctorForm, selectedRole) {
+function calcAge(dob) {
+  if (!dob) return null;
+  const diff = Date.now() - new Date(dob).getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+}
+
+function validate(form, confirmPassword, doctorForm, patientForm, selectedRole) {
   const errors = {};
   if (!form.name.trim()) errors.name = "Full name is required";
   else if (form.name.trim().length < 3) errors.name = "Name must be at least 3 characters";
@@ -71,6 +77,16 @@ function validate(form, confirmPassword, doctorForm, selectedRole) {
     if (doctorForm.consultationFee !== "" && (isNaN(doctorForm.consultationFee) || Number(doctorForm.consultationFee) < 0))
       errors.consultationFee = "Enter a valid fee";
   }
+  if (selectedRole === "patient") {
+    if (!patientForm.phone.trim()) errors.phone = "Phone number is required";
+    else if (!/^[\d\s+\-()]{7,15}$/.test(patientForm.phone.trim())) errors.phone = "Enter a valid phone number";
+    if (!patientForm.dob) errors.dob = "Date of birth is required";
+    else {
+      const age = calcAge(patientForm.dob);
+      if (age < 1 || age > 120) errors.dob = "Enter a valid date of birth";
+    }
+    if (!patientForm.gender) errors.gender = "Please select your gender";
+  }
   return errors;
 }
 
@@ -83,6 +99,7 @@ export default function RegisterRolePage() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [doctorForm, setDoctorForm] = useState({ phone: "", specialization: "", qualifications: "", bio: "", consultationFee: "" });
+  const [patientForm, setPatientForm] = useState({ phone: "", dob: "", gender: "", address: "" });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState("");
@@ -90,7 +107,7 @@ export default function RegisterRolePage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const errors = validate(form, confirmPassword, doctorForm, selectedRole);
+  const errors = validate(form, confirmPassword, doctorForm, patientForm, selectedRole);
   const strength = form.password ? getPasswordStrength(form.password) : null;
 
   const touch = (field) => setTouched((prev) => ({ ...prev, [field]: true }));
@@ -105,17 +122,18 @@ export default function RegisterRolePage() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (selectedRole === "doctor" && step === 1) { handleNext(); return; }
+    if (step === 1) { handleNext(); return; }
     const allTouched = { name: true, email: true, password: true, confirm: true,
-      ...(selectedRole === "doctor" ? { phone: true, specialization: true, qualifications: true, consultationFee: true } : {})
+      ...(selectedRole === "doctor" ? { phone: true, specialization: true, qualifications: true, consultationFee: true } : {}),
+      ...(selectedRole === "patient" ? { phone: true, dob: true, gender: true } : {})
     };
     setTouched(allTouched);
     if (Object.keys(errors).length > 0) return;
     setLoading(true);
     try {
       const user = await register({ ...form, role: selectedRole });
+      const token = localStorage.getItem("token");
       if (selectedRole === "doctor") {
-        const token = localStorage.getItem("token");
         await api.put("/doctors/update-profile", {
           fullName: form.name,
           email: form.email,
@@ -127,6 +145,14 @@ export default function RegisterRolePage() {
         }, { headers: { Authorization: `Bearer ${token}` } });
         navigate("/doctors");
       } else {
+        await api.put("/patients/update-profile", {
+          fullName: form.name,
+          email: form.email,
+          phone: patientForm.phone,
+          age: calcAge(patientForm.dob),
+          gender: patientForm.gender,
+          address: patientForm.address
+        }, { headers: { Authorization: `Bearer ${token}` } });
         navigate("/patient/dashboard");
       }
     } catch (err) {
@@ -181,29 +207,27 @@ export default function RegisterRolePage() {
                 </svg>
               )}
             </div>
-            <h1>{step === 2 ? "Professional Details" : cfg.heading}</h1>
-            <p>{step === 2 ? "Tell us about your medical background" : cfg.sub}</p>
+            <h1>{step === 2 ? (selectedRole === "doctor" ? "Professional Details" : "Personal Details") : cfg.heading}</h1>
+            <p>{step === 2 ? (selectedRole === "doctor" ? "Tell us about your medical background" : "Help us personalise your experience") : cfg.sub}</p>
           </div>
 
-          {/* Step indicator — doctor only */}
-          {selectedRole === "doctor" && (
-            <div className="rr-steps">
-              <div className={`rr-step${step >= 1 ? " rr-step-active" : ""}`}>
-                <div className="rr-step-dot" style={{ background: step >= 1 ? cfg.accentFrom : undefined }}>
-                  {step > 1 ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg> : "1"}
-                </div>
-                <span>Account</span>
+          {/* Step indicator — both roles */}
+          <div className="rr-steps">
+            <div className={`rr-step${step >= 1 ? " rr-step-active" : ""}`}>
+              <div className="rr-step-dot" style={{ background: step >= 1 ? cfg.accentFrom : undefined }}>
+                {step > 1 ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg> : "1"}
               </div>
-              <div className="rr-step-line" style={{ background: step > 1 ? cfg.accentFrom : undefined }} />
-              <div className={`rr-step${step === 2 ? " rr-step-active" : ""}`}>
-                <div className="rr-step-dot" style={{ background: step === 2 ? cfg.accentFrom : undefined }}>2</div>
-                <span>Professional</span>
-              </div>
+              <span>Account</span>
             </div>
-          )}
+            <div className="rr-step-line" style={{ background: step > 1 ? cfg.accentFrom : undefined }} />
+            <div className={`rr-step${step === 2 ? " rr-step-active" : ""}`}>
+              <div className="rr-step-dot" style={{ background: step === 2 ? cfg.accentFrom : undefined }}>2</div>
+              <span>{selectedRole === "doctor" ? "Professional" : "Personal"}</span>
+            </div>
+          </div>
 
-          {/* Patient perks only on step 1 */}
-          {(selectedRole === "patient" || step === 1) && (
+          {/* Perks only on step 1 */}
+          {step === 1 && (
             <div className="rr-perks">
               {cfg.perks.map((p) => (
                 <div key={p} className="rr-perk">
@@ -389,26 +413,93 @@ export default function RegisterRolePage() {
               </>
             )}
 
+            {/* ── STEP 2: Personal Details (patient only) ── */}
+            {selectedRole === "patient" && step === 2 && (
+              <>
+                <div className="ap-field">
+                  <label>Phone Number <span className="rr-required">*</span></label>
+                  <div className={`ap-input-wrap${touched.phone && errors.phone ? " ap-input-error" : touched.phone && !errors.phone ? " ap-input-ok" : ""}`}>
+                    <svg className="ap-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.08 6.08l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <input type="tel" placeholder="+94 77 123 4567" value={patientForm.phone}
+                      onChange={(e) => setPatientForm(p => ({ ...p, phone: e.target.value }))}
+                      onBlur={() => touch("phone")} />
+                    {touched.phone && !errors.phone && <span className="ap-input-check">✓</span>}
+                  </div>
+                  {touched.phone && errors.phone && <span className="ap-field-err">{errors.phone}</span>}
+                </div>
+
+                <div className="ap-field">
+                  <label>Date of Birth <span className="rr-required">*</span></label>
+                  <div className={`ap-input-wrap${touched.dob && errors.dob ? " ap-input-error" : touched.dob && !errors.dob ? " ap-input-ok" : ""}`}>
+                    <svg className="ap-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <input type="date" value={patientForm.dob}
+                      max={new Date().toISOString().split("T")[0]}
+                      onChange={(e) => setPatientForm(p => ({ ...p, dob: e.target.value }))}
+                      onBlur={() => touch("dob")} />
+                    {touched.dob && !errors.dob && patientForm.dob && <span className="ap-input-check">✓</span>}
+                  </div>
+                  {touched.dob && errors.dob && <span className="ap-field-err">{errors.dob}</span>}
+                  {patientForm.dob && !errors.dob && (
+                    <span style={{ fontSize: "12px", color: "#6b7280", marginTop: "3px", display: "block" }}>
+                      Age: {calcAge(patientForm.dob)} years old
+                    </span>
+                  )}
+                </div>
+
+                <div className="ap-field">
+                  <label>Gender <span className="rr-required">*</span></label>
+                  <div className={`ap-input-wrap${touched.gender && errors.gender ? " ap-input-error" : touched.gender && !errors.gender ? " ap-input-ok" : ""}`}>
+                    <svg className="ap-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="8" r="4"/><path d="M12 12v8M9 18h6"/>
+                    </svg>
+                    <select value={patientForm.gender}
+                      onChange={(e) => setPatientForm(p => ({ ...p, gender: e.target.value }))}
+                      onBlur={() => touch("gender")}>
+                      <option value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </div>
+                  {touched.gender && errors.gender && <span className="ap-field-err">{errors.gender}</span>}
+                </div>
+
+                <div className="ap-field">
+                  <label>Address <span className="rr-optional">optional</span></label>
+                  <div className="ap-input-wrap ap-textarea-wrap">
+                    <svg className="ap-input-icon" style={{top:"14px"}} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    <textarea placeholder="Your home or current address..." value={patientForm.address}
+                      onChange={(e) => setPatientForm(p => ({ ...p, address: e.target.value }))} rows={2} />
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Buttons */}
-            {selectedRole === "doctor" && step === 1 ? (
+            {step === 1 ? (
               <button type="button" className="ap-submit-btn"
                 style={{ background: `linear-gradient(135deg, ${cfg.accentFrom} 0%, ${cfg.accentTo} 100%)` }}
                 onClick={handleNext}>
-                Continue to Professional Details
+                {selectedRole === "doctor" ? "Continue to Professional Details" : "Continue to Personal Details"}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
               </button>
             ) : (
               <div className="rr-btn-row">
-                {selectedRole === "doctor" && (
-                  <button type="button" className="rr-back-btn" onClick={() => setStep(1)}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                    Back
-                  </button>
-                )}
+                <button type="button" className="rr-back-btn" onClick={() => setStep(1)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                  </svg>
+                  Back
+                </button>
                 <button type="submit" className="ap-submit-btn"
                   style={{ background: `linear-gradient(135deg, ${cfg.accentFrom} 0%, ${cfg.accentTo} 100%)`, flex: 1 }}
                   disabled={loading}>
