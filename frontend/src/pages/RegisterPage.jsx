@@ -21,44 +21,12 @@ export default function RegisterPage() {
             </svg>
             <span>MediFlow</span>
           </Link>
-          <div className="ap-panel-hero">
-            <img
-              src="https://images.unsplash.com/photo-1638202993928-7267aad84c31?auto=format&fit=crop&w=800&q=80"
-              alt="Healthcare"
-              className="ap-panel-img"
-              onError={(e) => { e.currentTarget.style.display = "none"; }}
-            />
-          </div>
-          <div className="ap-panel-text">
-            <h2>Join MediFlow Today</h2>
-            <p>Connect with top medical professionals and manage your healthcare journey seamlessly.</p>
-          </div>
-          <div className="ap-features">
-            <div className="ap-feature-item">
-              <div className="ap-feature-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </div>
-              <span>Book appointments instantly</span>
-            </div>
-            <div className="ap-feature-item">
-              <div className="ap-feature-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </div>
-              <span>Access digital prescriptions</span>
-            </div>
-            <div className="ap-feature-item">
-              <div className="ap-feature-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </div>
-              <span>HD video consultations</span>
-            </div>
-            <div className="ap-feature-item">
-              <div className="ap-feature-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </div>
-              <span>Secure medical records</span>
-            </div>
-          </div>
+          <img
+            src="https://images.unsplash.com/photo-1638202993928-7267aad84c31?auto=format&fit=crop&w=800&q=80"
+            alt="Healthcare"
+            className="ap-panel-img"
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
+          />
         </div>
       </div>
 

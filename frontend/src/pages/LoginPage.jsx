@@ -49,32 +49,12 @@ export default function LoginPage() {
             </svg>
             <span>MediFlow</span>
           </Link>
-          <div className="ap-panel-hero">
-            <img
-              src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80"
-              alt="Doctor"
-              className="ap-panel-img"
-              onError={(e) => { e.currentTarget.style.display = "none"; }}
-            />
-          </div>
-          <div className="ap-panel-text">
-            <h2>Your Health, Our Priority</h2>
-            <p>Access expert doctors, manage prescriptions, and book appointments — all in one place.</p>
-          </div>
-          <div className="ap-panel-stats">
-            <div className="ap-stat">
-              <strong>500+</strong>
-              <span>Doctors</span>
-            </div>
-            <div className="ap-stat">
-              <strong>50K+</strong>
-              <span>Patients</span>
-            </div>
-            <div className="ap-stat">
-              <strong>4.9★</strong>
-              <span>Rating</span>
-            </div>
-          </div>
+          <img
+            src="https://images.unsplash.com/photo-1585842378054-ee2e52f94ba2?auto=format&fit=crop&w=800&q=80"
+            alt="Doctor"
+            className="ap-panel-img"
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
+          />
         </div>
       </div>
 
