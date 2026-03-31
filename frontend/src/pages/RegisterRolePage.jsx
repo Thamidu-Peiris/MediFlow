@@ -131,8 +131,7 @@ export default function RegisterRolePage() {
     if (Object.keys(errors).length > 0) return;
     setLoading(true);
     try {
-      const user = await register({ ...form, role: selectedRole });
-      const token = localStorage.getItem("token");
+      const { user, token } = await register({ ...form, role: selectedRole });
       if (selectedRole === "doctor") {
         await api.put("/doctors/update-profile", {
           fullName: form.name,
@@ -156,7 +155,9 @@ export default function RegisterRolePage() {
         navigate("/patient/dashboard");
       }
     } catch (err) {
-      setServerError(err?.response?.data?.message || "Registration failed");
+      console.error("Registration error:", err);
+      console.error("Error response:", err?.response);
+      setServerError(err?.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

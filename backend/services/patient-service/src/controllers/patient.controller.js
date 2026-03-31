@@ -2,6 +2,8 @@ const Patient = require("../models/patient.model");
 
 exports.upsertProfile = async (req, res) => {
   try {
+    console.log("upsertProfile req.user:", req.user);
+    console.log("upsertProfile req.body:", req.body);
     const {
       fullName,
       email = "",
@@ -35,7 +37,8 @@ exports.upsertProfile = async (req, res) => {
 
     return res.status(200).json({ patient });
   } catch (error) {
-    return res.status(500).json({ message: "Failed to save profile" });
+    console.error("upsertProfile error:", error);
+    return res.status(500).json({ message: "Failed to save profile", error: error.message });
   }
 };
 
