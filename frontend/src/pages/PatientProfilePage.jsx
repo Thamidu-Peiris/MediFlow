@@ -61,6 +61,28 @@ export default function PatientProfilePage() {
     return date.toISOString().split("T")[0];
   };
 
+  const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return "-";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  };
+
+  const calculateAge = (dateStr) => {
+    if (!dateStr) return null;
+    const birthDate = new Date(dateStr);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -141,6 +163,9 @@ export default function PatientProfilePage() {
             <div className="profile-tags">
               <span className="tag blood">Blood: {profile.bloodType || "O+"}</span>
               <span className="tag gender">{profile.gender || "Female"}</span>
+              {profile.dob && (
+                <span className="tag age">{calculateAge(profile.dob)} years old</span>
+              )}
               <span className="tag member">Member since 2024</span>
             </div>
           </div>
@@ -248,7 +273,7 @@ export default function PatientProfilePage() {
                 </div>
                 <div className="info-item">
                   <span className="info-label">Date of Birth</span>
-                  <span className="info-value">{profile.dob || "-"}</span>
+                  <span className="info-value">{formatDisplayDate(profile.dob)}</span>
                 </div>
                 <div className="info-item">
                   <span className="info-label">Gender</span>
