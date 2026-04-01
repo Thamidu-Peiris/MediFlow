@@ -5537,6 +5537,266 @@ button, .btn-primary {
   padding-top: 16px;
 }
 
+/* Appointments Page */
+.aura-appointments-page {
+  padding: 0;
+}
+
+.aura-appointments-header {
+  margin-bottom: 24px;
+}
+
+/* Tabs */
+.aura-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 8px;
+}
+
+.aura-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.aura-tab:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.aura-tab.active {
+  background: #0d9488;
+  color: white;
+}
+
+.aura-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.aura-tab.active .aura-tab-count {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Appointments List */
+.aura-appointments-content {
+  min-height: 400px;
+}
+
+.aura-appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.aura-appointment-card {
+  display: grid;
+  grid-template-columns: 280px 1fr auto 280px;
+  align-items: center;
+  gap: 24px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 20px 24px;
+  transition: box-shadow 0.2s;
+}
+
+.aura-appointment-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Appointment Doctor */
+.aura-appointment-doctor {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.aura-appointment-doctor img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ccfbf1;
+}
+
+.aura-appointment-doctor-info h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.aura-appointment-doctor-info p {
+  font-size: 13px;
+  color: #0d9488;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Appointment Details */
+.aura-appointment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aura-appointment-datetime,
+.aura-appointment-fee {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.aura-appointment-datetime svg,
+.aura-appointment-fee svg {
+  color: #9ca3af;
+}
+
+.aura-appointment-fee {
+  color: #059669;
+  font-weight: 600;
+}
+
+/* Status Badge */
+.aura-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Appointment Actions */
+.aura-appointment-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aura-btn-join,
+.aura-btn-reschedule,
+.aura-btn-cancel,
+.aura-btn-danger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.aura-btn-join {
+  background: #0d9488;
+  color: white;
+}
+
+.aura-btn-join:hover {
+  background: #0f766e;
+}
+
+.aura-btn-reschedule {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1.5px solid #e5e7eb;
+}
+
+.aura-btn-reschedule:hover {
+  background: #e5e7eb;
+}
+
+.aura-btn-cancel,
+.aura-btn-danger {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1.5px solid #fecaca;
+}
+
+.aura-btn-cancel:hover,
+.aura-btn-danger:hover {
+  background: #fee2e2;
+}
+
+/* Modal Small */
+.aura-modal-small {
+  max-width: 400px;
+  text-align: center;
+}
+
+.aura-modal-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.aura-modal-header-center h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.aura-modal-header-center p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.aura-warning-icon {
+  width: 64px;
+  height: 64px;
+  background: #fef2f2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aura-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.aura-modal-actions .aura-btn-secondary,
+.aura-modal-actions .aura-btn-danger,
+.aura-modal-actions .aura-btn-confirm {
+  flex: 1;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .aura-filters-row {

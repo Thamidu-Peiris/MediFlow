@@ -50,6 +50,7 @@ export default function DoctorsPage() {
   const [selectedAvailability, setSelectedAvailability] = useState("all");
   const [selectedPriceRange, setSelectedPriceRange] = useState("all");
   const [minRating, setMinRating] = useState(0);
+  const [sortBy, setSortBy] = useState("rating"); // rating, price_low, price_high
   
   // Booking states
   const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -120,8 +121,17 @@ export default function DoctorsPage() {
       filtered = filtered.filter(d => parseFloat(d.rating || 0) >= minRating);
     }
     
+    // Sort
+    if (sortBy === "rating") {
+      filtered.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+    } else if (sortBy === "price_low") {
+      filtered.sort((a, b) => (a.consultationFee || 0) - (b.consultationFee || 0));
+    } else if (sortBy === "price_high") {
+      filtered.sort((a, b) => (b.consultationFee || 0) - (a.consultationFee || 0));
+    }
+    
     setFilteredDoctors(filtered);
-  }, [searchQuery, selectedSpecialty, selectedPriceRange, minRating, doctors]);
+  }, [searchQuery, selectedSpecialty, selectedPriceRange, minRating, sortBy, doctors]);
 
   const handleBookClick = (doctor) => {
     if (!user) {
@@ -140,8 +150,7 @@ export default function DoctorsPage() {
   };
 
   const handleViewProfile = (doctor) => {
-    setSelectedDoctor(doctor);
-    setShowProfileModal(true);
+    navigate(`/doctors/${doctor._id}`);
   };
 
   const handleBookingSubmit = async (e) => {
@@ -259,23 +268,35 @@ export default function DoctorsPage() {
           </div>
         </section>
 
-        {/* Results Count */}
-        <div className="aura-results-count">
-          <span>{filteredDoctors.length} doctors found</span>
-          {(searchQuery || selectedSpecialty !== "All" || selectedPriceRange !== "all" || minRating > 0) && (
-            <button 
-              className="aura-clear-filters"
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedSpecialty("All");
-                setSelectedAvailability("all");
-                setSelectedPriceRange("all");
-                setMinRating(0);
-              }}
-            >
-              Clear Filters
-            </button>
-          )}
+        {/* Results Count with Sort */}
+        <div className="aura-results-bar">
+          <div className="aura-results-count">
+            <span>{filteredDoctors.length} doctors found</span>
+            {(searchQuery || selectedSpecialty !== "All" || selectedPriceRange !== "all" || minRating > 0) && (
+              <button 
+                className="aura-clear-filters"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedSpecialty("All");
+                  setSelectedAvailability("all");
+                  setSelectedPriceRange("all");
+                  setMinRating(0);
+                  setSortBy("rating");
+                }}
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+          
+          <div className="aura-sort-group">
+            <label>Sort by:</label>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="rating">Highest Rated</option>
+              <option value="price_low">Price: Low to High</option>
+              <option value="price_high">Price: High to Low</option>
+            </select>
+          </div>
         </div>
 
         {/* Doctors Grid */}
