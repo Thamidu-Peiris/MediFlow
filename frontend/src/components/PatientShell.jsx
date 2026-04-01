@@ -108,7 +108,7 @@ export default function PatientShell({ children }) {
         {/* Navigation */}
         <nav className="aura-sidebar-nav">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.to;
+            const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
             return (
               <Link 
                 key={item.to} 

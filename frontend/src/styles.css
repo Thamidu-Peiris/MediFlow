@@ -2408,42 +2408,42 @@ button, .btn-primary {
 .symptom-checker-card {
   background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
   border-radius: 16px;
-  padding: 24px;
+  padding: 16px;
   color: #ffffff;
   text-align: center;
 }
 
 .checker-icon {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   background: rgba(255,255,255,0.2);
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
+  margin: 0 auto 12px;
 }
 
 .symptom-checker-card h4 {
-  margin: 0 0 8px;
-  font-size: 16px;
+  margin: 0 0 6px;
+  font-size: 15px;
   font-weight: 600;
 }
 
 .symptom-checker-card p {
-  margin: 0 0 16px;
-  font-size: 13px;
+  margin: 0 0 12px;
+  font-size: 12px;
   opacity: 0.9;
 }
 
 .checker-btn {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   background: #ffffff;
   color: #14b8a6;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -6505,6 +6505,82 @@ button, .btn-primary {
   grid-template-columns: 1fr 340px;
   gap: 24px;
   margin-bottom: 24px;
+  align-items: start;
+}
+
+/* Profile Main Content */
+.profile-main-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-main-content .content-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-main-content .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-main-content .info-display-modern {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 300px;
+}
+
+/* Profile Sidebar */
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.health-summary {
+  margin-bottom: 16px;
+}
+
+.symptom-checker-card {
+  flex-shrink: 0;
+}
+.symptom-checker-card.clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.symptom-checker-card.clickable:hover {
+  border-color: #14b8a6;
+  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Profile Main Content */
+.profile-main-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-main-content .content-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-main-content .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-main-content .info-display-modern {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 /* Content Card */
