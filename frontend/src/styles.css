@@ -6294,6 +6294,442 @@ button, .btn-primary {
   }
 }
 
+/* Modern Professional Profile Page Styles */
+.profile-dashboard-modern {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Profile Hero Card */
+.profile-hero-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.profile-hero-content {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.profile-avatar-section {
+  flex-shrink: 0;
+}
+
+.avatar-container-large {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.avatar-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  background: #14b8a6;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.4);
+}
+
+.avatar-edit-btn:hover {
+  background: #0d9488;
+  transform: scale(1.1);
+}
+
+.profile-info-section {
+  flex: 1;
+}
+
+.profile-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.profile-name-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-name-block h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.role-badge-professional {
+  padding: 6px 14px;
+  background: #f0fdfa;
+  color: #0d9488;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #ccfbf1;
+}
+
+.edit-profile-btn-professional {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-profile-btn-professional:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.edit-profile-btn-professional.active {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.profile-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.contact-divider {
+  color: #cbd5e1;
+}
+
+.profile-badges-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.info-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.info-badge.blood {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.info-badge.gender {
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.info-badge.age {
+  background: #eff6ff;
+  color: #0369a1;
+}
+
+.info-badge.member {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* Message Toast Modern */
+.message-toast-modern {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.message-toast-modern.success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.message-toast-modern.error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* Content Grid */
+.profile-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* Content Card */
+.content-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.card-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-header-icon.personal {
+  background: #f0fdfa;
+  color: #14b8a6;
+}
+
+.card-header-text h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.card-header-text p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.card-body {
+  padding: 24px;
+}
+
+/* Form Modern */
+.edit-form-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row-modern {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-field-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field-modern.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-field-modern label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.form-field-modern input,
+.form-field-modern select,
+.form-field-modern textarea {
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #1e293b;
+  background: white;
+  transition: all 0.2s;
+}
+
+.form-field-modern input:focus,
+.form-field-modern select:focus,
+.form-field-modern textarea:focus {
+  outline: none;
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.form-field-modern textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-actions-modern {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.save-btn-modern {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #14b8a6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-btn-modern:hover {
+  background: #0d9488;
+}
+
+.cancel-btn-modern {
+  padding: 12px 24px;
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn-modern:hover {
+  background: #f8fafc;
+}
+
+/* Info Display Modern */
+.info-display-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.info-row-modern {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.info-item-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-item-modern.full-width {
+  grid-column: 1 / -1;
+}
+
+.info-label-modern {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.info-value-modern {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  padding-left: 24px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .profile-content-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-hero-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .profile-title-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .profile-name-block {
+    flex-direction: column;
+  }
+  
+  .profile-contact-row {
+    justify-content: center;
+  }
+  
+  .profile-badges-row {
+    justify-content: center;
+  }
+  
+  .form-row-modern {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-row-modern {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Modern Prescriptions Page Styles */
 .prescriptions-container {
   padding: 0;
@@ -6736,6 +7172,326 @@ button, .btn-primary {
   }
   
   .prescriptions-grid-modern {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Profile Section Modern - Health & Security */
+.profile-section-modern {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.section-header-modern {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.section-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-icon.health {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.section-icon.security {
+  background: #f0fdfa;
+  color: #14b8a6;
+}
+
+.section-title h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.section-title p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Health Info Grid */
+.health-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.health-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.health-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.health-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+
+.health-card-icon.allergies {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.health-card-icon.conditions {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.health-card-icon.medications {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.health-card-icon.emergency {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+
+.health-card h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0 0 8px 0;
+}
+
+.health-value {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 12px 0;
+}
+
+.add-health-btn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-health-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+/* Security Card */
+.security-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.security-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.security-icon-large {
+  width: 64px;
+  height: 64px;
+  background: #f0fdfa;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.security-text h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.security-text p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.change-password-btn-modern {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.change-password-btn-modern:hover {
+  background: #f8fafc;
+  border-color: #14b8a6;
+  color: #14b8a6;
+}
+
+/* Password Change Card */
+.password-change-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.password-change-card h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.password-hint {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+.password-form-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.password-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.password-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.password-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.password-field input {
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background: white;
+}
+
+.password-field input:focus {
+  outline: none;
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.password-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.save-password-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #14b8a6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-password-btn:hover {
+  background: #0d9488;
+}
+
+.cancel-password-btn {
+  padding: 10px 20px;
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-password-btn:hover {
+  background: #f8fafc;
+}
+
+@media (max-width: 1024px) {
+  .health-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .health-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .security-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .security-info {
+    flex-direction: column;
+  }
+  
+  .password-fields {
     grid-template-columns: 1fr;
   }
 }
