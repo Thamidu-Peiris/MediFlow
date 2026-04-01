@@ -4869,16 +4869,718 @@ button, .btn-primary {
   margin: 0 0 16px 0;
 }
 
+/* Booking Page Styles */
+.aura-booking-page {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.aura-booking-header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 24px 32px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.aura-booking-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.aura-booking-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+}
+
+.aura-booking-subtitle {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+}
+
+.aura-booking-main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* Search & Filters */
+.aura-filters-section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.aura-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+
+.aura-search-bar svg {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.aura-search-bar input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: #111827;
+  outline: none;
+}
+
+.aura-search-bar input::placeholder {
+  color: #9ca3af;
+}
+
+.aura-filters-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.aura-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aura-filter-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.aura-filter-group select,
+.aura-filter-group input[type="range"] {
+  padding: 10px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.aura-filter-group select:focus {
+  border-color: #0d9488;
+}
+
+.aura-rating-slider {
+  -webkit-appearance: none;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  outline: none;
+}
+
+.aura-rating-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #0d9488;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Results Count */
+.aura-results-count {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.aura-clear-filters {
+  background: transparent;
+  border: none;
+  color: #0d9488;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Loading & Empty States */
+.aura-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+  gap: 16px;
+}
+
+.aura-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #0d9488;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.aura-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.aura-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+  text-align: center;
+}
+
+.aura-empty-state h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #374151;
+  margin: 16px 0 8px 0;
+}
+
+.aura-empty-state p {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Doctors Grid */
+.aura-doctors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.aura-doctor-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.aura-doctor-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+}
+
+.aura-doctor-image {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.aura-doctor-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.aura-doctor-status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.aura-doctor-info {
+  padding: 20px;
+}
+
+.aura-doctor-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.aura-doctor-specialty {
+  font-size: 14px;
+  color: #0d9488;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.aura-doctor-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.aura-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.aura-rating-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.aura-review-count {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.aura-doctor-fee {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #059669;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.aura-doctor-qualifications {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 16px 0;
+}
+
+/* Time Slots */
+.aura-timeslots {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.aura-timeslots label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.aura-timeslot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aura-timeslot {
+  padding: 6px 12px;
+  background: #f0fdfa;
+  color: #0d9488;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.aura-timeslot-more {
+  padding: 6px 12px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+/* Doctor Actions */
+.aura-doctor-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 20px 20px 20px;
+}
+
+.aura-btn-view,
+.aura-btn-book,
+.aura-btn-secondary,
+.aura-btn-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  text-decoration: none;
+}
+
+.aura-btn-view {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1.5px solid #e5e7eb;
+}
+
+.aura-btn-view:hover {
+  background: #e5e7eb;
+}
+
+.aura-btn-book,
+.aura-btn-confirm {
+  background: #0d9488;
+  color: white;
+}
+
+.aura-btn-book:hover,
+.aura-btn-confirm:hover {
+  background: #0f766e;
+}
+
+.aura-btn-secondary {
+  background: white;
+  color: #374151;
+  border: 1.5px solid #e5e7eb;
+  padding: 10px 16px;
+}
+
+.aura-btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.aura-btn-confirm:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Modal Styles */
+.aura-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.aura-modal {
+  background: white;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  padding: 32px;
+}
+
+.aura-modal-large {
+  max-width: 600px;
+}
+
+.aura-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.aura-modal-close:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.aura-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.aura-modal-doctor-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.aura-modal-header h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.aura-modal-header p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+}
+
+/* Alert */
+.aura-alert {
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.aura-alert.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.aura-alert.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Booking Form */
+.aura-booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.aura-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aura-form-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.aura-form-group input,
+.aura-form-group select,
+.aura-form-group textarea {
+  padding: 12px 16px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #111827;
+  background: white;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.aura-form-group input:focus,
+.aura-form-group select:focus,
+.aura-form-group textarea:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+.aura-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.aura-fee-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #f0fdfa;
+  border: 1.5px solid #ccfbf1;
+  border-radius: 12px;
+  color: #0d9488;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Profile Modal */
+.aura-profile-header {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.aura-profile-header img {
+  width: 120px;
+  height: 120px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.aura-profile-info h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.aura-profile-specialty {
+  font-size: 16px;
+  color: #0d9488;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.aura-profile-rating {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.aura-profile-fee {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #059669;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.aura-profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.aura-profile-section h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+.aura-profile-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.aura-profile-section li {
+  padding: 8px 0;
+  color: #6b7280;
+  font-size: 14px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.aura-profile-section li:last-child {
+  border-bottom: none;
+}
+
+.aura-profile-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.aura-profile-slot {
+  padding: 10px 16px;
+  background: #f0fdfa;
+  color: #0d9488;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.aura-profile-actions {
+  padding-top: 16px;
+}
+
 /* Responsive */
-@media (max-width: 1200px) {
-  .aura-quick-actions-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .aura-summary-cards {
+@media (max-width: 1024px) {
+  .aura-filters-row {
     grid-template-columns: repeat(2, 1fr);
   }
+  
+  .aura-doctors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
 }
+
+@media (max-width: 640px) {
+  .aura-booking-header-content {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .aura-filters-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .aura-doctors-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .aura-form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .aura-modal {
+    padding: 24px;
+  }
+  
+  .aura-profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .aura-profile-header img {
+    margin: 0 auto;
+  }
+}
+
 
 @media (max-width: 1024px) {
   .aura-sidebar {
