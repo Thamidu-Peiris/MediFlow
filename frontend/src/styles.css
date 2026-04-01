@@ -3963,6 +3963,7 @@ button, .btn-primary {
   padding: 32px;
   overflow: hidden;
   color: white;
+  box-shadow: 0 10px 40px rgba(13, 148, 136, 0.3);
 }
 
 .aura-consultation-glow {
@@ -3971,7 +3972,7 @@ button, .btn-primary {
   right: -60px;
   width: 200px;
   height: 200px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   filter: blur(40px);
 }
@@ -3989,30 +3990,48 @@ button, .btn-primary {
   flex: 1;
 }
 
-.aura-badge {
+.aura-consultation-card .aura-badge {
   display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(8px);
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 16px;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.aura-doctor-name {
+.aura-consultation-card .aura-doctor-name {
   font-size: 28px;
   font-weight: 800;
   margin: 0 0 8px 0;
   letter-spacing: -0.02em;
+  color: white !important;
 }
 
-.aura-doctor-specialty {
+.aura-consultation-card .aura-doctor-specialty {
   font-size: 16px;
-  opacity: 0.9;
-  margin: 0 0 24px 0;
+  color: rgba(255, 255, 255, 0.9) !important;
+  margin: 0 0 16px 0;
+  font-weight: 500;
+}
+
+.aura-consultation-card .aura-countdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9) !important;
+  margin: 8px 0 20px 0;
+}
+
+.aura-consultation-card .aura-countdown svg {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .aura-consultation-actions {
@@ -4033,11 +4052,13 @@ button, .btn-primary {
   text-decoration: none;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid white;
 }
 
 .aura-btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  background: #f0fdfa;
 }
 
 .aura-doctor-image {
@@ -4045,11 +4066,11 @@ button, .btn-primary {
 }
 
 .aura-doctor-image img {
-  width: 140px;
-  height: 140px;
-  border-radius: 16px;
+  width: 160px;
+  height: 160px;
+  border-radius: 20px;
   object-fit: cover;
-  border: 4px solid rgba(255, 255, 255, 0.2);
+  border: 4px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 

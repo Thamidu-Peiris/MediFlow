@@ -242,11 +242,11 @@ export default function PatientDashboardPage() {
               <div className="aura-consultation-glow"></div>
               <div className="aura-consultation-content">
                 <div className="aura-consultation-info">
-                  <span className="aura-badge">Next Appointment</span>
-                  <h2 className="aura-doctor-name">{nextAppointment?.doctorName || 'Dr. Sarah Jenkins'}</h2>
-                  <p className="aura-doctor-specialty">{nextAppointment?.specialty || 'Cardiology Specialist'} • {nextAppointment?.time || '10:30 AM Today'}</p>
+                  <span className="aura-badge" style={{ color: 'white' }}>Next Appointment</span>
+                  <h2 className="aura-doctor-name" style={{ color: 'white' }}>{nextAppointment?.doctorName || 'Dr. Sarah Jenkins'}</h2>
+                  <p className="aura-doctor-specialty" style={{ color: 'rgba(255,255,255,0.9)' }}>{nextAppointment?.specialty || 'Cardiology Specialist'} • {nextAppointment?.time || '10:30 AM Today'}</p>
                   {nextAppointment && (
-                    <p className="aura-countdown">
+                    <p className="aura-countdown" style={{ color: 'rgba(255,255,255,0.9)' }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                       </svg>
