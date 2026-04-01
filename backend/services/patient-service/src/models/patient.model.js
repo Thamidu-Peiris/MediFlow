@@ -35,6 +35,7 @@ const patientSchema = new mongoose.Schema(
     fullName: { type: String, required: true, trim: true },
     email: { type: String, default: "", lowercase: true, trim: true },
     phone: { type: String, default: "" },
+    dob: { type: Date, default: null },
     age: { type: Number, default: null },
     gender: { type: String, default: "" },
     address: { type: String, default: "" },
