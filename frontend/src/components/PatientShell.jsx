@@ -6,7 +6,7 @@ import api from "../api/client";
 const navItems = [
   { to: "/patient/dashboard", label: "Dashboard", icon: "dashboard" },
   { to: "/patient/appointments", label: "Appointments", icon: "calendar" },
-  { to: "/doctors", label: "Doctors", icon: "medical_services" },
+  { to: "/patient/doctors", label: "Doctors", icon: "medical_services" },
   { to: "/patient/reports", label: "Reports", icon: "description" },
   { to: "/ai-checker", label: "AI Checker", icon: "psychology" },
   { to: "/patient/prescriptions", label: "Prescriptions", icon: "medication" },
@@ -54,6 +54,7 @@ const sidebarIcons = {
 
 const pageTitles = {
   "/patient/dashboard": { title: "Dashboard", subtitle: "Overview of your health account" },
+  "/patient/doctors": { title: "Find Doctors", subtitle: "Browse and book appointments with specialists" },
   "/patient/profile": { title: "My Profile", subtitle: "Manage your personal and health information" },
   "/patient/appointments": { title: "My Appointments", subtitle: "View and manage your appointments" },
   "/patient/reports": { title: "Medical Reports", subtitle: "Upload, view and manage your medical documents" },
