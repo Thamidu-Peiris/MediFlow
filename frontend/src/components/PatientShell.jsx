@@ -59,6 +59,7 @@ const pageTitles = {
   "/patient/reports": { title: "Medical Reports", subtitle: "Upload, view and manage your medical documents" },
   "/patient/prescriptions": { title: "Prescriptions", subtitle: "View your prescriptions and medications" },
   "/patient/history": { title: "Medical History", subtitle: "View your medical history and diagnoses" },
+  "/ai-checker": { title: "AI Symptom Checker", subtitle: "AI-powered symptom analysis and health insights" },
 };
 
 export default function PatientShell({ children }) {
