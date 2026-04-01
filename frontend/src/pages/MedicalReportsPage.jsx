@@ -14,6 +14,9 @@ export default function MedicalReportsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
   
   // Upload form state
   const [reportTitle, setReportTitle] = useState("");
@@ -44,8 +47,14 @@ export default function MedicalReportsPage() {
         (r.title || "").toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
+    if (dateRange.start) {
+      filtered = filtered.filter(r => new Date(r.uploadedAt || r.createdAt) >= new Date(dateRange.start));
+    }
+    if (dateRange.end) {
+      filtered = filtered.filter(r => new Date(r.uploadedAt || r.createdAt) <= new Date(dateRange.end + 'T23:59:59'));
+    }
     return filtered;
-  }, [reports, activeCategory, searchQuery]);
+  }, [reports, activeCategory, searchQuery, dateRange]);
 
   const categoryCounts = useMemo(() => {
     const counts = { All: reports.length };
@@ -82,17 +91,35 @@ export default function MedicalReportsPage() {
     formData.append("title", reportTitle || file.name);
     formData.append("category", category);
     formData.append("doctor", relatedDoctor);
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    // Simulate progress since axios doesn't give real-time progress for FormData easily
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => Math.min(prev + 10, 90));
+    }, 200);
+    
     try {
       await api.post("/patients/upload-report", formData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
       });
-      setFile(null);
-      setReportTitle("");
-      setRelatedDoctor("");
-      setMessage("Report uploaded successfully");
-      loadReports();
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setTimeout(() => {
+        setFile(null);
+        setReportTitle("");
+        setRelatedDoctor("");
+        setUploadProgress(0);
+        setIsUploading(false);
+        setMessage("Report uploaded successfully");
+        loadReports();
+      }, 500);
       setTimeout(() => setMessage(""), 3000);
     } catch (err) {
+      clearInterval(progressInterval);
+      setUploadProgress(0);
+      setIsUploading(false);
       setMessage(err?.response?.data?.message || "Upload failed");
     }
   };
@@ -146,7 +173,7 @@ export default function MedicalReportsPage() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  onClick={() => document.getElementById("file-input").click()}
+                  onClick={() => !isUploading && document.getElementById("file-input").click()}
                 >
                   <input 
                     id="file-input"
@@ -154,18 +181,53 @@ export default function MedicalReportsPage() {
                     accept=".pdf,image/*,.dcm" 
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
                     style={{ display: "none" }}
+                    disabled={isUploading}
                   />
-                  <div className="drop-zone-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
+                  
+                  {/* File Type Icons */}
+                  <div className="file-type-icons">
+                    <div className="file-icon pdf">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <path d="M9 13h6"/><path d="M9 17h3"/>
+                      </svg>
+                    </div>
+                    <div className="file-icon image">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <path d="m21 15-5-5L5 21"/>
+                      </svg>
+                    </div>
+                    <div className="file-icon dicom">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2">
+                        <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/>
+                        <path d="M8.5 8.5A2.5 2.5 0 0 0 11 11"/>
+                        <path d="M15.5 8.5A2.5 2.5 0 0 1 13 11"/>
+                      </svg>
+                    </div>
                   </div>
+                  
                   <p className="drop-zone-text">
-                    {file ? file.name : "Drop files here"}
+                    {file ? file.name : "Drop files here or click to browse"}
                   </p>
                   <p className="drop-zone-hint">
                     PDF, JPG, PNG, DICOM up to 20MB
                   </p>
+                  
+                  {/* Upload Progress Bar */}
+                  {isUploading && (
+                    <div className="upload-progress-container">
+                      <div className="upload-progress-bar">
+                        <div 
+                          className="upload-progress-fill" 
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                      <span className="upload-progress-text">{uploadProgress}%</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Form Fields */}
@@ -224,6 +286,36 @@ export default function MedicalReportsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+              </div>
+              
+              {/* Date Range Filter */}
+              <div className="date-range-filter">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <input 
+                  type="date" 
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                  placeholder="From"
+                />
+                <span className="date-separator">to</span>
+                <input 
+                  type="date" 
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                  placeholder="To"
+                />
+                {(dateRange.start || dateRange.end) && (
+                  <button 
+                    className="clear-date-filter"
+                    onClick={() => setDateRange({ start: "", end: "" })}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
 
