@@ -4681,7 +4681,205 @@ button, .btn-primary {
   background: #f8fafc;
 }
 
+/* Summary Cards */
+.aura-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.aura-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.aura-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.aura-summary-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aura-summary-icon.teal { background: #f0fdfa; color: #0d9488; }
+.aura-summary-icon.indigo { background: #eef2ff; color: #6366f1; }
+.aura-summary-icon.rose { background: #fff1f2; color: #e11d48; }
+.aura-summary-icon.amber { background: #fffbeb; color: #f59e0b; }
+
+.aura-summary-info {
+  flex: 1;
+}
+
+.aura-summary-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+  line-height: 1;
+}
+
+.aura-summary-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Section Title */
+.aura-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+/* Quick Actions Grid */
+.aura-quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.aura-quick-action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.aura-quick-action-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.aura-quick-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aura-quick-action-card.aura-teal .aura-quick-action-icon { background: #f0fdfa; color: #0d9488; }
+.aura-quick-action-card.aura-indigo .aura-quick-action-icon { background: #eef2ff; color: #6366f1; }
+.aura-quick-action-card.aura-amber .aura-quick-action-icon { background: #fffbeb; color: #f59e0b; }
+.aura-quick-action-card.aura-rose .aura-quick-action-icon { background: #fff1f2; color: #e11d48; }
+.aura-quick-action-card.aura-gray .aura-quick-action-icon { background: #f3f4f6; color: #6b7280; }
+
+.aura-quick-action-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Countdown */
+.aura-countdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 8px 0 16px 0;
+}
+
+/* Widgets */
+.aura-widget {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.aura-widget.ai {
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+  border-color: #5eead4;
+}
+
+.aura-widget-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0d9488;
+  margin-bottom: 12px;
+}
+
+.aura-widget.ai .aura-widget-header {
+  color: #0f766e;
+}
+
+.aura-widget-text {
+  font-size: 14px;
+  color: #4b5563;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.aura-widget-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d9488;
+  text-decoration: none;
+}
+
+.aura-widget-link:hover {
+  text-decoration: underline;
+}
+
+/* Chart Cards */
+.aura-chart-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 20px;
+  height: 280px;
+}
+
+.aura-chart-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
 /* Responsive */
+@media (max-width: 1200px) {
+  .aura-quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .aura-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 1024px) {
   .aura-sidebar {
     transform: translateX(-100%);
