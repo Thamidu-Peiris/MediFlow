@@ -33,12 +33,24 @@ const sidebarIcons = {
   ),
 };
 
+const pageTitles = {
+  "/patient/dashboard": { title: "Dashboard", subtitle: "Overview of your health account" },
+  "/patient/profile": { title: "My Profile", subtitle: "Manage your personal and health information" },
+  "/patient/appointments": { title: "My Appointments", subtitle: "View and manage your appointments" },
+  "/patient/reports": { title: "Medical Reports", subtitle: "Upload, view and manage your medical documents" },
+  "/patient/prescriptions": { title: "Prescriptions", subtitle: "View your prescriptions and medications" },
+  "/patient/history": { title: "Medical History", subtitle: "View your medical history and diagnoses" },
+};
+
 export default function PatientShell({ children }) {
   const { user, logout, authHeaders } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [stats, setStats] = useState({ visits: 0, reports: 0, prescriptions: 0 });
   const [patientInfo, setPatientInfo] = useState(null);
+
+  // Get current page title based on route
+  const currentPage = pageTitles[location.pathname] || { title: "My Profile", subtitle: "Manage your personal and health information" };
 
   useEffect(() => {
     api.get("/patients/me", authHeaders).then((res) => {
@@ -136,8 +148,8 @@ export default function PatientShell({ children }) {
         {/* Top Header */}
         <header className="patient-header">
           <div className="header-left">
-            <h1>My Profile</h1>
-            <p>Manage your personal and health information</p>
+            <h1>{currentPage.title}</h1>
+            <p>{currentPage.subtitle}</p>
           </div>
           <div className="header-right">
             <div className="header-search">
