@@ -3,8 +3,16 @@ const mongoose = require("mongoose");
 const reportSchema = new mongoose.Schema(
   {
     fileName: { type: String, required: true },
-    filePath: { type: String, required: true },
+    filePath: { type: String, default: "" },
     fileType: { type: String, default: "" },
+    title: { type: String, default: "" },
+    category: { type: String, default: "" },
+    doctor: { type: String, default: "" },
+    fileSize: { type: Number, default: 0 },
+    /** Legacy only — new reports use Cloudinary; not written for new uploads */
+    gridFsFileId: { type: String, default: "" },
+    cloudinaryPublicId: { type: String, default: "" },
+    cloudinaryResourceType: { type: String, default: "" },
     uploadedAt: { type: Date, default: Date.now }
   },
   { _id: true }
@@ -39,6 +47,12 @@ const patientSchema = new mongoose.Schema(
     age: { type: Number, default: null },
     gender: { type: String, default: "" },
     address: { type: String, default: "" },
+    bloodType: { type: String, default: "" },
+    avatar: { type: String, default: "" },
+    avatarPublicId: { type: String, default: "" },
+    /** Legacy only — new avatars use Cloudinary */
+    avatarGridFsId: { type: String, default: "" },
+    avatarContentType: { type: String, default: "" },
     medicalHistory: [{ type: String }],
     reports: [reportSchema],
     prescriptions: [prescriptionSchema],

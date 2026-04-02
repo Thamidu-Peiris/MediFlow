@@ -8,7 +8,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(cors());
+app.use(
+  cors({
+    exposedHeaders: ["X-MediFlow-Patient-Service-Revision", "X-MediFlow-Upload-Engine"]
+  })
+);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({ message: "API Gateway is running" });
@@ -26,14 +30,20 @@ const proxyRoutes = [
 ];
 
 proxyRoutes.forEach(([path, target]) => {
-  app.use(
-    path,
-    createProxyMiddleware({
-      target,
-      changeOrigin: true,
-      pathRewrite: (pathName) => pathName.replace(path, "")
-    })
-  );
+  const opts = {
+    target,
+    changeOrigin: true,
+    pathRewrite: (pathName) => pathName.replace(path, "")
+  };
+  if (path === "/api/patients") {
+    opts.onProxyRes = (proxyRes, req, res) => {
+      const rev = proxyRes.headers["x-mediflow-patient-service-revision"];
+      if (rev) res.setHeader("X-MediFlow-Patient-Service-Revision", rev);
+      const eng = proxyRes.headers["x-mediflow-upload-engine"];
+      if (eng) res.setHeader("X-MediFlow-Upload-Engine", eng);
+    };
+  }
+  app.use(path, createProxyMiddleware(opts));
 });
 
 app.listen(PORT, () => {
