@@ -5087,7 +5087,7 @@ button, .btn-primary {
 .aura-nav-item.active {
   background: #ecfdf5; /* emerald-50 style */
   color: #0d9488; /* teal-700 style */
-  font-weight: 700;
+  font-weight: 900;
   box-shadow: none;
 }
 
@@ -5105,11 +5105,26 @@ button, .btn-primary {
 
 /* Stronger stroke on selected item */
 .aura-nav-item.active .aura-nav-icon svg {
-  stroke-width: 3.25;
+  stroke-width: 4 !important;
+}
+
+/* Premium material icons: bold + filled on selected */
+.aura-nav-icon .material-symbols-outlined {
+  font-size: 20px;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.aura-nav-item.active .aura-nav-icon .material-symbols-outlined {
+  font-variation-settings: "FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24;
 }
 
 .aura-nav-label {
   white-space: nowrap;
+}
+
+/* Ensure label is visually bold in selected state */
+.aura-nav-item.active .aura-nav-label {
+  font-weight: 900;
 }
 
 /* Sidebar Footer */
