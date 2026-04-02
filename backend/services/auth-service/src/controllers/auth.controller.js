@@ -34,6 +34,7 @@ exports.register = async (req, res) => {
     const token = generateToken({
       sub: user._id.toString(),
       email: user.email,
+      name: user.name,
       role: user.role
     });
 
@@ -67,6 +68,7 @@ exports.login = async (req, res) => {
     const token = generateToken({
       sub: user._id.toString(),
       email: user.email,
+      name: user.name,
       role: user.role
     });
 
