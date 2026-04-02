@@ -5,6 +5,9 @@ const stripeService = require("../services/stripe.service");
 const payhereService = require("../services/payhere.service");
 
 const APPOINTMENT_URL = process.env.APPOINTMENT_SERVICE_URL || "http://localhost:8004";
+const DOCTOR_URL = process.env.DOCTOR_SERVICE_URL || "http://localhost:8003";
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function lkrToCents(lkr) {
   const n = Math.round(Number(lkr) * 100);
@@ -19,6 +22,26 @@ function serviceFeeCents(consultationCents) {
   const fixed = Math.round(Number(process.env.SERVICE_FEE_LKR || 50) * 100);
   const pct = Math.round(consultationCents * 0.02);
   return Math.max(fixed, pct, 0);
+}
+
+function toMinutes12h(timeLabel = "") {
+  const m = String(timeLabel).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2]);
+  const ampm = m[3].toUpperCase();
+  if (h === 12) h = 0;
+  if (ampm === "PM") h += 12;
+  return h * 60 + min;
+}
+
+function slotContainsMinutes(slot, mins) {
+  const [sh, sm] = String(slot.start || "").split(":").map(Number);
+  const [eh, em] = String(slot.end || "").split(":").map(Number);
+  if ([sh, sm, eh, em].some(Number.isNaN)) return false;
+  const start = sh * 60 + sm;
+  const end = eh * 60 + em;
+  return mins >= start && mins < end;
 }
 
 exports.createPendingBooking = async (req, res) => {
@@ -37,6 +60,72 @@ exports.createPendingBooking = async (req, res) => {
 
     if (!doctorUserId || !date || !time) {
       return res.status(400).json({ message: "doctorUserId, date, and time are required" });
+    }
+    const requestedMins = toMinutes12h(time);
+    if (requestedMins == null) {
+      return res.status(400).json({ message: "Invalid time format. Use h:mm AM/PM." });
+    }
+
+    const dateObj = new Date(`${date}T12:00:00`);
+    if (Number.isNaN(dateObj.getTime())) {
+      return res.status(400).json({ message: "Invalid date format." });
+    }
+    const dayName = DAY_NAMES[dateObj.getDay()];
+
+    // Validate against doctor weekly availability
+    const doctorsRes = await axios.get(`${DOCTOR_URL}/public`, { timeout: 10000 });
+    const doctor = (doctorsRes.data?.doctors || []).find((d) => d.userId === doctorUserId);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found." });
+    }
+    const dayAvailability = (doctor.availability || []).find((d) => d.day === dayName);
+    const isWithinAvailability = (dayAvailability?.slots || []).some((slot) =>
+      slotContainsMinutes(slot, requestedMins)
+    );
+    if (!isWithinAvailability) {
+      return res.status(400).json({ message: `Doctor is not available on ${dayName} at ${time}.` });
+    }
+
+    // Validate against existing appointments (already booked times)
+    const occupiedRes = await axios.get(
+      `${APPOINTMENT_URL}/public/doctor/${encodeURIComponent(doctorUserId)}/occupied`,
+      { params: { date }, timeout: 10000 }
+    );
+    const occupiedTimes = occupiedRes.data?.occupiedTimes || [];
+    if (occupiedTimes.includes(time)) {
+      return res.status(409).json({ message: "Selected time slot is already booked." });
+    }
+
+    // Prevent duplicate booking attempts by the same patient for same doctor/date/time.
+    const authHeader = req.headers.authorization || "";
+    if (authHeader) {
+      const myAptRes = await axios.get(`${APPOINTMENT_URL}/my`, {
+        headers: { Authorization: authHeader },
+        timeout: 10000,
+      });
+      const myAppointments = myAptRes.data?.appointments || [];
+      const duplicateAppointment = myAppointments.some(
+        (a) =>
+          a.doctorId === doctorUserId &&
+          a.date === date &&
+          a.time === time &&
+          !["cancelled", "rejected"].includes(a.status)
+      );
+      if (duplicateAppointment) {
+        return res.status(409).json({ message: "You already booked this doctor for the selected date and time." });
+      }
+    }
+
+    const duplicatePending = await PendingBooking.findOne({
+      patientSub: req.user.sub,
+      doctorUserId,
+      date,
+      time,
+      status: "pending_payment",
+      expiresAt: { $gt: new Date() },
+    }).select("_id");
+    if (duplicatePending) {
+      return res.status(409).json({ message: "A pending checkout already exists for this slot." });
     }
 
     const consultationCents = lkrToCents(consultationFee || 0);
@@ -321,6 +410,32 @@ exports.completeBookingAfterPayment = async (req, res) => {
   } catch (e) {
     console.error(e);
     return res.status(500).json({ message: "Failed to complete booking" });
+  }
+};
+
+// Public: return occupied times from paid/pending PendingBookings for a doctor/date.
+// Used by frontend to filter already-booked slots in the booking modal.
+exports.getDoctorOccupiedFromPending = async (req, res) => {
+  try {
+    const { doctorUserId, date } = req.query;
+    if (!doctorUserId || !date) {
+      return res.status(400).json({ message: "doctorUserId and date are required" });
+    }
+
+    const docs = await PendingBooking.find({
+      doctorUserId,
+      date,
+      status: { $in: ["pending_payment", "paid"] },
+      expiresAt: { $gt: new Date() },
+    }).select("time");
+
+    const occupiedTimes = Array.from(
+      new Set(docs.map((d) => String(d.time || "").trim()).filter(Boolean))
+    );
+
+    return res.json({ occupiedTimes });
+  } catch (e) {
+    return res.status(500).json({ message: "Failed to fetch occupied times" });
   }
 };
 

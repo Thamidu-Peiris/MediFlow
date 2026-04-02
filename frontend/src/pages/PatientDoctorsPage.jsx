@@ -31,10 +31,34 @@ const priceRanges = [
 ];
 
 const timeSlots = [
-  "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
-  "11:00 AM", "11:30 AM", "02:00 PM", "02:30 PM",
-  "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM"
+  "09:00 AM", "10:00 AM", "11:00 AM",
+  "12:00 PM", "01:00 PM", "02:00 PM",
+  "03:00 PM", "04:00 PM", "05:00 PM"
 ];
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+const toMinutes12h = (timeLabel = "") => {
+  const m = String(timeLabel).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2]);
+  const ampm = m[3].toUpperCase();
+  if (h === 12) h = 0;
+  if (ampm === "PM") h += 12;
+  return h * 60 + min;
+};
+
+const slotContainsTime = (slot, timeLabel) => {
+  const mins = toMinutes12h(timeLabel);
+  if (mins == null) return false;
+  const [sh, sm] = String(slot.start || "").split(":").map(Number);
+  const [eh, em] = String(slot.end || "").split(":").map(Number);
+  if ([sh, sm, eh, em].some(Number.isNaN)) return false;
+  const start = sh * 60 + sm;
+  const end = eh * 60 + em;
+  return mins >= start && mins < end;
+};
 
 export default function PatientDoctorsPage() {
   const { user, authHeaders } = useAuth();
@@ -57,6 +81,8 @@ export default function PatientDoctorsPage() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [occupiedTimes, setOccupiedTimes] = useState([]);
+  const [myBookedTimes, setMyBookedTimes] = useState([]);
   const [reason, setReason] = useState("");
   const [bookingMsg, setBookingMsg] = useState("");
 
@@ -135,8 +161,107 @@ export default function PatientDoctorsPage() {
     setBookingMsg("");
     setSelectedDate("");
     setSelectedTime("");
+    setOccupiedTimes([]);
     setReason("");
   };
+
+  const getSelectedDayName = () => {
+    if (!selectedDate) return "";
+    const d = new Date(`${selectedDate}T12:00:00`);
+    if (Number.isNaN(d.getTime())) return "";
+    return DAY_NAMES[d.getDay()];
+  };
+
+  const isDateAvailableForDoctor = (doctor, isoDate) => {
+    if (!doctor || !isoDate) return false;
+    const d = new Date(`${isoDate}T12:00:00`);
+    if (Number.isNaN(d.getTime())) return false;
+    const dayName = DAY_NAMES[d.getDay()];
+    const dayAvailability = (doctor.availability || []).find((a) => a.day === dayName);
+    return Boolean(dayAvailability && Array.isArray(dayAvailability.slots) && dayAvailability.slots.length > 0);
+  };
+
+  const normalizeTime = (t) => String(t || "").trim().toUpperCase().replace(/\s+/g, " ");
+
+  const getAvailableSlotsForDate = (doctor, isoDate, blockedTimes = []) => {
+    if (!doctor || !isoDate) return [];
+    const d = new Date(`${isoDate}T12:00:00`);
+    if (Number.isNaN(d.getTime())) return [];
+    const dayName = DAY_NAMES[d.getDay()];
+    const dayAvailability = (doctor.availability || []).find((a) => a.day === dayName);
+    if (!dayAvailability?.slots?.length) return [];
+    // Normalize blocked times for case/whitespace-insensitive comparison
+    const blocked = new Set(blockedTimes.map(normalizeTime));
+    return timeSlots.filter(
+      (slotLabel) =>
+        dayAvailability.slots.some((slot) => slotContainsTime(slot, slotLabel)) &&
+        !blocked.has(normalizeTime(slotLabel))
+    );
+  };
+
+  const handleDateChange = (value) => {
+    setSelectedDate(value);
+    setSelectedTime("");
+    setBookingMsg("");
+    if (!value || !selectedDoctor) return;
+    if (!isDateAvailableForDoctor(selectedDoctor, value)) {
+      setBookingMsg(`Doctor is not available on ${DAY_NAMES[new Date(`${value}T12:00:00`).getDay()]}.`);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedDoctor || !selectedDate || !isDateAvailableForDoctor(selectedDoctor, selectedDate)) {
+      setOccupiedTimes([]);
+      setMyBookedTimes([]);
+      return;
+    }
+    let cancelled = false;
+
+    const apptOccupied = api.get(
+      `/appointments/public/doctor/${encodeURIComponent(selectedDoctor.userId)}/occupied`,
+      { params: { date: selectedDate } }
+    ).catch(() => ({ data: { occupiedTimes: [] } }));
+
+    // Payment service: also checks paid/pending PendingBookings not yet turned into appointments
+    const pendingOccupied = api.get("/payments/doctor-occupied", {
+      params: { doctorUserId: selectedDoctor.userId, date: selectedDate },
+    }).catch(() => ({ data: { occupiedTimes: [] } }));
+
+    const myAppointments = authHeaders
+      ? api.get("/appointments/my", authHeaders).catch(() => ({ data: { appointments: [] } }))
+      : Promise.resolve({ data: { appointments: [] } });
+
+    Promise.all([apptOccupied, pendingOccupied, myAppointments])
+      .then(([apptRes, pendingRes, myRes]) => {
+        if (cancelled) return;
+
+        const apptTimes = Array.isArray(apptRes.data?.occupiedTimes) ? apptRes.data.occupiedTimes : [];
+        const pendingTimes = Array.isArray(pendingRes.data?.occupiedTimes) ? pendingRes.data.occupiedTimes : [];
+
+        // Combine both sources and normalize
+        const allOccupied = Array.from(
+          new Set([...apptTimes, ...pendingTimes].map((t) => String(t).trim()))
+        );
+        setOccupiedTimes(allOccupied);
+
+        // Patient's own booked times for this doctor/date (to prevent re-booking)
+        const myAppts = Array.isArray(myRes.data?.appointments) ? myRes.data.appointments : [];
+        const myTimes = myAppts
+          .filter(
+            (a) =>
+              a.doctorId === selectedDoctor.userId &&
+              a.date === selectedDate &&
+              !["cancelled", "rejected"].includes(a.status)
+          )
+          .map((a) => String(a.time || "").trim())
+          .filter(Boolean);
+        setMyBookedTimes(Array.from(new Set(myTimes)));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDoctor, selectedDate, authHeaders]);
 
   const handleViewProfile = (doctor) => {
     navigate(`/doctors/${doctor._id}`);
@@ -146,6 +271,16 @@ export default function PatientDoctorsPage() {
     e.preventDefault();
     if (!selectedDate || !selectedTime) {
       setBookingMsg("Please select both date and time slot");
+      return;
+    }
+    if (!isDateAvailableForDoctor(selectedDoctor, selectedDate)) {
+      setBookingMsg(`Doctor is not available on ${getSelectedDayName() || "the selected date"}.`);
+      return;
+    }
+    const allBlocked = Array.from(new Set([...(occupiedTimes || []), ...(myBookedTimes || [])]));
+    const allowedSlots = getAvailableSlotsForDate(selectedDoctor, selectedDate, allBlocked);
+    if (!allowedSlots.includes(selectedTime)) {
+      setBookingMsg("Selected time is not available. Please choose an available slot.");
       return;
     }
 
@@ -179,6 +314,14 @@ export default function PatientDoctorsPage() {
     }
     return stars;
   };
+
+  const availableSlotsForSelectedDate = selectedDoctor && selectedDate
+    ? getAvailableSlotsForDate(
+        selectedDoctor,
+        selectedDate,
+        Array.from(new Set([...(occupiedTimes || []), ...(myBookedTimes || [])]))
+      )
+    : [];
 
   return (
     <PatientShell>
@@ -389,7 +532,7 @@ export default function PatientDoctorsPage() {
                       type="date" 
                       required 
                       value={selectedDate} 
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      onChange={(e) => handleDateChange(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
@@ -400,14 +543,22 @@ export default function PatientDoctorsPage() {
                       required
                       value={selectedTime} 
                       onChange={(e) => setSelectedTime(e.target.value)}
+                      disabled={!selectedDate || availableSlotsForSelectedDate.length === 0}
                     >
                       <option value="">Choose a slot</option>
-                      {timeSlots.map(slot => (
+                      {availableSlotsForSelectedDate.map(slot => (
                         <option key={slot} value={slot}>{slot}</option>
                       ))}
                     </select>
                   </div>
                 </div>
+                {selectedDate && (
+                  <p className="text-xs text-on-surface-variant -mt-2">
+                    {availableSlotsForSelectedDate.length > 0
+                      ? `${availableSlotsForSelectedDate.length} slot(s) available on ${getSelectedDayName()}.`
+                      : `No available slots on ${getSelectedDayName() || "selected date"}.`}
+                  </p>
+                )}
 
                 <div className="aura-form-group">
                   <label>Reason for Visit</label>

@@ -1,5 +1,8 @@
 const Appointment = require("../models/appointment.model");
 const mongoose = require("mongoose");
+const axios = require("axios");
+
+const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || "http://localhost:8006";
 
 // Minimal reference model to fetch patient names from the same MongoDB cluster.
 // patient-service stores documents in the `patients` collection with fields:
@@ -36,6 +39,61 @@ function calcAge(dob) {
   return age;
 }
 
+function toMinutes12h(timeLabel = "") {
+  const m = String(timeLabel).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2]);
+  const ampm = m[3].toUpperCase();
+  if (h === 12) h = 0;
+  if (ampm === "PM") h += 12;
+  return h * 60 + min;
+}
+
+// ── Public (no auth) ──────────────────────────────────────────────────────────
+
+exports.listDoctorOccupiedTimes = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+        const { date } = req.query;
+        if (!doctorId || !date) {
+            return res.status(400).json({ message: "doctorId and date are required" });
+        }
+
+        const appointments = await Appointment.find({
+            doctorId,
+            date,
+            status: { $nin: ["cancelled", "rejected"] }
+        }).select("time status");
+
+        const appointmentTimes = appointments
+            .map((a) => String(a.time || "").trim())
+            .filter(Boolean);
+
+        // Also fetch occupied times from payment service (paid/pending_payment pending bookings)
+        let pendingTimes = [];
+        try {
+            const pRes = await axios.get(
+                `${PAYMENT_SERVICE_URL}/api/payments/doctor-occupied`,
+                { params: { doctorUserId: doctorId, date }, timeout: 3000 }
+            );
+            if (Array.isArray(pRes.data?.occupiedTimes)) {
+                pendingTimes = pRes.data.occupiedTimes;
+            }
+        } catch {
+            // payment service unavailable — proceed with appointment data only
+        }
+
+        const occupiedTimes = Array.from(
+            new Set([...appointmentTimes, ...pendingTimes])
+        );
+
+        return res.status(200).json({ occupiedTimes });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch occupied times" });
+    }
+};
+
 // ── Patient ────────────────────────────────────────────────────────────────────
 
 exports.requestAppointment = async (req, res) => {
@@ -55,6 +113,22 @@ exports.requestAppointment = async (req, res) => {
 
         if (!doctorId || !date) {
             return res.status(400).json({ message: "doctorId and date are required" });
+        }
+
+        const requestedMins = toMinutes12h(time);
+        if (time && requestedMins == null) {
+            return res.status(400).json({ message: "Invalid time format. Use h:mm AM/PM." });
+        }
+
+        const conflict = await Appointment.findOne({
+            doctorId,
+            date,
+            time,
+            status: { $nin: ["cancelled", "rejected"] }
+        }).select("_id");
+
+        if (conflict) {
+            return res.status(409).json({ message: "Selected time slot is already booked" });
         }
 
         const appointment = await Appointment.create({
@@ -123,6 +197,50 @@ exports.cancelAppointment = async (req, res) => {
         return res.status(200).json({ appointment });
     } catch (error) {
         return res.status(500).json({ message: "Failed to cancel appointment" });
+    }
+};
+
+exports.rescheduleAppointment = async (req, res) => {
+    try {
+        const { date, time = "" } = req.body || {};
+        if (!date || !time) {
+            return res.status(400).json({ message: "date and time are required" });
+        }
+
+        const requestedMins = toMinutes12h(time);
+        if (requestedMins == null) {
+            return res.status(400).json({ message: "Invalid time format. Use h:mm AM/PM." });
+        }
+
+        const appointment = await Appointment.findOne({
+            _id: req.params.id,
+            patientId: req.user.sub,
+            status: { $in: ["pending", "accepted"] }
+        });
+
+        if (!appointment) {
+            return res.status(404).json({ message: "Appointment not found or cannot be rescheduled" });
+        }
+
+        const conflict = await Appointment.findOne({
+            _id: { $ne: appointment._id },
+            doctorId: appointment.doctorId,
+            date,
+            time,
+            status: { $nin: ["cancelled", "rejected"] }
+        }).select("_id");
+
+        if (conflict) {
+            return res.status(409).json({ message: "Selected time slot is already booked" });
+        }
+
+        appointment.date = date;
+        appointment.time = String(time).trim();
+        await appointment.save();
+
+        return res.status(200).json({ appointment });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to reschedule appointment" });
     }
 };
 
