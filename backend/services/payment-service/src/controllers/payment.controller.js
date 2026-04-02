@@ -120,11 +120,49 @@ exports.createStripeIntent = async (req, res) => {
     }
 
     const total = doc.consultationFeeCents + doc.serviceFeeCents;
+    const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY || "";
+    const pendingIdStr = doc._id.toString();
+
+    // Reuse an existing PaymentIntent when possible so React re-runs / double
+    // clicks do not mount a new clientSecret while the old PI already succeeded.
+    if (doc.stripePaymentIntentId) {
+      const existing = await stripeService.retrievePaymentIntent(doc.stripePaymentIntentId);
+      if (existing) {
+        const metaPending = String(existing.metadata?.pendingId || "");
+        const amountOk = Number(existing.amount) === total;
+        const currencyOk =
+          String(existing.currency || "").toLowerCase() === String(doc.currency || "lkr").toLowerCase();
+
+        if (metaPending === pendingIdStr && amountOk && currencyOk) {
+          if (existing.status === "succeeded") {
+            return res.json({
+              alreadySucceeded: true,
+              paymentIntentId: existing.id,
+              publishableKey,
+            });
+          }
+          const reusable = [
+            "requires_payment_method",
+            "requires_confirmation",
+            "requires_action",
+            "processing",
+          ].includes(existing.status);
+          if (reusable && existing.client_secret) {
+            return res.json({
+              clientSecret: existing.client_secret,
+              paymentIntentId: existing.id,
+              publishableKey,
+            });
+          }
+        }
+      }
+    }
+
     const result = await stripeService.createPaymentIntent({
       amountCents: total,
       currency: doc.currency,
       metadata: {
-        pendingId: doc._id.toString(),
+        pendingId: pendingIdStr,
         orderId: doc.orderId,
         patientSub: doc.patientSub,
       },
@@ -140,7 +178,7 @@ exports.createStripeIntent = async (req, res) => {
     return res.json({
       clientSecret: result.clientSecret,
       paymentIntentId: result.paymentIntentId,
-      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || "",
+      publishableKey,
     });
   } catch (e) {
     console.error(e);
@@ -238,17 +276,27 @@ exports.completeBookingAfterPayment = async (req, res) => {
     }
 
     const authHeader = req.headers.authorization;
+    const patientName =
+      req.user?.name ||
+      (req.user?.email ? String(req.user.email).split("@")[0] : "") ||
+      "Patient";
     const appointmentPayload = {
+      patientName,
+      // Used by some frontends as a stable identifier.
+      sessionId: doc._id.toString(),
       doctorId: doc.doctorUserId,
       doctorName: doc.doctorName,
       specialization: doc.specialization,
       date: doc.date,
       time: doc.time,
       reason: doc.reason || `Consultation paid. Order ${doc.orderId}`,
+      notes: doc.reason || `Consultation paid. Order ${doc.orderId}`,
     };
 
     try {
-      const aptRes = await axios.post(`${APPOINTMENT_URL}/appointments`, appointmentPayload, {
+      // appointment-service mounts all routes at `/` (see appointment.routes.js)
+      // so creating an appointment is POST `${APPOINTMENT_URL}/`.
+      const aptRes = await axios.post(`${APPOINTMENT_URL}/`, appointmentPayload, {
         headers: { Authorization: authHeader, "Content-Type": "application/json" },
         timeout: 15000,
       });
@@ -265,7 +313,9 @@ exports.completeBookingAfterPayment = async (req, res) => {
       return res.status(502).json({
         message: "Payment OK but appointment creation failed. Contact support with order id.",
         orderId: doc.orderId,
+        status: aptErr.response?.status,
         detail: msg,
+        response: aptErr.response?.data,
       });
     }
   } catch (e) {

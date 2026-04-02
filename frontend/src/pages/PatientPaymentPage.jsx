@@ -40,6 +40,22 @@ function StripePayForm({ pendingId, authHeaders, onDone, onError, totalLabel }) 
         redirect: "if_required",
       });
       if (error) {
+        // User paid once then clicked Pay again, or StrictMode / remount reused a succeeded PI
+        const pi = error.payment_intent;
+        if (
+          error.code === "payment_intent_unexpected_state" &&
+          pi &&
+          pi.status === "succeeded"
+        ) {
+          await api.post(
+            "/payments/complete-booking",
+            { pendingId, paymentIntentId: pi.id },
+            authHeaders
+          );
+          onDone();
+          setBusy(false);
+          return;
+        }
         onError(error.message || "Payment failed");
         setBusy(false);
         return;
@@ -55,7 +71,7 @@ function StripePayForm({ pendingId, authHeaders, onDone, onError, totalLabel }) 
         onError(`Unexpected status: ${paymentIntent?.status}`);
       }
     } catch (err) {
-      onError(err.response?.data?.message || err.message || "Payment error");
+      onError(err.response?.data?.detail || err.response?.data?.message || err.message || "Payment error");
     } finally {
       setBusy(false);
     }
@@ -201,7 +217,8 @@ export default function PatientPaymentPage() {
           navigate(`/patient/payment?pending=${pid}`, { replace: true });
         }
       } catch (e) {
-        if (!cancelled) setError(e.response?.data?.message || e.message || "Failed to load checkout");
+        if (!cancelled)
+          setError(e.response?.data?.detail || e.response?.data?.message || e.message || "Failed to load checkout");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -242,18 +259,26 @@ export default function PatientPaymentPage() {
     (async () => {
       try {
         const res = await api.post("/payments/stripe/create-intent", { pendingId }, authHeaders);
-        if (!cancelled) {
-          setClientSecret(res.data.clientSecret || "");
-          if (res.data.publishableKey) setPublishableKey(res.data.publishableKey);
+        if (cancelled) return;
+        if (res.data.publishableKey) setPublishableKey(res.data.publishableKey);
+        if (res.data.alreadySucceeded && res.data.paymentIntentId) {
+          await api.post(
+            "/payments/complete-booking",
+            { pendingId, paymentIntentId: res.data.paymentIntentId },
+            authHeaders
+          );
+          navigate("/patient/appointments", { replace: true });
+          return;
         }
+        setClientSecret(res.data.clientSecret || "");
       } catch (e) {
-        if (!cancelled) setError(e.response?.data?.message || "Could not start card payment");
+        if (!cancelled) setError(e.response?.data?.detail || e.response?.data?.message || "Could not start card payment");
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [payTab, pendingId, detail, authHeaders]);
+  }, [payTab, pendingId, detail, authHeaders, navigate]);
 
   const submitHelakuru = async () => {
     setHelakuruMsg("");

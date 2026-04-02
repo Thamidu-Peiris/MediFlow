@@ -20,7 +20,7 @@ export default function LoginPage() {
       } else if (loggedInUser.role === "admin") {
         navigate("/admin/dashboard");
       } else {
-        navigate("/doctors");
+        navigate("/doctor/dashboard", { replace: true });
       }
     } catch (err) {
       setMessage(err?.response?.data?.message || "Login failed");
