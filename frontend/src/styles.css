@@ -1768,6 +1768,289 @@ button, .btn-primary {
   font-size: 13px;
 }
 
+/* Admin SaaS Shell */
+.ad-shell {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #111827;
+}
+
+.ad-sidebar {
+  width: 280px;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding: 18px 16px;
+  overflow-y: auto;
+}
+
+.ad-sidebar-brand {
+  margin-bottom: 18px;
+}
+
+.ad-brand {
+  display: block;
+  font-size: 20px;
+  font-weight: 900;
+  color: #0d9488;
+  letter-spacing: -0.02em;
+}
+
+.ad-subtitle {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.ad-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ad-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-weight: 800;
+  color: #64748b;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.05s ease;
+}
+
+.ad-nav-item:hover {
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.ad-nav-item:active {
+  transform: translateY(1px);
+}
+
+.ad-nav-item.active {
+  background: #ecfdf5;
+  color: #0d9488;
+  box-shadow: none;
+}
+
+.ad-nav-icon .material-symbols-outlined {
+  font-size: 20px;
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+  color: inherit;
+}
+
+.ad-nav-item.active .ad-nav-icon .material-symbols-outlined {
+  font-variation-settings: "FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24;
+}
+
+.ad-nav-label {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.ad-main {
+  margin-left: 280px;
+  flex: 1;
+  min-height: 100vh;
+}
+
+.ad-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 18px 24px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ad-topbar-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #0d9488;
+}
+
+.ad-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ad-user {
+  color: #334155;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.ad-logout-btn {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.05s ease, background 0.15s ease;
+}
+
+.ad-logout-btn:hover {
+  background: #111827;
+}
+
+.ad-logout-btn:active {
+  transform: translateY(1px);
+}
+
+.ad-content {
+  padding: 22px 24px 80px;
+}
+
+/* Admin search / export */
+.ad-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ad-search-input {
+  width: 280px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  outline: none;
+}
+
+.ad-search-input:focus {
+  border-color: rgba(13, 148, 136, 0.6);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.ad-search-export {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+.ad-search-export:hover {
+  background: #f0fdfa;
+  border-color: rgba(13, 148, 136, 0.4);
+}
+
+.ad-search-export:active {
+  transform: translateY(1px);
+}
+
+.ad-search-export .material-symbols-outlined {
+  font-variation-settings: "FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24;
+  color: #0d9488;
+}
+
+.ad-search-results {
+  position: absolute;
+  right: 0;
+  top: 54px;
+  width: 360px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  z-index: 20;
+}
+
+.ad-search-result {
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3px;
+  text-align: left;
+}
+
+.ad-search-result:hover {
+  background: #f0fdfa;
+}
+
+.ad-search-result-title {
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.ad-search-result-sub {
+  font-weight: 700;
+  color: #64748b;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ad-search-result-role {
+  font-size: 12px;
+  color: #0d9488;
+  font-weight: 900;
+}
+
+@media (max-width: 1024px) {
+  .ad-sidebar {
+    width: 92px;
+    padding: 18px 10px;
+  }
+  .ad-main {
+    margin-left: 92px;
+  }
+  .ad-subtitle,
+  .ad-nav-label {
+    display: none;
+  }
+  .ad-topbar-title {
+    font-size: 16px;
+  }
+  .ad-search-input {
+    width: 180px;
+  }
+  .ad-search-results {
+    width: 300px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ad-search-input {
+    width: 140px;
+  }
+  .ad-search-results {
+    width: 240px;
+  }
+  .ad-search-export {
+    width: 40px;
+  }
+}
+
+
 /* Patient Dashboard Layout - New Design */
 .patient-layout {
   display: grid;
