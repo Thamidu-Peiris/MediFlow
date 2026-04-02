@@ -2048,11 +2048,12 @@ button, .btn-primary {
 
 .ad-charts-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(320px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 10px;
 }
 .ad-chart-card { padding: 16px; }
-.ad-chart-title { margin: 0 0 8px; font-size: 14px; font-weight: 950; color:#0f172a; }
+.ad-chart-title { margin: 0 0 8px; font-size: 14px; font-weight: 950; color:#0f172a; display:flex; align-items:center; gap:8px; }
+.ad-chart-title-icon { color:#0d9488; font-variation-settings: "FILL" 1, "wght" 800, "GRAD" 0, "opsz" 24; }
 
 .ad-activity {
   background: #ffffff;
@@ -5503,6 +5504,14 @@ button, .btn-primary {
   border-bottom: 1px solid #e5e7eb;
 }
 
+/* Admin premium topbar */
+.aura-topbar-admin {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(13,148,136,0.20);
+  box-shadow: 0 18px 42px rgba(13,148,136,0.10);
+  backdrop-filter: none;
+}
+
 .aura-topbar-left {
   display: flex;
   align-items: center;
@@ -5519,6 +5528,92 @@ button, .btn-primary {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.aura-profile-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.aura-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(13,148,136,0.18);
+  background: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.aura-profile-btn:hover {
+  background: rgba(240,253,250,0.9);
+  border-color: rgba(13,148,136,0.45);
+  transform: translateY(-1px);
+}
+
+.aura-profile-btn .material-symbols-outlined {
+  font-variation-settings: "FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24;
+  color: #0d9488;
+}
+
+.aura-profile-name {
+  font-size: 13px;
+}
+
+.aura-profile-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 180px;
+  background: #ffffff;
+  border: 1px solid rgba(226,232,240,1);
+  border-radius: 16px;
+  box-shadow: 0 22px 60px rgba(15,23,42,0.14);
+  padding: 8px;
+  z-index: 50;
+}
+
+.aura-profile-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  color: #0f172a;
+  font-weight: 950;
+}
+
+.aura-profile-item:hover {
+  background: #f0fdfa;
+}
+
+.aura-profile-item .material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+  color: #0d9488;
+}
+
+.aura-profile-logout {
+  color: #ef4444;
+}
+
+.aura-profile-logout .material-symbols-outlined {
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .aura-profile-name {
+    display: none;
+  }
 }
 
 .aura-icon-btn {

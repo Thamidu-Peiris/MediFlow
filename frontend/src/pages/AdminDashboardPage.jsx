@@ -337,6 +337,60 @@ export default function AdminDashboardPage() {
     <section className="pd-layout-admin">
       {message ? <p className="page muted">{message}</p> : null}
 
+      {/* GLOBAL SEARCH BAR (TOP, PREMIUM) */}
+      <div className="ad-section">
+        <div className="ad-global-search">
+          <input
+            className="ad-global-search-input"
+            placeholder="Search users, doctors, appointments..."
+            value={globalSearchQuery}
+            onChange={(e) => setGlobalSearchQuery(e.target.value)}
+          />
+
+          <div className="ad-global-search-results">
+            {!globalSearchQuery.trim() ? (
+              <div style={{ color: "#94a3b8", fontWeight: 700 }}>Type to search.</div>
+            ) : (
+              <>
+                <div className="ad-search-group">
+                  <div className="ad-search-group-title">Users</div>
+                  {globalSearchResults.users.length ? (
+                    globalSearchResults.users.map((u) => (
+                      <div key={u._id} className="ad-search-item">
+                        <div className="ad-search-item-title">{u.name}</div>
+                        <div className="ad-search-item-sub">{u.email}</div>
+                        <div className="ad-search-item-role">{u.role}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ color: "#94a3b8", fontWeight: 700 }}>No user matches.</div>
+                  )}
+                </div>
+
+                <div className="ad-search-group">
+                  <div className="ad-search-group-title">Appointments</div>
+                  {globalSearchResults.appointments.length ? (
+                    globalSearchResults.appointments.map((a) => (
+                      <div key={a._id} className="ad-search-item">
+                        <div className="ad-search-item-title">
+                          {a.patientName} → {a.doctorName}
+                        </div>
+                        <div className="ad-search-item-sub">
+                          {String(a.date || "").slice(0, 10)} • {a.time || "-"}
+                        </div>
+                        <div className="ad-search-item-role">{a.status}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ color: "#94a3b8", fontWeight: 700 }}>No appointment matches.</div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* TOP SUMMARY CARDS */}
       <div className="ad-dash-summary">
         {topCards.map((c) => (
@@ -392,8 +446,11 @@ export default function AdminDashboardPage() {
 
         <div className="ad-charts-grid">
           <article className="pd-card ad-chart-card">
-            <h3 className="ad-chart-title">📅 Appointment Trends</h3>
-            <div style={{ height: 280 }}>
+            <h3 className="ad-chart-title">
+              <span className="ad-chart-title-icon material-symbols-outlined">event</span>
+              Appointment Trends
+            </h3>
+            <div style={{ height: 220 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={charts.appointmentTrends}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -408,8 +465,11 @@ export default function AdminDashboardPage() {
           </article>
 
           <article className="pd-card ad-chart-card">
-            <h3 className="ad-chart-title">💰 Revenue Analytics</h3>
-            <div style={{ height: 280 }}>
+            <h3 className="ad-chart-title">
+              <span className="ad-chart-title-icon material-symbols-outlined">payments</span>
+              Revenue Analytics
+            </h3>
+            <div style={{ height: 220 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={charts.revenueAnalytics}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -424,8 +484,11 @@ export default function AdminDashboardPage() {
           </article>
 
           <article className="pd-card ad-chart-card">
-            <h3 className="ad-chart-title">👥 User Growth</h3>
-            <div style={{ height: 280 }}>
+            <h3 className="ad-chart-title">
+              <span className="ad-chart-title-icon material-symbols-outlined">people</span>
+              User Growth
+            </h3>
+            <div style={{ height: 220 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={charts.userGrowth}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -440,8 +503,11 @@ export default function AdminDashboardPage() {
           </article>
 
           <article className="pd-card ad-chart-card">
-            <h3 className="ad-chart-title">🧑‍⚕️ Role Distribution</h3>
-            <div style={{ height: 280 }}>
+            <h3 className="ad-chart-title">
+              <span className="ad-chart-title-icon material-symbols-outlined">admin_panel_settings</span>
+              Role Distribution
+            </h3>
+            <div style={{ height: 220 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Tooltip />
@@ -709,60 +775,6 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* GLOBAL SEARCH */}
-      <div className="ad-section">
-        <div className="ad-section-head">
-          <h2>Global Search</h2>
-          <p>Search users/doctors/appointments (scoped to admin-accessible data).</p>
-        </div>
-
-        <div className="ad-global-search">
-          <input
-            className="ad-global-search-input"
-            placeholder="Search users, doctors, appointments..."
-            value={globalSearchQuery}
-            onChange={(e) => setGlobalSearchQuery(e.target.value)}
-          />
-
-          <div className="ad-global-search-results">
-            {!globalSearchQuery.trim() ? (
-              <div style={{ color: "#94a3b8", fontWeight: 700 }}>Type to search.</div>
-            ) : (
-              <>
-                <div className="ad-search-group">
-                  <div className="ad-search-group-title">Users</div>
-                  {globalSearchResults.users.length ? (
-                    globalSearchResults.users.map((u) => (
-                      <div key={u._id} className="ad-search-item">
-                        <div className="ad-search-item-title">{u.name}</div>
-                        <div className="ad-search-item-sub">{u.email}</div>
-                        <div className="ad-search-item-role">{u.role}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ color: "#94a3b8", fontWeight: 700 }}>No user matches.</div>
-                  )}
-                </div>
-
-                <div className="ad-search-group">
-                  <div className="ad-search-group-title">Appointments</div>
-                  {globalSearchResults.appointments.length ? (
-                    globalSearchResults.appointments.map((a) => (
-                      <div key={a._id} className="ad-search-item">
-                        <div className="ad-search-item-title">{a.patientName} → {a.doctorName}</div>
-                        <div className="ad-search-item-sub">{String(a.date || "").slice(0, 10)} • {a.time || "-"}</div>
-                        <div className="ad-search-item-role">{a.status}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ color: "#94a3b8", fontWeight: 700 }}>No appointment matches.</div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
     </section>
   );
 }

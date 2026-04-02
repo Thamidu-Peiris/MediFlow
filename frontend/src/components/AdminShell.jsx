@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -49,10 +49,25 @@ export default function AdminShell({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileWrapRef = useRef(null);
+
   const displayName = useMemo(() => {
     if (!user) return "Admin";
     return user.name || user.email || "Admin";
   }, [user]);
+
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!profileWrapRef.current) return;
+      if (!profileWrapRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   return (
     <div className="aura-shell">
@@ -116,12 +131,51 @@ export default function AdminShell({ children }) {
       </aside>
 
       <main className="aura-main">
-        <header className="aura-topbar">
+        <header className="aura-topbar aura-topbar-admin">
           <div className="aura-topbar-left">
             <span className="aura-logo">MediFlow Admin</span>
           </div>
           <div className="aura-topbar-right">
-            <span className="aura-user-name" style={{ fontSize: 13 }}>{displayName}</span>
+            <div className="aura-profile-wrap" ref={profileWrapRef}>
+              <button
+                type="button"
+                className="aura-profile-btn"
+                onClick={() => setProfileOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={profileOpen}
+              >
+                <span className="material-symbols-outlined">account_circle</span>
+                <span className="aura-profile-name">{displayName.split(" ")[0]}</span>
+              </button>
+
+              {profileOpen ? (
+                <div className="aura-profile-menu" role="menu">
+                  <Link
+                    to="/admin/settings"
+                    className="aura-profile-item"
+                    role="menuitem"
+                    onClick={() => setProfileOpen(false)}
+                  >
+                    <span className="material-symbols-outlined">settings</span>
+                    Settings
+                  </Link>
+
+                  <button
+                    type="button"
+                    className="aura-profile-item aura-profile-logout"
+                    role="menuitem"
+                    onClick={() => {
+                      setProfileOpen(false);
+                      logout();
+                      navigate("/login");
+                    }}
+                  >
+                    <span className="material-symbols-outlined">logout</span>
+                    Logout
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
         </header>
 
