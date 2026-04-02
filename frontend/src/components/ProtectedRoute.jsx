@@ -3,8 +3,9 @@ import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const { token, user, loadingUser } = useAuth();
+  const effectiveToken = token || localStorage.getItem("token") || "";
 
-  if (!token) {
+  if (!effectiveToken) {
     return <Navigate to="/login" replace />;
   }
 
