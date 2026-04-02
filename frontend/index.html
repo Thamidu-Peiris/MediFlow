@@ -4,6 +4,79 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MediFlow</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#e3efff",
+              "inverse-primary": "#7ad5d7",
+              "tertiary": "#455c78",
+              "on-primary": "#ffffff",
+              "primary": "#006566",
+              "on-secondary": "#ffffff",
+              "background": "#f7f9ff",
+              "on-secondary-container": "#606364",
+              "on-error": "#ffffff",
+              "surface-container-low": "#edf4ff",
+              "on-primary-container": "#e2ffff",
+              "tertiary-fixed": "#d1e4ff",
+              "surface-bright": "#f7f9ff",
+              "secondary-container": "#dee0e1",
+              "on-tertiary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-high": "#d8eaff",
+              "secondary-fixed-dim": "#c4c7c8",
+              "surface-variant": "#cee5ff",
+              "on-surface-variant": "#3e4949",
+              "on-primary-fixed-variant": "#004f51",
+              "error-container": "#ffdad6",
+              "on-secondary-fixed-variant": "#444748",
+              "outline-variant": "#bdc9c8",
+              "surface-tint": "#00696b",
+              "primary-fixed": "#97f2f3",
+              "primary-container": "#117f81",
+              "on-error-container": "#93000a",
+              "secondary": "#5c5f60",
+              "surface-dim": "#c1ddfb",
+              "inverse-on-surface": "#e8f2ff",
+              "primary-fixed-dim": "#7ad5d7",
+              "outline": "#6e7979",
+              "tertiary-container": "#5d7591",
+              "on-tertiary-container": "#f9faff",
+              "on-surface": "#001d32",
+              "on-tertiary-fixed": "#011d35",
+              "on-secondary-fixed": "#191c1d",
+              "tertiary-fixed-dim": "#b0c9e8",
+              "surface-container-highest": "#cee5ff",
+              "inverse-surface": "#16334a",
+              "secondary-fixed": "#e1e3e4",
+              "on-tertiary-fixed-variant": "#314863",
+              "on-background": "#001d32",
+              "error": "#ba1a1a",
+              "surface": "#f7f9ff",
+              "on-primary-fixed": "#002020"
+            },
+            fontFamily: {
+              "headline": ["Manrope", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body { font-family: 'Inter', sans-serif; background-color: #f7f9ff; }
+      h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

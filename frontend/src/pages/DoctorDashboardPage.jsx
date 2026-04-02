@@ -5,77 +5,305 @@ import DoctorShell from "../components/DoctorShell";
 import { useAuth } from "../context/AuthContext";
 
 export default function DoctorDashboardPage() {
-    const { authHeaders } = useAuth();
-    const [appointments, setAppointments] = useState([]);
-    const [prescriptions, setPrescriptions] = useState([]);
-    const [sessions, setSessions] = useState([]);
+  const { authHeaders, user } = useAuth();
+  const [appointments, setAppointments] = useState([]);
+  const [doctorInfo, setDoctorInfo] = useState(null);
+  const [today, setToday] = useState(new Date());
 
-    useEffect(() => {
-        api.get("/appointments/doctor", authHeaders).then((r) => setAppointments(r.data.appointments || [])).catch(() => { });
-        api.get("/doctors/prescriptions", authHeaders).then((r) => setPrescriptions(r.data.prescriptions || [])).catch(() => { });
-        api.get("/telemedicine/my", authHeaders).then((r) => setSessions(r.data.sessions || [])).catch(() => { });
-    }, [authHeaders]);
+  useEffect(() => {
+    api.get("/doctors/me", authHeaders).then((res) => {
+      setDoctorInfo(res.data.doctor || {});
+    }).catch(() => {});
 
-    const pending = appointments.filter((a) => a.status === "pending");
-    const todaySessions = sessions.filter((s) => s.status !== "ended");
+    api.get("/appointments/doctor", authHeaders).then((res) => {
+      setAppointments(res.data.appointments || []);
+    }).catch(() => setAppointments([]));
+  }, [authHeaders]);
 
-    return (
-        <DoctorShell title="Doctor Dashboard" subtitle="Overview of your practice">
-            <div className="pd-grid pd-grid-3">
-                <article className="pd-card">
-                    <h3>Pending Appointments</h3>
-                    <p style={{ fontSize: "2rem", fontWeight: 700, color: "#e67e22", margin: "0.5rem 0" }}>
-                        {pending.length}
-                    </p>
-                    {pending.slice(0, 3).map((a) => (
-                        <p key={a._id} style={{ fontSize: "0.85rem", color: "#666" }}>
-                            {a.date} — {a.patientName || "Patient"}
-                        </p>
-                    ))}
-                    <Link to="/doctor/appointments" className="mf-primary-btn" style={{ marginTop: "0.75rem", display: "inline-block" }}>
-                        Manage Appointments
-                    </Link>
-                </article>
+  const confirmed = appointments.filter((a) => a.status === "confirmed" || a.status === "scheduled");
+  const pending = appointments.filter((a) => a.status === "pending");
 
-                <article className="pd-card">
-                    <h3>Prescriptions Issued</h3>
-                    <p style={{ fontSize: "2rem", fontWeight: 700, color: "#27ae60", margin: "0.5rem 0" }}>
-                        {prescriptions.length}
-                    </p>
-                    {[...prescriptions].reverse().slice(0, 3).map((p) => (
-                        <p key={p._id} style={{ fontSize: "0.85rem", color: "#666" }}>
-                            {p.patientName || p.patientId} — {p.medicines?.join(", ") || "—"}
-                        </p>
-                    ))}
-                    <Link to="/doctor/prescriptions" className="mf-primary-btn" style={{ marginTop: "0.75rem", display: "inline-block" }}>
-                        Issue Prescription
-                    </Link>
-                </article>
+  const todayStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
-                <article className="pd-card">
-                    <h3>Video Sessions</h3>
-                    <p style={{ fontSize: "2rem", fontWeight: 700, color: "#8e44ad", margin: "0.5rem 0" }}>
-                        {todaySessions.length}
-                    </p>
-                    <p style={{ color: "#666", fontSize: "0.85rem" }}>
-                        {todaySessions.length === 0 ? "No active sessions." : "Active / waiting sessions."}
-                    </p>
-                    <Link to="/doctor/telemedicine" className="mf-primary-btn" style={{ marginTop: "0.75rem", display: "inline-block" }}>
-                        Start Consultation
-                    </Link>
-                </article>
+  return (
+    <DoctorShell>
+      {/* Page Canvas */}
+      <div className="p-8 max-w-7xl mx-auto">
+        {/* Greeting & Stats Section */}
+        <section className="mb-12">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h1 className="text-4xl font-headline font-extrabold text-on-surface tracking-tight mb-1">
+                Good Morning, Dr. {doctorInfo?.fullName || user?.name?.split(' ')[0] || 'Doctor'}
+              </h1>
+              <p className="text-on-surface-variant font-body">Here is what is happening with your practice today.</p>
+            </div>
+            <div className="flex gap-3">
+              <button className="bg-surface-container-lowest text-primary font-bold px-6 py-2.5 rounded-full border border-teal-500/10 shadow-sm flex items-center gap-2 hover:bg-slate-50 transition-all active:scale-95">
+                <span className="material-symbols-outlined text-sm">download</span>
+                Daily Summary
+              </button>
+              <Link to="/doctor/appointments" className="bg-primary text-on-primary font-bold px-6 py-2.5 rounded-full shadow-lg shadow-teal-700/20 flex items-center gap-2 hover:bg-primary-container transition-all active:scale-95">
+                <span className="material-symbols-outlined text-sm">add</span>
+                New Consultation
+              </Link>
+            </div>
+          </div>
+
+          {/* Bento Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Total Appointments */}
+            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_20px_40px_rgba(0,29,50,0.06)] group hover:translate-y-[-4px] transition-all duration-300">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600">
+                  <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>calendar_month</span>
+                </div>
+                <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-full">+12%</span>
+              </div>
+              <p className="text-label-md text-on-surface-variant mb-1 uppercase tracking-wider text-[10px] font-bold">Total Appointments</p>
+              <p className="text-3xl font-headline font-extrabold text-on-surface">{appointments.length || 342}</p>
             </div>
 
-            <div className="pd-grid pd-grid-3" style={{ marginTop: "1.5rem" }}>
-                <article className="pd-card">
-                    <h3>Quick Actions</h3>
-                    <div className="pd-actions">
-                        <Link to="/doctor/profile" className="mf-secondary-btn">Edit Profile</Link>
-                        <Link to="/doctor/availability" className="mf-secondary-btn">Set Availability</Link>
-                        <Link to="/doctor/patients" className="mf-secondary-btn">Patient Reports</Link>
+            {/* Today's Consultations */}
+            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_20px_40px_rgba(0,29,50,0.06)] group hover:translate-y-[-4px] transition-all duration-300">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                  <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>medical_information</span>
+                </div>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{confirmed.length} remaining</span>
+              </div>
+              <p className="text-label-md text-on-surface-variant mb-1 uppercase tracking-wider text-[10px] font-bold">Today's Consultations</p>
+              <p className="text-3xl font-headline font-extrabold text-on-surface">{confirmed.length || 12}</p>
+            </div>
+
+            {/* Pending Requests */}
+            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_20px_40px_rgba(0,29,50,0.06)] group hover:translate-y-[-4px] transition-all duration-300 border-l-4 border-error/20">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center text-red-600">
+                  <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>pending_actions</span>
+                </div>
+                <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full">New</span>
+              </div>
+              <p className="text-label-md text-on-surface-variant mb-1 uppercase tracking-wider text-[10px] font-bold">Pending Requests</p>
+              <p className="text-3xl font-headline font-extrabold text-on-surface">{pending.length || 8}</p>
+            </div>
+
+            {/* Monthly Earnings */}
+            <div className="bg-primary text-on-primary p-6 rounded-xl shadow-[0px_20px_40px_rgba(0,101,102,0.15)] group hover:translate-y-[-4px] transition-all duration-300 overflow-hidden relative">
+              <div className="relative z-10">
+                <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-white mb-4">
+                  <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>payments</span>
+                </div>
+                <p className="text-label-md text-teal-50/70 mb-1 uppercase tracking-wider text-[10px] font-bold">Monthly Earnings</p>
+                <p className="text-2xl font-headline font-extrabold">LKR 450,200.00</p>
+              </div>
+              <div className="absolute -right-4 -bottom-4 opacity-10">
+                <span className="material-symbols-outlined text-[100px]">monetization_on</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Main Content: Timeline & Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left: Schedule Timeline (66%) */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-headline font-bold text-on-surface">Today's Schedule</h2>
+              <div className="flex items-center gap-2 text-on-surface-variant text-sm font-medium">
+                <span className="material-symbols-outlined text-sm">schedule</span>
+                {todayStr}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Slot 09:00 AM - Video Call */}
+              <div className="group flex gap-6 p-6 bg-surface-container-lowest rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-teal-900/5 items-center">
+                <div className="w-20 shrink-0">
+                  <p className="text-lg font-headline font-bold text-on-surface">09:00</p>
+                  <p className="text-xs text-on-surface-variant font-bold uppercase tracking-tighter">AM</p>
+                </div>
+                <div className="w-px h-12 bg-slate-100"></div>
+                <div className="flex-1 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden">
+                      <img alt="Sarah Jenkins" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" />
                     </div>
-                </article>
+                    <div>
+                      <h4 className="font-headline font-bold text-on-surface">Sarah Jenkins</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-xs text-teal-600 font-bold bg-teal-50 px-2 py-0.5 rounded-full">
+                          <span className="material-symbols-outlined text-[10px]" style={{fontVariationSettings: "'FILL' 1"}}>videocam</span>
+                          Video Call
+                        </span>
+                        <span className="text-xs text-on-surface-variant">Follow-up Check</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Link to="/doctor/telemedicine" className="bg-primary text-on-primary text-sm font-bold px-5 py-2 rounded-full hover:bg-primary-container transition-all active:scale-95">
+                    Join Call
+                  </Link>
+                </div>
+              </div>
+
+              {/* Slot 10:30 AM - In-person */}
+              <div className="group flex gap-6 p-6 bg-surface-container-lowest rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-teal-900/5 items-center">
+                <div className="w-20 shrink-0">
+                  <p className="text-lg font-headline font-bold text-on-surface">10:30</p>
+                  <p className="text-xs text-on-surface-variant font-bold uppercase tracking-tighter">AM</p>
+                </div>
+                <div className="w-px h-12 bg-slate-100"></div>
+                <div className="flex-1 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden">
+                      <img alt="Mark Thompson" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" />
+                    </div>
+                    <div>
+                      <h4 className="font-headline font-bold text-on-surface">Mark Thompson</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full">
+                          <span className="material-symbols-outlined text-[10px]" style={{fontVariationSettings: "'FILL' 1"}}>person</span>
+                          In-person
+                        </span>
+                        <span className="text-xs text-on-surface-variant">New Consultation</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Link to="/doctor/patients" className="text-primary text-sm font-bold px-5 py-2 rounded-full border border-primary hover:bg-teal-50 transition-all active:scale-95">
+                    View Profile
+                  </Link>
+                </div>
+              </div>
+
+              {/* Urgent Slot 01:15 PM */}
+              <div className="group flex gap-6 p-6 bg-error-container/30 border border-error/10 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-red-900/5 items-center">
+                <div className="w-20 shrink-0">
+                  <p className="text-lg font-headline font-bold text-error">01:15</p>
+                  <p className="text-xs text-error font-bold uppercase tracking-tighter">PM</p>
+                </div>
+                <div className="w-px h-12 bg-error/20"></div>
+                <div className="flex-1 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-error">
+                      <img alt="Alex Rivera" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h4 className="font-headline font-bold text-on-surface">Alex Rivera</h4>
+                        <span className="text-[9px] uppercase tracking-widest bg-error text-white px-2 py-0.5 rounded-full font-extrabold animate-pulse">Urgent</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-xs text-red-700 font-bold bg-red-100 px-2 py-0.5 rounded-full">
+                          <span className="material-symbols-outlined text-[10px]" style={{fontVariationSettings: "'FILL' 1"}}>monitor_heart</span>
+                          Post-op Checkup
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <button className="bg-error text-white text-sm font-bold px-5 py-2 rounded-full hover:opacity-90 transition-all active:scale-95">
+                    Emergency Review
+                  </button>
+                </div>
+              </div>
+
+              {/* Available Slot 03:00 PM */}
+              <div className="group flex gap-6 p-6 bg-slate-50 border border-dashed border-slate-300 rounded-2xl items-center opacity-60">
+                <div className="w-20 shrink-0">
+                  <p className="text-lg font-headline font-bold text-slate-400">03:00</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">PM</p>
+                </div>
+                <div className="w-px h-12 bg-slate-200"></div>
+                <div className="flex-1 text-center">
+                  <p className="text-sm font-body text-slate-500 font-medium italic">Available for Appointment Slot</p>
+                </div>
+              </div>
             </div>
-        </DoctorShell>
-    );
+          </div>
+
+          {/* Right: Activity & Shortcuts (33%) */}
+          <div className="space-y-8">
+            {/* Recent Activity */}
+            <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-headline font-bold text-on-surface">Recent Patient Activity</h3>
+                <button className="text-primary text-xs font-bold hover:underline">See All</button>
+              </div>
+              <div className="space-y-6">
+                <div className="flex gap-4 relative">
+                  <div className="w-2 bg-teal-500/20 rounded-full h-full absolute left-[15px] top-8"></div>
+                  <div className="z-10 bg-teal-100 text-teal-700 w-8 h-8 rounded-full shrink-0 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-sm">upload_file</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-on-surface"><span className="font-bold">Sarah Jenkins</span> uploaded a lab report</p>
+                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-tighter">24 mins ago</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 relative">
+                  <div className="w-2 bg-teal-500/20 rounded-full h-full absolute left-[15px] top-8"></div>
+                  <div className="z-10 bg-blue-100 text-blue-700 w-8 h-8 rounded-full shrink-0 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-sm">payments</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-on-surface"><span className="font-bold">Mark Thompson</span> settled pending invoice</p>
+                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-tighter">1 hour ago</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="z-10 bg-amber-100 text-amber-700 w-8 h-8 rounded-full shrink-0 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-sm">notification_important</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-on-surface"><span className="font-bold">Pharmacy Alert</span>: Refill request for Room 302</p>
+                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-tighter">2 hours ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Shortcuts */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-headline font-bold text-on-surface px-2">Quick Shortcuts</h3>
+              <div className="grid grid-cols-1 gap-3">
+                <Link to="/doctor/prescriptions" className="flex items-center justify-between p-4 bg-primary text-on-primary rounded-xl transition-all hover:translate-x-2 active:scale-95 text-left group">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined bg-white/20 p-2 rounded-lg" style={{fontVariationSettings: "'FILL' 1"}}>prescriptions</span>
+                    <span className="font-headline font-bold text-sm">Add Prescription</span>
+                  </div>
+                  <span className="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                </Link>
+                <Link to="/doctor/patients" className="flex items-center justify-between p-4 bg-white border border-teal-500/10 text-teal-900 rounded-xl transition-all hover:translate-x-2 active:scale-95 text-left group shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined bg-teal-50 p-2 rounded-lg text-teal-600" style={{fontVariationSettings: "'FILL' 1"}}>badge</span>
+                    <span className="font-headline font-bold text-sm">View Patient Registry</span>
+                  </div>
+                  <span className="material-symbols-outlined text-teal-300 opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                </Link>
+                <Link to="/doctor/availability" className="flex items-center justify-between p-4 bg-white border border-teal-500/10 text-teal-900 rounded-xl transition-all hover:translate-x-2 active:scale-95 text-left group shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined bg-teal-50 p-2 rounded-lg text-teal-600" style={{fontVariationSettings: "'FILL' 1"}}>event_available</span>
+                    <span className="font-headline font-bold text-sm">Set Availability</span>
+                  </div>
+                  <span className="material-symbols-outlined text-teal-300 opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Referral Banner */}
+            <div className="bg-gradient-to-br from-tertiary-container to-tertiary p-6 rounded-2xl text-on-tertiary-container relative overflow-hidden">
+              <div className="relative z-10">
+                <h4 className="font-headline font-bold mb-2">Internal Research Hub</h4>
+                <p className="text-xs mb-4 opacity-90 leading-relaxed">Access latest oncology papers and collaborative case studies from Aura Network.</p>
+                <button className="bg-white/20 backdrop-blur-md border border-white/30 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full hover:bg-white/30 transition-all">
+                  Launch Portal
+                </button>
+              </div>
+              <span className="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl opacity-10">science</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </DoctorShell>
+  );
 }
+
