@@ -2,6 +2,7 @@ import { useState } from "react";
 import api from "../api/client";
 import DoctorShell from "../components/DoctorShell";
 import { useAuth } from "../context/AuthContext";
+import { normalizeReportsList } from "../utils/normalizePatientReports";
 
 export default function DoctorPatientsPage() {
     const { authHeaders } = useAuth();
@@ -21,7 +22,7 @@ export default function DoctorPatientsPage() {
 
         try {
             const res = await api.get(`/doctors/patient-reports/${patientId.trim()}`, authHeaders);
-            setReports(res.data.reports || []);
+            setReports(normalizeReportsList(res.data.reports || []));
         } catch (err) {
             if (err.response?.status === 404) {
                 setErrorMsg("Patient profile not found.");

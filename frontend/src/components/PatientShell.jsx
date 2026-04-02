@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import api from "../api/client";
+import { useAuthMediaSrc } from "../hooks/useAuthMediaSrc";
 
 const navItems = [
   { to: "/patient/dashboard", label: "Dashboard", icon: "dashboard" },
@@ -63,11 +64,16 @@ const pageTitles = {
   "/ai-checker": { title: "AI Symptom Checker", subtitle: "AI-powered symptom analysis and health insights" },
 };
 
+const DEFAULT_AVATAR =
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80";
+
 export default function PatientShell({ children }) {
-  const { user, logout, authHeaders } = useAuth();
+  const { user, logout, authHeaders, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [patientInfo, setPatientInfo] = useState(null);
+  const resolvedAvatar = useAuthMediaSrc(patientInfo?.avatar || "", token);
+  const avatarImgSrc = resolvedAvatar || DEFAULT_AVATAR;
 
   useEffect(() => {
     api.get("/patients/me", authHeaders).then((res) => {
@@ -89,7 +95,7 @@ export default function PatientShell({ children }) {
           <div className="aura-user-profile">
             <div className="aura-user-avatar">
               <img 
-                src={patientInfo?.avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"} 
+                src={avatarImgSrc} 
                 alt={patientInfo?.fullName || user?.name} 
               />
             </div>
@@ -153,7 +159,7 @@ export default function PatientShell({ children }) {
             </button>
             <div className="aura-user-menu">
               <img 
-                src={patientInfo?.avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"} 
+                src={avatarImgSrc} 
                 alt="User" 
                 className="aura-user-thumb"
               />

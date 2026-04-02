@@ -2192,6 +2192,12 @@ button, .btn-primary {
   border: 1px solid #fecaca;
 }
 
+.message-toast.warning {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+}
+
 /* Profile Grid */
 .profile-grid {
   display: grid;
@@ -6339,8 +6345,11 @@ button, .btn-primary {
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0;
   background: #14b8a6;
   border: 3px solid #ffffff;
   border-radius: 50%;
@@ -6353,9 +6362,23 @@ button, .btn-primary {
   box-shadow: 0 2px 8px rgba(20, 184, 166, 0.4);
 }
 
+/* Prevent flex from shrinking the icon (was making pencil look “missing” / tiny) */
+.avatar-edit-btn .avatar-edit-btn-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
 .avatar-edit-btn:hover {
   background: #0d9488;
   transform: scale(1.1);
+}
+
+.avatar-edit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .profile-info-section {

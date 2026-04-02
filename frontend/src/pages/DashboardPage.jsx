@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { openProtectedFile } from "../utils/openProtectedFile";
+import { normalizeReportsList } from "../utils/normalizePatientReports";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -60,7 +62,7 @@ export default function DashboardPage() {
   const loadReports = async () => {
     try {
       const res = await api.get("/patients/reports", authHeaders);
-      setReports(res.data.reports || []);
+      setReports(normalizeReportsList(res.data.reports || []));
     } catch {
       setReports([]);
     }
@@ -168,10 +170,14 @@ export default function DashboardPage() {
             </form>
             <ul className="report-list">
               {reports.map((r) => (
-                <li key={`${r.filePath}-${r.uploadedAt}`}>
-                  <a href={r.filePath} target="_blank" rel="noreferrer">
+                <li key={`${r._id || r.filePath}-${r.uploadedAt}`}>
+                  <button
+                    type="button"
+                    className="linkBtn"
+                    onClick={() => openProtectedFile(r.filePath, token)}
+                  >
                     {r.fileName}
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
