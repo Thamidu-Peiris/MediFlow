@@ -13,6 +13,7 @@ export default function DoctorPrescriptionsPage() {
         notes: ""
     });
     const [msg, setMsg] = useState("");
+    const [saving, setSaving] = useState(false);
 
     const fetchPrescriptions = () => {
         api.get("/doctors/prescriptions", authHeaders)
@@ -32,6 +33,7 @@ export default function DoctorPrescriptionsPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            setSaving(true);
             setMsg("Saving...");
             const medsArray = formData.medicines.split(",").map(m => m.trim()).filter(Boolean);
 
@@ -40,70 +42,147 @@ export default function DoctorPrescriptionsPage() {
                 medicines: medsArray
             }, authHeaders);
 
-            setMsg("Prescription issued!");
+            setMsg("Prescription issued successfully!");
             setFormData({ patientId: "", patientName: "", medicines: "", notes: "" });
             fetchPrescriptions();
         } catch (err) {
             setMsg(err.response?.data?.message || "Failed to issue prescription");
+        } finally {
+            setSaving(false);
         }
     };
 
     return (
-        <DoctorShell title="Prescriptions" subtitle="Issue and view prescriptions">
-            <div className="pd-grid pd-grid-2">
-                <section>
-                    <div style={{ background: "#fff", padding: "1.5rem", borderRadius: "8px", border: "1px solid #eee" }}>
-                        <h3>Issue New Prescription</h3>
-                        <p style={{ color: msg.includes("issued") ? "green" : "red" }}>{msg}</p>
-                        <form onSubmit={handleSubmit} className="mf-form">
-                            <div className="mf-form-group">
-                                <label>Patient ID</label>
-                                <input type="text" name="patientId" value={formData.patientId} onChange={handleChange} required />
+        <DoctorShell>
+            <div className="p-8 max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 className="text-4xl font-headline font-extrabold text-on-surface tracking-tight mb-1">Clinical Notes</h1>
+                        <p className="text-on-surface-variant font-body">Issue and manage prescriptions</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Issue New Prescription Form */}
+                    <div className="bg-surface-container-lowest p-8 rounded-2xl shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                                <span className="material-symbols-outlined text-white" style={{fontVariationSettings: "'FILL' 1"}}>edit_note</span>
                             </div>
-                            <div className="mf-form-group">
-                                <label>Patient Name (Optional)</label>
-                                <input type="text" name="patientName" value={formData.patientName} onChange={handleChange} />
+                            <h3 className="text-xl font-headline font-bold text-on-surface">Issue New Prescription</h3>
+                        </div>
+
+                        {msg && (
+                            <div className={`mb-6 flex items-center gap-2 px-4 py-3 rounded-xl ${msg.includes("success") ? "bg-teal-50 text-teal-700" : "bg-error-container text-error"}`}>
+                                <span className="material-symbols-outlined text-sm">{msg.includes("success") ? "check_circle" : "error"}</span>
+                                {msg}
                             </div>
-                            <div className="mf-form-group">
-                                <label>Medicines (Comma separated)</label>
-                                <input type="text" name="medicines" value={formData.medicines} onChange={handleChange} required placeholder="Paracetamol 500mg, Amoxicillin" />
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase tracking-wider">Patient ID</label>
+                                <input 
+                                    type="text" 
+                                    name="patientId" 
+                                    value={formData.patientId} 
+                                    onChange={handleChange} 
+                                    required 
+                                    className="w-full bg-white border border-teal-500/10 rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all"
+                                    placeholder="Enter patient ID"
+                                />
                             </div>
-                            <div className="mf-form-group">
-                                <label>Doctor's Notes</label>
-                                <textarea name="notes" value={formData.notes} onChange={handleChange} rows="3" placeholder="Take after meals..."></textarea>
+                            <div>
+                                <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase tracking-wider">Patient Name (Optional)</label>
+                                <input 
+                                    type="text" 
+                                    name="patientName" 
+                                    value={formData.patientName} 
+                                    onChange={handleChange}
+                                    className="w-full bg-white border border-teal-500/10 rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all"
+                                    placeholder="Enter patient name"
+                                />
                             </div>
-                            <button type="submit" className="mf-primary-btn">Issue Prescription</button>
+                            <div>
+                                <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase tracking-wider">Medicines (Comma separated)</label>
+                                <input 
+                                    type="text" 
+                                    name="medicines" 
+                                    value={formData.medicines} 
+                                    onChange={handleChange} 
+                                    required 
+                                    placeholder="Paracetamol 500mg, Amoxicillin"
+                                    className="w-full bg-white border border-teal-500/10 rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase tracking-wider">Doctor's Notes</label>
+                                <textarea 
+                                    name="notes" 
+                                    value={formData.notes} 
+                                    onChange={handleChange} 
+                                    rows="3" 
+                                    placeholder="Take after meals..."
+                                    className="w-full bg-white border border-teal-500/10 rounded-xl px-4 py-3 text-on-surface focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all resize-none"
+                                ></textarea>
+                            </div>
+                            <button 
+                                type="submit" 
+                                disabled={saving}
+                                className="w-full bg-primary text-on-primary font-bold py-3 rounded-xl hover:bg-primary-container transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {saving ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-sm">prescriptions</span>
+                                        Issue Prescription
+                                    </>
+                                )}
+                            </button>
                         </form>
                     </div>
-                </section>
 
-                <section>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {/* Recent Prescriptions */}
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-headline font-bold text-on-surface mb-4">Recent Prescriptions</h3>
                         {prescriptions.length === 0 ? (
-                            <p>No prescriptions issued yet.</p>
+                            <div className="bg-surface-container-lowest p-12 rounded-2xl text-center">
+                                <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">medication</span>
+                                <p className="text-on-surface-variant font-body">No prescriptions issued yet.</p>
+                            </div>
                         ) : (
-                            [...prescriptions].reverse().map((p) => (
-                                <article key={p._id} className="pd-card">
-                                    <h4>{p.patientName || p.patientId}</h4>
-                                    <p style={{ fontSize: "0.85rem", color: "#888", marginBottom: "0.5rem" }}>
-                                        Issued on: {new Date(p.createdAt).toLocaleDateString()}
-                                    </p>
-                                    <div>
-                                        <strong>Medicines:</strong>
-                                        <ul style={{ paddingLeft: "1.25rem", margin: "0.5rem 0" }}>
-                                            {p.medicines?.map((m, i) => <li key={i}>{m}</li>)}
-                                        </ul>
+                            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                                {[...prescriptions].reverse().map((p) => (
+                                    <div key={p._id} className="bg-surface-container-lowest p-5 rounded-xl shadow-sm hover:shadow-md transition-all">
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div>
+                                                <h4 className="font-headline font-bold text-on-surface">{p.patientName || p.patientId}</h4>
+                                                <p className="text-xs text-on-surface-variant">{new Date(p.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                            <span className="material-symbols-outlined text-primary">medication</span>
+                                        </div>
+                                        <div className="mb-3">
+                                            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Medicines:</p>
+                                            <ul className="list-disc list-inside text-sm text-on-surface">
+                                                {p.medicines?.map((m, i) => <li key={i}>{m}</li>)}
+                                            </ul>
+                                        </div>
+                                        {p.notes && (
+                                            <div className="bg-surface-container-high p-3 rounded-lg">
+                                                <p className="text-xs text-on-surface-variant">{p.notes}</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    {p.notes && (
-                                        <p style={{ fontSize: "0.9rem", marginTop: "0.5rem", padding: "0.5rem", background: "#f8f9fa", borderRadius: "4px" }}>
-                                            {p.notes}
-                                        </p>
-                                    )}
-                                </article>
-                            ))
+                                ))}
+                            </div>
                         )}
                     </div>
-                </section>
+                </div>
             </div>
         </DoctorShell>
     );

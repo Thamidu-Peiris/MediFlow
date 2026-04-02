@@ -59,7 +59,6 @@ export default function PatientDoctorsPage() {
   const [selectedTime, setSelectedTime] = useState("");
   const [reason, setReason] = useState("");
   const [bookingMsg, setBookingMsg] = useState("");
-  const [isBooking, setIsBooking] = useState(false);
 
   // Fetch doctors
   useEffect(() => {
@@ -149,31 +148,24 @@ export default function PatientDoctorsPage() {
       setBookingMsg("Please select both date and time slot");
       return;
     }
-    
-    setIsBooking(true);
-    setBookingMsg("");
 
+    const draft = {
+      doctorUserId: selectedDoctor.userId,
+      doctorName: selectedDoctor.fullName,
+      specialization: selectedDoctor.specialization || "",
+      doctorImage: selectedDoctor.image || "",
+      date: selectedDate,
+      time: selectedTime,
+      reason,
+      consultationFee: selectedDoctor.consultationFee || 0,
+    };
     try {
-      await api.post("/appointments", {
-        doctorId: selectedDoctor.userId,
-        doctorName: selectedDoctor.fullName,
-        specialization: selectedDoctor.specialization,
-        date: selectedDate,
-        time: selectedTime,
-        reason
-      }, authHeaders);
-
-      setBookingMsg("Appointment booked successfully!");
-      setTimeout(() => {
-        setSelectedDoctor(null);
-        setSelectedDate("");
-        setSelectedTime("");
-      }, 2000);
-    } catch (err) {
-      setBookingMsg(err.response?.data?.message || "Failed to book appointment");
-    } finally {
-      setIsBooking(false);
+      sessionStorage.setItem("mediflow_booking_draft", JSON.stringify(draft));
+    } catch {
+      /* ignore */
     }
+    setSelectedDoctor(null);
+    navigate("/patient/payment", { state: draft });
   };
 
   const renderStars = (rating) => {
@@ -427,24 +419,11 @@ export default function PatientDoctorsPage() {
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isBooking || bookingMsg.includes("success")}
-                  className="aura-btn-confirm"
-                >
-                  {isBooking ? (
-                    <>
-                      <div className="aura-spinner-small"></div>
-                      Booking...
-                    </>
-                  ) : (
-                    <>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                      Confirm Booking
-                    </>
-                  )}
+                <button type="submit" className="aura-btn-confirm">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Confirm Booking
                 </button>
               </form>
             </div>
