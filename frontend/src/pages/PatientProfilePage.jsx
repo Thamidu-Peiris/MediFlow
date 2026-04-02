@@ -4,8 +4,8 @@ import PatientShell from "../components/PatientShell";
 import { useAuth } from "../context/AuthContext";
 import { useAuthMediaSrc } from "../hooks/useAuthMediaSrc";
 
-const DEFAULT_PROFILE_AVATAR =
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80";
+/** Default placeholder avatar — served from /public */
+const DEFAULT_PROFILE_AVATAR = `${import.meta.env.BASE_URL}default-profile-avatar.png`;
 
 export default function PatientProfilePage() {
   const { authHeaders, token } = useAuth();
