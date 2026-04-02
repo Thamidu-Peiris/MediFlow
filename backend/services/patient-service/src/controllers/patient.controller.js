@@ -592,3 +592,146 @@ exports.getAppointments = async (req, res) => {
     return res.status(500).json({ message: "Failed to fetch appointments" });
   }
 };
+
+const HEALTH_SECTION_TO_FIELD = {
+  allergies: "allergies",
+  "medical-conditions": "medicalConditions",
+  medications: "currentMedications"
+};
+
+function healthArrayFieldFromParam(section) {
+  return HEALTH_SECTION_TO_FIELD[section] || null;
+}
+
+exports.addHealthItem = async (req, res) => {
+  try {
+    const field = healthArrayFieldFromParam(req.params.section);
+    if (!field) {
+      return res.status(400).json({ message: "Invalid health section" });
+    }
+    const label = String(req.body.label || "").trim();
+    const note = String(req.body.note || "").trim();
+    if (!label) {
+      return res.status(400).json({ message: "label is required" });
+    }
+    /** $push works even when the array field is missing on older MongoDB documents */
+    const patient = await Patient.findOneAndUpdate(
+      { userId: req.user.sub },
+      { $push: { [field]: { label, note } } },
+      { new: true }
+    );
+    if (!patient) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+    return res.status(201).json({ patient: serializePatientForClient(patient) });
+  } catch (error) {
+    console.error("addHealthItem error:", error);
+    return res.status(500).json({ message: "Failed to add item", error: error.message });
+  }
+};
+
+exports.updateHealthItem = async (req, res) => {
+  try {
+    const field = healthArrayFieldFromParam(req.params.section);
+    if (!field) {
+      return res.status(400).json({ message: "Invalid health section" });
+    }
+    const { itemId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(itemId)) {
+      return res.status(400).json({ message: "Invalid item id" });
+    }
+    const oid = new mongoose.Types.ObjectId(itemId);
+    const updatePayload = {};
+    if (req.body.label !== undefined) {
+      const lbl = String(req.body.label || "").trim();
+      if (!lbl) {
+        return res.status(400).json({ message: "label cannot be empty" });
+      }
+      updatePayload[`${field}.$.label`] = lbl;
+    }
+    if (req.body.note !== undefined) {
+      updatePayload[`${field}.$.note`] = String(req.body.note || "").trim();
+    }
+    if (Object.keys(updatePayload).length === 0) {
+      const patient = await Patient.findOne({ userId: req.user.sub });
+      if (!patient) {
+        return res.status(404).json({ message: "Profile not found" });
+      }
+      return res.status(200).json({ patient: serializePatientForClient(patient) });
+    }
+    const patient = await Patient.findOneAndUpdate(
+      { userId: req.user.sub, [`${field}._id`]: oid },
+      { $set: updatePayload },
+      { new: true }
+    );
+    if (!patient) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+    return res.status(200).json({ patient: serializePatientForClient(patient) });
+  } catch (error) {
+    console.error("updateHealthItem error:", error);
+    return res.status(500).json({ message: "Failed to update item", error: error.message });
+  }
+};
+
+exports.deleteHealthItem = async (req, res) => {
+  try {
+    const field = healthArrayFieldFromParam(req.params.section);
+    if (!field) {
+      return res.status(400).json({ message: "Invalid health section" });
+    }
+    const { itemId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(itemId)) {
+      return res.status(400).json({ message: "Invalid item id" });
+    }
+    const oid = new mongoose.Types.ObjectId(itemId);
+    const pullResult = await Patient.updateOne(
+      { userId: req.user.sub },
+      { $pull: { [field]: { _id: oid } } }
+    );
+    if (pullResult.matchedCount === 0) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+    if (pullResult.modifiedCount === 0) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+    const patient = await Patient.findOne({ userId: req.user.sub });
+    return res.status(200).json({ patient: serializePatientForClient(patient) });
+  } catch (error) {
+    console.error("deleteHealthItem error:", error);
+    return res.status(500).json({ message: "Failed to delete item", error: error.message });
+  }
+};
+
+exports.setEmergencyContact = async (req, res) => {
+  try {
+    const name = String(req.body.name || "").trim();
+    const relationship = String(req.body.relationship || "").trim();
+    const phone = String(req.body.phone || "").trim();
+    const patient = await Patient.findOne({ userId: req.user.sub });
+    if (!patient) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+    patient.emergencyContact = { name, relationship, phone };
+    await patient.save();
+    return res.status(200).json({ patient: serializePatientForClient(patient) });
+  } catch (error) {
+    console.error("setEmergencyContact error:", error);
+    return res.status(500).json({ message: "Failed to save emergency contact", error: error.message });
+  }
+};
+
+exports.clearEmergencyContact = async (req, res) => {
+  try {
+    const patient = await Patient.findOne({ userId: req.user.sub });
+    if (!patient) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+    patient.emergencyContact = { name: "", relationship: "", phone: "" };
+    await patient.save();
+    return res.status(200).json({ patient: serializePatientForClient(patient) });
+  } catch (error) {
+    console.error("clearEmergencyContact error:", error);
+    return res.status(500).json({ message: "Failed to clear emergency contact", error: error.message });
+  }
+};

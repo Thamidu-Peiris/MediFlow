@@ -2465,6 +2465,49 @@ button, .btn-primary {
   max-width: 1400px;
 }
 
+.medical-reports-page .reports-upload-panel {
+  border: 1px solid #e8eef3;
+  box-shadow: 0 4px 28px -10px rgba(15, 23, 42, 0.1);
+  border-radius: 16px;
+}
+
+.medical-reports-page .reports-upload-header {
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.medical-reports-page .reports-upload-header-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ccfbf1 0%, #99f6e4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d9488;
+}
+
+.medical-reports-page .reports-upload-header h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.medical-reports-page .reports-upload-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.medical-reports-page .drop-zone {
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
+}
+
 .reports-grid {
   display: grid;
   grid-template-columns: 380px 1fr;
@@ -2680,8 +2723,8 @@ button, .btn-primary {
 /* Reports Cards Grid */
 .reports-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+  gap: 22px;
 }
 
 .no-reports {
@@ -2713,79 +2756,150 @@ button, .btn-primary {
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border: 1px solid #f1f5f9;
-  transition: all 0.2s ease;
+  transition: box-shadow 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
 }
 
 .report-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 0 12px 40px -12px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(20, 184, 166, 0.12);
+  transform: translateY(-3px);
+  border-color: #e2e8f0;
 }
 
-/* Report Thumbnail */
+.report-card-pro {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+}
+
+/* Square media area */
+.report-card-media {
+  position: relative;
+  padding: 12px 12px 0;
+}
+
 .report-thumbnail {
   position: relative;
-  height: 160px;
-  background: #f8fafc;
+  background: #f1f5f9;
   overflow: hidden;
 }
 
-.report-thumbnail img {
+.report-thumbnail-square {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.report-thumbnail img,
+.report-thumb-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .report-thumbnail-pdf {
   width: 100%;
   height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  padding: 12px;
+  text-align: center;
+  background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .report-thumbnail-pdf span {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: #ef4444;
+  color: #64748b;
+  line-height: 1.45;
 }
 
-.report-overlay {
+.report-thumbnail-pdf svg {
+  flex-shrink: 0;
+}
+
+.report-file-kind-badge {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 1;
 }
 
-.report-card:hover .report-overlay {
+.report-card-media {
+  position: relative;
+  padding: 12px 12px 0;
+}
+
+.report-card-media .report-overlay {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  width: calc(100% - 24px);
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.report-overlay-pro {
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0) 35%, rgba(15, 23, 42, 0.62) 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 14px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.report-card-pro:hover .report-overlay-pro {
   opacity: 1;
 }
 
-.view-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: none;
-  display: flex;
+.report-overlay-open {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: none;
+  background: #ffffff;
   color: #0f172a;
-  transition: transform 0.2s;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, background 0.2s ease;
+  pointer-events: auto;
 }
 
-.view-btn:hover {
-  transform: scale(1.1);
+.report-overlay-open:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.report-overlay-open:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Report Info */
@@ -2793,12 +2907,20 @@ button, .btn-primary {
   padding: 16px;
 }
 
+.report-info-pro {
+  padding: 14px 16px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .report-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .report-header h4 {
@@ -2806,8 +2928,20 @@ button, .btn-primary {
   font-size: 15px;
   font-weight: 600;
   color: #0f172a;
-  line-height: 1.4;
+  line-height: 1.35;
   flex: 1;
+  letter-spacing: -0.01em;
+}
+
+.report-legacy-hint {
+  font-size: 12px;
+  color: #b45309;
+  margin: 0 0 10px;
+  line-height: 1.45;
+  padding: 8px 10px;
+  background: #fffbeb;
+  border-radius: 8px;
+  border: 1px solid #fde68a;
 }
 
 .category-badge {
@@ -2855,11 +2989,109 @@ button, .btn-primary {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   font-size: 13px;
-  color: #14b8a6;
+  font-weight: 500;
+  color: #0d9488;
 }
 
+.report-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.report-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.report-date svg {
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.report-size-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+}
+
+.report-actions-pro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.report-action-tile {
+  flex: 1 1 calc(33.333% - 6px);
+  min-width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 72px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  border: 1px solid #e8eef3;
+  background: linear-gradient(180deg, #fafbfc 0%, #f4f6f8 100%);
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.report-action-tile span {
+  line-height: 1;
+}
+
+.report-action-tile:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.report-action-tile:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.report-action-open:hover:not(:disabled) {
+  color: #0369a1;
+  border-color: #bae6fd;
+  background: #f0f9ff;
+}
+
+.report-action-download:hover:not(:disabled) {
+  color: #0f766e;
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
+.report-action-delete:hover:not(:disabled) {
+  color: #b91c1c;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+/* Legacy class names (older report UIs) */
 .report-tags {
   display: flex;
   gap: 8px;
@@ -2887,14 +3119,6 @@ button, .btn-primary {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.report-date {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #94a3b8;
 }
 
 .report-size {
@@ -7402,6 +7626,252 @@ button, .btn-primary {
 .add-health-btn:hover {
   background: #f1f5f9;
   border-color: #cbd5e1;
+}
+
+.health-info-grid-manage {
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .health-info-grid-manage {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .health-info-grid-manage {
+    grid-template-columns: 1fr;
+  }
+}
+
+.health-card-manage {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+.health-card-manage h4 {
+  text-align: left;
+}
+
+.health-value-empty {
+  margin-bottom: 10px !important;
+}
+
+.health-item-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.health-item-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.health-item-row:last-child {
+  border-bottom: none;
+}
+
+.health-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.health-item-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.health-item-note {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.health-item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.health-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.health-icon-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.health-icon-btn.danger:hover {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.health-emergency-read {
+  margin: 0 0 12px;
+  text-align: left;
+}
+
+.health-emergency-line {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.health-emergency-rel {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.health-emergency-phone {
+  margin: 0;
+  font-size: 13px;
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.health-emergency-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.add-health-btn-ghost {
+  background: transparent;
+}
+
+.add-health-btn-ghost:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.health-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.health-modal {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e2e8f0;
+}
+
+.health-modal-title {
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.health-modal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 14px;
+}
+
+.health-modal-label input,
+.health-modal-label textarea {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.health-modal-label input:focus,
+.health-modal-label textarea:focus {
+  outline: none;
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+}
+
+.health-modal-optional {
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.health-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.health-modal-cancel {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.health-modal-cancel:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.health-modal-save {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+
+.health-modal-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* Security Card */

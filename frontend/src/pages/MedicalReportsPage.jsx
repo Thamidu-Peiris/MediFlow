@@ -8,6 +8,65 @@ import { normalizeReportsList, normalizeReportForClient } from "../utils/normali
 
 const CATEGORIES = ["Lab Results", "Radiology", "Cardiology", "Dermatology", "Monitoring", "Other"];
 
+function ReportIcon({ children, size = 20 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      {children}
+    </svg>
+  );
+}
+
+function IconOpenReport({ size }) {
+  return (
+    <ReportIcon size={size}>
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </ReportIcon>
+  );
+}
+
+function IconUploadCloud({ size }) {
+  return (
+    <ReportIcon size={size}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </ReportIcon>
+  );
+}
+
+function IconDownloadReport({ size }) {
+  return (
+    <ReportIcon size={size}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </ReportIcon>
+  );
+}
+
+function IconDeleteReport({ size }) {
+  return (
+    <ReportIcon size={size}>
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </ReportIcon>
+  );
+}
+
 function reportLooksLikeImage(report) {
   const ft = report.fileType || "";
   if (ft.includes("image")) return true;
@@ -53,6 +112,7 @@ function ReportCardThumbnail({ report, token }) {
   if (tryImage && src && !imgError) {
     return (
       <img
+        className="report-thumb-img"
         src={src}
         alt=""
         onError={() => setImgError(true)}
@@ -347,12 +407,19 @@ export default function MedicalReportsPage() {
         <div className="reports-grid">
           {/* Left Column - Upload */}
           <div className="upload-section">
-            <div className="profile-section">
-              <div className="section-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                <h3>Upload New Report</h3>
+            <div className="profile-section reports-upload-panel">
+              <div className="section-header reports-upload-header">
+                <span className="reports-upload-header-icon" aria-hidden>
+                  <ReportIcon size={22}>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </ReportIcon>
+                </span>
+                <div>
+                  <h3>Upload New Report</h3>
+                  <p className="reports-upload-subtitle">PDF, scans, or images — stored securely</p>
+                </div>
               </div>
               
               <form onSubmit={onUpload}>
@@ -452,9 +519,7 @@ export default function MedicalReportsPage() {
                 </div>
 
                 <button type="submit" className="upload-report-btn" disabled={!file}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                  </svg>
+                  <IconUploadCloud size={18} />
                   Upload Report
                 </button>
               </form>
@@ -539,26 +604,35 @@ export default function MedicalReportsPage() {
                 </div>
               ) : (
                 filteredReports.map((report) => (
-                  <div className="report-card" key={report._id || report.filePath}>
-                    {/* Thumbnail */}
-                    <div className="report-thumbnail">
-                      <ReportCardThumbnail report={report} token={token} />
-                      <div className="report-overlay">
+                  <article className="report-card report-card-pro" key={report._id || report.filePath}>
+                    <div className="report-card-media">
+                      <div className="report-thumbnail report-thumbnail-square">
+                        <ReportCardThumbnail report={report} token={token} />
+                        <span className="report-file-kind-badge" aria-hidden>
+                          {report.needsReupload
+                            ? "!"
+                            : reportLooksLikeImage(report)
+                              ? "IMG"
+                              : (report.fileType || "").includes("pdf") || /\.pdf$/i.test(report.fileName || "")
+                                ? "PDF"
+                                : "FILE"}
+                        </span>
+                      </div>
+                      <div className="report-overlay report-overlay-pro">
                         <button
                           type="button"
-                          className="view-btn"
+                          className="report-overlay-open"
                           disabled={!report.filePath || report.needsReupload}
                           onClick={() => openProtectedFile(report.filePath, token)}
+                          title="Open report"
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
-                          </svg>
+                          <IconOpenReport size={22} />
+                          <span>Open</span>
                         </button>
                       </div>
                     </div>
 
-                    {/* Report Info */}
-                    <div className="report-info">
+                    <div className="report-info report-info-pro">
                       <div className="report-header">
                         <h4>{report.title || report.fileName || "Untitled Report"}</h4>
                         <span className={`category-badge ${(report.category || "lab-results").toLowerCase().replace(" ", "-")}`}>
@@ -567,79 +641,75 @@ export default function MedicalReportsPage() {
                       </div>
 
                       {report.needsReupload && (
-                        <p className="report-legacy-hint" style={{ fontSize: "12px", color: "#b45309", margin: "0 0 8px" }}>
-                          No working file link (old storage or missing URL). Delete this entry, then upload again — new files go to Cloudinary.
+                        <p className="report-legacy-hint">
+                          No working file link. Delete this entry, then upload again — new files are stored on Cloudinary.
                         </p>
                       )}
 
                       {report.doctor && (
                         <div className="report-doctor">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2" aria-hidden>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
                           </svg>
                           <span>Dr. {report.doctor}</span>
                         </div>
                       )}
 
-                      <div className="report-tags">
-                        <span className="report-tag">{report.category || "Lab Results"}</span>
-                        <span className="report-tag">Routine</span>
+                      <div className="report-meta-row">
+                        <span className="report-date">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                          {formatDate(report.uploadedAt || report.createdAt)}
+                        </span>
+                        <span className="report-size-pill">{reportFooterTypeLabel(report)}</span>
                       </div>
 
-                      <div className="report-footer">
-                        <div className="report-meta">
-                          <span className="report-date">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
-                              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                            {formatDate(report.uploadedAt || report.createdAt)}
-                          </span>
-                          <span className="report-size">{reportFooterTypeLabel(report)}</span>
-                        </div>
-                        <div className="report-actions">
+                      <div className="report-actions-pro" role="group" aria-label="Report actions">
+                        <button
+                          type="button"
+                          className="report-action-tile report-action-open"
+                          title="Open report"
+                          disabled={!report.filePath || report.needsReupload}
+                          onClick={() => openProtectedFile(report.filePath, token)}
+                        >
+                          <IconOpenReport size={20} />
+                          <span>Open</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="report-action-tile report-action-download"
+                          title="Download"
+                          disabled={!report.filePath || report.needsReupload}
+                          onClick={() =>
+                            downloadProtectedFile(
+                              report.filePath,
+                              token,
+                              report.fileName || "report"
+                            )
+                          }
+                        >
+                          <IconDownloadReport size={20} />
+                          <span>Download</span>
+                        </button>
+                        {report._id && (
                           <button
                             type="button"
-                            className="action-btn download"
-                            title="Download"
-                            disabled={!report.filePath || report.needsReupload}
-                            onClick={() =>
-                              downloadProtectedFile(
-                                report.filePath,
-                                token,
-                                report.fileName || "report"
-                              )
-                            }
+                            className="report-action-tile report-action-delete"
+                            onClick={() => onDelete(report._id)}
+                            title="Delete report"
                           >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
+                            <IconDeleteReport size={20} />
+                            <span>Delete</span>
                           </button>
-                          <button
-                            type="button"
-                            className="action-btn view"
-                            disabled={!report.filePath || report.needsReupload}
-                            onClick={() => openProtectedFile(report.filePath, token)}
-                            title="View"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
-                            </svg>
-                          </button>
-                          {report._id && (
-                            <button 
-                              className="action-btn delete"
-                              onClick={() => onDelete(report._id)}
-                              title="Delete"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                              </svg>
-                            </button>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  </article>
                 ))
               )}
             </div>
