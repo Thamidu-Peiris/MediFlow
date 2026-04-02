@@ -64,8 +64,7 @@ const pageTitles = {
   "/ai-checker": { title: "AI Symptom Checker", subtitle: "AI-powered symptom analysis and health insights" },
 };
 
-const DEFAULT_AVATAR =
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80";
+const DEFAULT_AVATAR = `${import.meta.env.BASE_URL}default-profile-avatar.png`;
 
 export default function PatientShell({ children }) {
   const { user, logout, authHeaders, token } = useAuth();

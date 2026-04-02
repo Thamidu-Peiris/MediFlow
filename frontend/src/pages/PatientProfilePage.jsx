@@ -4,8 +4,41 @@ import PatientShell from "../components/PatientShell";
 import { useAuth } from "../context/AuthContext";
 import { useAuthMediaSrc } from "../hooks/useAuthMediaSrc";
 
-const DEFAULT_PROFILE_AVATAR =
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80";
+/** Default placeholder avatar — served from /public */
+const DEFAULT_PROFILE_AVATAR = `${import.meta.env.BASE_URL}default-profile-avatar.png`;
+
+const EMPTY_EC = { name: "", relationship: "", phone: "" };
+
+const HEALTH_API_PATH = {
+  allergies: "allergies",
+  medicalConditions: "medical-conditions",
+  currentMedications: "medications"
+};
+
+function normalizePatientFromApi(p) {
+  return {
+    fullName: p.fullName || "",
+    email: p.email || "",
+    phone: p.phone || "",
+    dob: p.dob || "",
+    gender: p.gender || "",
+    address: p.address || "",
+    bloodType: p.bloodType || "O+",
+    age: p.age || "",
+    avatar: p.avatar || "",
+    allergies: Array.isArray(p.allergies) ? p.allergies : [],
+    medicalConditions: Array.isArray(p.medicalConditions) ? p.medicalConditions : [],
+    currentMedications: Array.isArray(p.currentMedications) ? p.currentMedications : [],
+    emergencyContact:
+      p.emergencyContact && typeof p.emergencyContact === "object"
+        ? {
+            name: p.emergencyContact.name || "",
+            relationship: p.emergencyContact.relationship || "",
+            phone: p.emergencyContact.phone || ""
+          }
+        : { ...EMPTY_EC }
+  };
+}
 
 export default function PatientProfilePage() {
   const { authHeaders, token } = useAuth();
@@ -19,6 +52,10 @@ export default function PatientProfilePage() {
     bloodType: "O+",
     age: "",
     avatar: "",
+    allergies: [],
+    medicalConditions: [],
+    currentMedications: [],
+    emergencyContact: { ...EMPTY_EC }
   });
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
@@ -29,24 +66,122 @@ export default function PatientProfilePage() {
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [healthModal, setHealthModal] = useState(null);
+  const [healthSaving, setHealthSaving] = useState(false);
   const heroAvatarSrc = useAuthMediaSrc(profile.avatar || "", token) || DEFAULT_PROFILE_AVATAR;
 
+  const refreshProfile = async () => {
+    const res = await api.get("/patients/me", authHeaders);
+    setProfile(normalizePatientFromApi(res.data.patient || {}));
+  };
+
   useEffect(() => {
-    api.get("/patients/me", authHeaders).then((res) => {
-      const p = res.data.patient || {};
-      setProfile({
-        fullName: p.fullName || "",
-        email: p.email || "",
-        phone: p.phone || "",
-        dob: p.dob || "",
-        gender: p.gender || "",
-        address: p.address || "",
-        bloodType: p.bloodType || "O+",
-        age: p.age || "",
-        avatar: p.avatar || "",
-      });
-    }).catch(() => {});
+    api
+      .get("/patients/me", authHeaders)
+      .then((res) => setProfile(normalizePatientFromApi(res.data.patient || {})))
+      .catch(() => {});
   }, [authHeaders]);
+
+  const openAddItem = (section) => {
+    setHealthModal({ kind: "item", section, itemId: null, label: "", note: "" });
+  };
+
+  const openEditItem = (section, item) => {
+    setHealthModal({
+      kind: "item",
+      section,
+      itemId: item._id,
+      label: item.label || "",
+      note: item.note || ""
+    });
+  };
+
+  const openEmergencyModal = () => {
+    const ec = profile.emergencyContact || EMPTY_EC;
+    setHealthModal({
+      kind: "emergency",
+      name: ec.name,
+      relationship: ec.relationship,
+      phone: ec.phone
+    });
+  };
+
+  const saveHealthModal = async () => {
+    if (!healthModal) return;
+    setHealthSaving(true);
+    try {
+      if (healthModal.kind === "item") {
+        const path = HEALTH_API_PATH[healthModal.section];
+        if (!path) throw new Error("Invalid section");
+        if (healthModal.itemId) {
+          await api.put(
+            `/patients/me/health/${path}/${healthModal.itemId}`,
+            { label: healthModal.label, note: healthModal.note },
+            authHeaders
+          );
+        } else {
+          await api.post(
+            `/patients/me/health/${path}`,
+            { label: healthModal.label, note: healthModal.note },
+            authHeaders
+          );
+        }
+      } else {
+        await api.put(
+          "/patients/me/health/emergency-contact",
+          {
+            name: healthModal.name,
+            relationship: healthModal.relationship,
+            phone: healthModal.phone
+          },
+          authHeaders
+        );
+      }
+      await refreshProfile();
+      setHealthModal(null);
+      setMessage("Health information updated");
+      setTimeout(() => setMessage(""), 3000);
+    } catch (err) {
+      const detail =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        (err?.response?.status ? `Server responded ${err.response.status}` : "") ||
+        err?.message;
+      setMessage(detail || "Could not save — check that patient-service is updated and you are logged in as a patient.");
+    } finally {
+      setHealthSaving(false);
+    }
+  };
+
+  const deleteHealthItem = async (section, itemId) => {
+    if (!confirm("Remove this entry?")) return;
+    const path = HEALTH_API_PATH[section];
+    if (!path) return;
+    try {
+      await api.delete(`/patients/me/health/${path}/${itemId}`, authHeaders);
+      await refreshProfile();
+      setMessage("Removed successfully");
+      setTimeout(() => setMessage(""), 3000);
+    } catch (err) {
+      setMessage(err?.response?.data?.message || "Delete failed");
+    }
+  };
+
+  const clearEmergencyContact = async () => {
+    if (!confirm("Clear emergency contact details?")) return;
+    try {
+      await api.delete("/patients/me/health/emergency-contact", authHeaders);
+      await refreshProfile();
+      setMessage("Emergency contact cleared");
+      setTimeout(() => setMessage(""), 3000);
+    } catch (err) {
+      setMessage(err?.response?.data?.message || "Could not clear");
+    }
+  };
+
+  const updateModalField = (field, value) => {
+    setHealthModal((m) => (m ? { ...m, [field]: value } : m));
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -515,12 +650,12 @@ export default function PatientProfilePage() {
             </div>
             <div className="section-title">
               <h3>Health Information</h3>
-              <p>Medical records and health conditions</p>
+              <p>Medical records and health conditions — add, view, edit, or remove anytime</p>
             </div>
           </div>
-          
-          <div className="health-info-grid">
-            <div className="health-card">
+
+          <div className="health-info-grid health-info-grid-manage">
+            <div className="health-card health-card-manage">
               <div className="health-card-icon allergies">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/>
@@ -529,11 +664,51 @@ export default function PatientProfilePage() {
                 </svg>
               </div>
               <h4>Allergies</h4>
-              <p className="health-value">No known allergies</p>
-              <button className="add-health-btn">Add Allergy</button>
+              {profile.allergies.length === 0 ? (
+                <p className="health-value health-value-empty">No allergies recorded</p>
+              ) : (
+                <ul className="health-item-list">
+                  {profile.allergies.map((item) => (
+                    <li key={item._id} className="health-item-row">
+                      <div className="health-item-main">
+                        <span className="health-item-label">{item.label}</span>
+                        {item.note ? <span className="health-item-note">{item.note}</span> : null}
+                      </div>
+                      <div className="health-item-actions">
+                        <button
+                          type="button"
+                          className="health-icon-btn"
+                          title="Edit"
+                          aria-label={`Edit ${item.label}`}
+                          onClick={() => openEditItem("allergies", item)}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="health-icon-btn danger"
+                          title="Delete"
+                          aria-label={`Delete ${item.label}`}
+                          onClick={() => deleteHealthItem("allergies", item._id)}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button type="button" className="add-health-btn" onClick={() => openAddItem("allergies")}>
+                Add allergy
+              </button>
             </div>
-            
-            <div className="health-card">
+
+            <div className="health-card health-card-manage">
               <div className="health-card-icon conditions">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -542,35 +717,245 @@ export default function PatientProfilePage() {
                   <line x1="16" y1="17" x2="8" y2="17"/>
                 </svg>
               </div>
-              <h4>Medical Conditions</h4>
-              <p className="health-value">None recorded</p>
-              <button className="add-health-btn">Add Condition</button>
+              <h4>Medical conditions</h4>
+              {profile.medicalConditions.length === 0 ? (
+                <p className="health-value health-value-empty">None recorded</p>
+              ) : (
+                <ul className="health-item-list">
+                  {profile.medicalConditions.map((item) => (
+                    <li key={item._id} className="health-item-row">
+                      <div className="health-item-main">
+                        <span className="health-item-label">{item.label}</span>
+                        {item.note ? <span className="health-item-note">{item.note}</span> : null}
+                      </div>
+                      <div className="health-item-actions">
+                        <button
+                          type="button"
+                          className="health-icon-btn"
+                          title="Edit"
+                          aria-label={`Edit ${item.label}`}
+                          onClick={() => openEditItem("medicalConditions", item)}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="health-icon-btn danger"
+                          title="Delete"
+                          aria-label={`Delete ${item.label}`}
+                          onClick={() => deleteHealthItem("medicalConditions", item._id)}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button type="button" className="add-health-btn" onClick={() => openAddItem("medicalConditions")}>
+                Add condition
+              </button>
             </div>
-            
-            <div className="health-card">
+
+            <div className="health-card health-card-manage">
               <div className="health-card-icon medications">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/>
                   <path d="m8.5 8.5 7 7"/>
                 </svg>
               </div>
-              <h4>Current Medications</h4>
-              <p className="health-value">No active medications</p>
-              <button className="add-health-btn">Add Medication</button>
+              <h4>Current medications</h4>
+              {profile.currentMedications.length === 0 ? (
+                <p className="health-value health-value-empty">No medications listed</p>
+              ) : (
+                <ul className="health-item-list">
+                  {profile.currentMedications.map((item) => (
+                    <li key={item._id} className="health-item-row">
+                      <div className="health-item-main">
+                        <span className="health-item-label">{item.label}</span>
+                        {item.note ? <span className="health-item-note">{item.note}</span> : null}
+                      </div>
+                      <div className="health-item-actions">
+                        <button
+                          type="button"
+                          className="health-icon-btn"
+                          title="Edit"
+                          aria-label={`Edit ${item.label}`}
+                          onClick={() => openEditItem("currentMedications", item)}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="health-icon-btn danger"
+                          title="Delete"
+                          aria-label={`Delete ${item.label}`}
+                          onClick={() => deleteHealthItem("currentMedications", item._id)}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button type="button" className="add-health-btn" onClick={() => openAddItem("currentMedications")}>
+                Add medication
+              </button>
             </div>
-            
-            <div className="health-card">
+
+            <div className="health-card health-card-manage">
               <div className="health-card-icon emergency">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
               </div>
-              <h4>Emergency Contact</h4>
-              <p className="health-value">Not set</p>
-              <button className="add-health-btn">Set Contact</button>
+              <h4>Emergency contact</h4>
+              {!(profile.emergencyContact?.name || profile.emergencyContact?.phone) ? (
+                <p className="health-value health-value-empty">Not set</p>
+              ) : (
+                <div className="health-emergency-read">
+                  <p className="health-emergency-line">
+                    <strong>{profile.emergencyContact.name || "—"}</strong>
+                    {profile.emergencyContact.relationship ? (
+                      <span className="health-emergency-rel"> · {profile.emergencyContact.relationship}</span>
+                    ) : null}
+                  </p>
+                  <p className="health-emergency-phone">{profile.emergencyContact.phone || "—"}</p>
+                </div>
+              )}
+              <div className="health-emergency-actions">
+                <button type="button" className="add-health-btn" onClick={openEmergencyModal}>
+                  {profile.emergencyContact?.name || profile.emergencyContact?.phone ? "Edit contact" : "Set contact"}
+                </button>
+                {(profile.emergencyContact?.name || profile.emergencyContact?.phone) && (
+                  <button type="button" className="add-health-btn add-health-btn-ghost" onClick={clearEmergencyContact}>
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
+
+        {healthModal && (
+          <div
+            className="health-modal-overlay"
+            role="presentation"
+            onClick={() => !healthSaving && setHealthModal(null)}
+            onKeyDown={(e) => e.key === "Escape" && !healthSaving && setHealthModal(null)}
+          >
+            <div
+              className="health-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="health-modal-title"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 id="health-modal-title" className="health-modal-title">
+                {healthModal.kind === "emergency"
+                  ? "Emergency contact"
+                  : healthModal.itemId
+                    ? healthModal.section === "allergies"
+                      ? "Edit allergy"
+                      : healthModal.section === "medicalConditions"
+                        ? "Edit condition"
+                        : "Edit medication"
+                    : healthModal.section === "allergies"
+                      ? "Add allergy"
+                      : healthModal.section === "medicalConditions"
+                        ? "Add condition"
+                        : "Add medication"}
+              </h3>
+              {healthModal.kind === "item" && (
+                <>
+                  <label className="health-modal-label">
+                    Name / title
+                    <input
+                      type="text"
+                      value={healthModal.label}
+                      onChange={(e) => updateModalField("label", e.target.value)}
+                      placeholder="e.g. Penicillin"
+                      maxLength={200}
+                    />
+                  </label>
+                  <label className="health-modal-label">
+                    Notes <span className="health-modal-optional">(optional)</span>
+                    <textarea
+                      value={healthModal.note}
+                      onChange={(e) => updateModalField("note", e.target.value)}
+                      placeholder="Reaction, dosage, instructions…"
+                      rows={3}
+                      maxLength={500}
+                    />
+                  </label>
+                </>
+              )}
+              {healthModal.kind === "emergency" && (
+                <>
+                  <label className="health-modal-label">
+                    Full name
+                    <input
+                      type="text"
+                      value={healthModal.name}
+                      onChange={(e) => updateModalField("name", e.target.value)}
+                      maxLength={120}
+                    />
+                  </label>
+                  <label className="health-modal-label">
+                    Relationship
+                    <input
+                      type="text"
+                      value={healthModal.relationship}
+                      onChange={(e) => updateModalField("relationship", e.target.value)}
+                      placeholder="e.g. Spouse, Parent"
+                      maxLength={80}
+                    />
+                  </label>
+                  <label className="health-modal-label">
+                    Phone
+                    <input
+                      type="tel"
+                      value={healthModal.phone}
+                      onChange={(e) => updateModalField("phone", e.target.value)}
+                      placeholder="+94 …"
+                      maxLength={40}
+                    />
+                  </label>
+                </>
+              )}
+              <div className="health-modal-actions">
+                <button type="button" className="health-modal-cancel" disabled={healthSaving} onClick={() => setHealthModal(null)}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="health-modal-save"
+                  disabled={
+                    healthSaving ||
+                    (healthModal.kind === "item" && !String(healthModal.label || "").trim()) ||
+                    (healthModal.kind === "emergency" &&
+                      !String(healthModal.name || "").trim() &&
+                      !String(healthModal.phone || "").trim())
+                  }
+                  onClick={saveHealthModal}
+                >
+                  {healthSaving ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Security Section */}
         <div className="profile-section-modern security-section">
