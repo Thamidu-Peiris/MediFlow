@@ -3,6 +3,8 @@ const {
     requestAppointment,
     listMyAppointments,
     cancelAppointment,
+    rescheduleAppointment,
+    listDoctorOccupiedTimes,
     listDoctorAppointments,
     acceptAppointment,
     rejectAppointment,
@@ -12,10 +14,14 @@ const { verifyAuth, requirePatientRole, requireDoctorRole } = require("../middle
 
 const router = express.Router();
 
+// Public routes
+router.get("/public/doctor/:doctorId/occupied", listDoctorOccupiedTimes);
+
 // Patient routes
 router.post("/", verifyAuth, requirePatientRole, requestAppointment);
 router.get("/my", verifyAuth, requirePatientRole, listMyAppointments);
 router.patch("/:id/cancel", verifyAuth, requirePatientRole, cancelAppointment);
+router.patch("/:id/reschedule", verifyAuth, requirePatientRole, rescheduleAppointment);
 
 // Doctor routes
 router.get("/doctor", verifyAuth, requireDoctorRole, listDoctorAppointments);

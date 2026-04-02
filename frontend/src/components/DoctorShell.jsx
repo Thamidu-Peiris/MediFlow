@@ -5,7 +5,7 @@ import api from "../api/client";
 
 const navItems = [
   { to: "/doctor/dashboard", label: "Overview", icon: "dashboard" },
-  { to: "/doctor/availability", label: "Calendar", icon: "calendar_month" },
+  { to: "/doctor/availability", label: "Availability", icon: "calendar_month" },
   { to: "/doctor/appointments", label: "Appointments", icon: "calendar_today" },
   { to: "/doctor/patients", label: "Patients", icon: "group" },
   { to: "/doctor/prescriptions", label: "Messages", icon: "mail" },

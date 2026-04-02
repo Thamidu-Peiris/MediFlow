@@ -30,9 +30,43 @@ const tabIcons = {
 
 const statusColors = {
   confirmed: { bg: "#dcfce7", color: "#166534", label: "Confirmed" },
+  accepted: { bg: "#dcfce7", color: "#166534", label: "Accepted" },
   pending: { bg: "#fef3c7", color: "#92400e", label: "Pending" },
+  pending_payment: { bg: "#fef3c7", color: "#92400e", label: "Pending Payment" },
+  approved: { bg: "#dcfce7", color: "#166534", label: "Approved" },
+  scheduled: { bg: "#dbeafe", color: "#1e40af", label: "Scheduled" },
   completed: { bg: "#dbeafe", color: "#1e40af", label: "Completed" },
-  cancelled: { bg: "#fee2e2", color: "#991b1b", label: "Cancelled" }
+  cancelled: { bg: "#fee2e2", color: "#991b1b", label: "Cancelled" },
+  rejected: { bg: "#fee2e2", color: "#991b1b", label: "Rejected" },
+  failed: { bg: "#fee2e2", color: "#991b1b", label: "Failed" },
+  expired: { bg: "#fee2e2", color: "#991b1b", label: "Expired" }
+};
+
+const UPCOMING_STATUSES = ["confirmed", "accepted", "pending", "pending_payment", "approved", "scheduled", "upcoming"];
+const COMPLETED_STATUSES = ["completed", "done"];
+const CANCELLED_STATUSES = ["cancelled", "rejected", "failed", "expired"];
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+const toMinutes12h = (timeLabel = "") => {
+  const m = String(timeLabel).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2]);
+  const ampm = m[3].toUpperCase();
+  if (h === 12) h = 0;
+  if (ampm === "PM") h += 12;
+  return h * 60 + min;
+};
+
+const slotContainsTime = (slot, timeLabel) => {
+  const mins = toMinutes12h(timeLabel);
+  if (mins == null) return false;
+  const [sh, sm] = String(slot?.start || "").split(":").map(Number);
+  const [eh, em] = String(slot?.end || "").split(":").map(Number);
+  if ([sh, sm, eh, em].some(Number.isNaN)) return false;
+  const start = sh * 60 + sm;
+  const end = eh * 60 + em;
+  return mins >= start && mins < end;
 };
 
 export default function PatientAppointmentsPage() {
@@ -50,11 +84,13 @@ export default function PatientAppointmentsPage() {
   // Reschedule form state
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
+  const [rescheduleAvailableTimes, setRescheduleAvailableTimes] = useState([]);
+  const [rescheduleSlotsLoading, setRescheduleSlotsLoading] = useState(false);
 
   const timeSlots = [
-    "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
-    "11:00 AM", "11:30 AM", "02:00 PM", "02:30 PM",
-    "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM"
+    "09:00 AM", "10:00 AM", "11:00 AM",
+    "12:00 PM", "01:00 PM", "02:00 PM",
+    "03:00 PM", "04:00 PM", "05:00 PM"
   ];
 
   useEffect(() => {
@@ -63,8 +99,12 @@ export default function PatientAppointmentsPage() {
 
   const fetchAppointments = async () => {
     try {
-      const res = await api.get("/patients/appointments", authHeaders);
-      const apps = res.data.appointments || [];
+      // Prefer appointment-service source used by current booking flow.
+      // Keep /patients/appointments as graceful fallback.
+      const res = await api.get("/appointments/my", authHeaders).catch(() =>
+        api.get("/patients/appointments", authHeaders)
+      );
+      const apps = res.data?.appointments || [];
       // Enhance with mock data for demo
       const enhanced = apps.map((app, idx) => ({
         ...app,
@@ -86,9 +126,10 @@ export default function PatientAppointmentsPage() {
   };
 
   const filteredAppointments = appointments.filter(app => {
-    if (activeTab === "upcoming") return ["confirmed", "pending", "scheduled", "upcoming"].includes(app.status);
-    if (activeTab === "completed") return app.status === "completed" || app.status === "done";
-    if (activeTab === "cancelled") return app.status === "cancelled";
+    const status = String(app.status || "").toLowerCase();
+    if (activeTab === "upcoming") return UPCOMING_STATUSES.includes(status);
+    if (activeTab === "completed") return COMPLETED_STATUSES.includes(status);
+    if (activeTab === "cancelled") return CANCELLED_STATUSES.includes(status);
     return true;
   });
 
@@ -116,6 +157,10 @@ export default function PatientAppointmentsPage() {
   const handleReschedule = async (e) => {
     e.preventDefault();
     if (!selectedAppointment || !newDate || !newTime) return;
+    if (!rescheduleAvailableTimes.includes(newTime)) {
+      setMessage("Selected time is not available for this doctor on the selected date.");
+      return;
+    }
     setActionLoading(true);
     try {
       await api.patch(`/appointments/${selectedAppointment._id}/reschedule`, {
@@ -145,8 +190,89 @@ export default function PatientAppointmentsPage() {
   };
 
   const getStatusStyle = (status) => {
-    return statusColors[status] || statusColors.pending;
+    return statusColors[String(status || "").toLowerCase()] || statusColors.pending;
   };
+
+  useEffect(() => {
+    if (!showRescheduleModal || !selectedAppointment || !newDate) {
+      setRescheduleAvailableTimes([]);
+      return;
+    }
+
+    let cancelled = false;
+    setRescheduleSlotsLoading(true);
+    setMessage("");
+
+    Promise.all([
+      api.get("/doctors/public"),
+      api.get(`/appointments/public/doctor/${encodeURIComponent(selectedAppointment.doctorId)}/occupied`, {
+        params: { date: newDate },
+      }).catch(() => ({ data: { occupiedTimes: [] } })),
+      api.get("/payments/doctor-occupied", {
+        params: { doctorUserId: selectedAppointment.doctorId, date: newDate },
+      }).catch(() => ({ data: { occupiedTimes: [] } })),
+    ])
+      .then(([docsRes, occupiedRes, pendingRes]) => {
+        if (cancelled) return;
+
+        const doctors = Array.isArray(docsRes.data?.doctors) ? docsRes.data.doctors : [];
+        const doctor = doctors.find((d) => d.userId === selectedAppointment.doctorId);
+        if (!doctor) {
+          setRescheduleAvailableTimes([]);
+          setMessage("Doctor availability not found.");
+          return;
+        }
+
+        const dateObj = new Date(`${newDate}T12:00:00`);
+        if (Number.isNaN(dateObj.getTime())) {
+          setRescheduleAvailableTimes([]);
+          return;
+        }
+
+        const dayName = DAY_NAMES[dateObj.getDay()];
+        const dayAvailability = (doctor.availability || []).find((a) => a.day === dayName);
+        if (!dayAvailability?.slots?.length) {
+          setRescheduleAvailableTimes([]);
+          setMessage(`Doctor is not available on ${dayName}.`);
+          return;
+        }
+
+        const occupiedApt = Array.isArray(occupiedRes.data?.occupiedTimes) ? occupiedRes.data.occupiedTimes : [];
+        const occupiedPending = Array.isArray(pendingRes.data?.occupiedTimes) ? pendingRes.data.occupiedTimes : [];
+        const blocked = new Set(
+          [...occupiedApt, ...occupiedPending].map((t) => String(t || "").trim().toUpperCase())
+        );
+
+        // Allow keeping the current same slot when date/time is unchanged.
+        if (newDate === selectedAppointment.date && selectedAppointment.time) {
+          blocked.delete(String(selectedAppointment.time).trim().toUpperCase());
+        }
+
+        const allowed = timeSlots.filter(
+          (slotLabel) =>
+            dayAvailability.slots.some((slot) => slotContainsTime(slot, slotLabel)) &&
+            !blocked.has(String(slotLabel).trim().toUpperCase())
+        );
+
+        setRescheduleAvailableTimes(allowed);
+        if (newTime && !allowed.includes(newTime)) {
+          setNewTime("");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRescheduleAvailableTimes([]);
+          setMessage("Failed to load available times. Please try again.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRescheduleSlotsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showRescheduleModal, selectedAppointment, newDate]);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "Date TBD";
@@ -166,9 +292,10 @@ export default function PatientAppointmentsPage() {
         <div className="aura-tabs">
           {tabs.map(tab => {
             const count = appointments.filter(app => {
-              if (tab.id === "upcoming") return ["confirmed", "pending", "scheduled", "upcoming"].includes(app.status);
-              if (tab.id === "completed") return app.status === "completed" || app.status === "done";
-              if (tab.id === "cancelled") return app.status === "cancelled";
+              const status = String(app.status || "").toLowerCase();
+              if (tab.id === "upcoming") return UPCOMING_STATUSES.includes(status);
+              if (tab.id === "completed") return COMPLETED_STATUSES.includes(status);
+              if (tab.id === "cancelled") return CANCELLED_STATUSES.includes(status);
               return false;
             }).length;
             
@@ -213,7 +340,7 @@ export default function PatientAppointmentsPage() {
             <div className="aura-appointments-list">
               {filteredAppointments.map(appointment => {
                 const statusStyle = getStatusStyle(appointment.status);
-                const isUpcoming = ["confirmed", "pending", "scheduled", "upcoming"].includes(appointment.status);
+                const isUpcoming = UPCOMING_STATUSES.includes(String(appointment.status || "").toLowerCase());
                 
                 return (
                   <div key={appointment._id} className="aura-appointment-card">
@@ -277,6 +404,7 @@ export default function PatientAppointmentsPage() {
                               setShowRescheduleModal(true);
                               setNewDate(appointment.date);
                               setNewTime(appointment.time);
+                              setMessage("");
                             }}
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -390,12 +518,22 @@ export default function PatientAppointmentsPage() {
                       required
                       value={newTime}
                       onChange={e => setNewTime(e.target.value)}
+                      disabled={!newDate || rescheduleSlotsLoading || rescheduleAvailableTimes.length === 0}
                     >
-                      <option value="">Select time</option>
-                      {timeSlots.map(slot => (
+                      <option value="">
+                        {rescheduleSlotsLoading ? "Loading available times..." : "Select time"}
+                      </option>
+                      {rescheduleAvailableTimes.map(slot => (
                         <option key={slot} value={slot}>{slot}</option>
                       ))}
                     </select>
+                    {!rescheduleSlotsLoading && newDate && (
+                      <small style={{ color: "#6b7280", marginTop: 6, display: "block" }}>
+                        {rescheduleAvailableTimes.length > 0
+                          ? `${rescheduleAvailableTimes.length} available slot(s) on selected date`
+                          : "No available slots on selected date"}
+                      </small>
+                    )}
                   </div>
                 </div>
 
