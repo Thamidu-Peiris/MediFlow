@@ -1,11 +1,13 @@
 const express = require("express");
 const multer = require("multer");
-const path = require("path");
 
 const {
   upsertProfile,
   getMyProfile,
   uploadReport,
+  uploadAvatar,
+  streamReportFile,
+  streamAvatar,
   listReports,
   deleteReport,
   deleteAccount,
@@ -14,32 +16,105 @@ const {
   getAppointments
 } = require("../controllers/patient.controller");
 const { verifyAuth, requirePatientRole } = require("../middleware/auth.middleware");
+const {
+  initUploadTrace,
+  afterReportMulter
+} = require("../middleware/uploadTrace.middleware");
+const diagnostics = require("../controllers/diagnostics.controller");
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, "../uploads")),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  }
+// Gateway: http://localhost:8081/api/patients/health  →  /health on this service
+//          http://localhost:8081/api/patients/build   →  /build
+router.get("/health", diagnostics.health);
+router.get("/medi-flow-build", diagnostics.buildInfo);
+router.get("/build", diagnostics.buildInfo);
+
+const memory = multer.memoryStorage();
+
+function reportFileFilter(req, file, cb) {
+  const name = (file.originalname || "").toLowerCase();
+  const ok =
+    /^image\//.test(file.mimetype) ||
+    file.mimetype === "application/pdf" ||
+    file.mimetype === "application/dicom" ||
+    file.mimetype === "application/octet-stream" ||
+    name.endsWith(".dcm") ||
+    name.endsWith(".dicom");
+  if (ok) cb(null, true);
+  else cb(new Error("Only PDF, images, or DICOM are allowed"));
+}
+
+function imageFileFilter(req, file, cb) {
+  if (/^image\//.test(file.mimetype)) cb(null, true);
+  else cb(new Error("Only image files are allowed for profile photos"));
+}
+
+const uploadReportMw = multer({
+  storage: memory,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: reportFileFilter
 });
-const upload = multer({ storage });
+
+const uploadAvatarMw = multer({
+  storage: memory,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: imageFileFilter
+});
+
+function handleMulter(mw) {
+  return (req, res, next) => {
+    mw(req, res, (err) => {
+      if (err) {
+        const msg =
+          err.code === "LIMIT_FILE_SIZE"
+            ? "File is too large"
+            : err.message || "Upload failed";
+        return res.status(400).json({ message: msg });
+      }
+      next();
+    });
+  };
+}
 
 router.get("/me", verifyAuth, requirePatientRole, getMyProfile);
 router.put("/update-profile", verifyAuth, requirePatientRole, upsertProfile);
 router.delete("/delete-account", verifyAuth, requirePatientRole, deleteAccount);
-router.post("/upload-report", verifyAuth, requirePatientRole, upload.single("report"), uploadReport);
+router.get("/avatar/me", verifyAuth, requirePatientRole, streamAvatar);
+router.get("/reports/:id/download", verifyAuth, requirePatientRole, streamReportFile);
+router.post(
+  "/upload-report",
+  verifyAuth,
+  requirePatientRole,
+  initUploadTrace,
+  handleMulter(uploadReportMw.single("report")),
+  afterReportMulter,
+  uploadReport
+);
+router.post(
+  "/upload-avatar",
+  verifyAuth,
+  requirePatientRole,
+  handleMulter(uploadAvatarMw.single("avatar")),
+  uploadAvatar
+);
 router.get("/reports", verifyAuth, requirePatientRole, listReports);
 router.delete("/reports/:id", verifyAuth, requirePatientRole, deleteReport);
 router.get("/history", verifyAuth, requirePatientRole, getHistory);
 router.get("/prescriptions", verifyAuth, requirePatientRole, getPrescriptions);
 router.get("/appointments", verifyAuth, requirePatientRole, getAppointments);
 
-// Backward compatibility with previously used endpoints
 router.get("/profiles/me", verifyAuth, requirePatientRole, getMyProfile);
 router.post("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
 router.put("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
-router.post("/reports/upload", verifyAuth, requirePatientRole, upload.single("report"), uploadReport);
+router.post(
+  "/reports/upload",
+  verifyAuth,
+  requirePatientRole,
+  initUploadTrace,
+  handleMulter(uploadReportMw.single("report")),
+  afterReportMulter,
+  uploadReport
+);
 
 module.exports = router;

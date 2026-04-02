@@ -4,6 +4,7 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import api from "../api/client";
 import PatientShell from "../components/PatientShell";
 import { useAuth } from "../context/AuthContext";
+import { normalizeReportsList } from "../utils/normalizePatientReports";
 
 // Chart colors
 const COLORS = {
@@ -112,7 +113,7 @@ export default function PatientDashboardPage() {
     }).catch(() => setPrescriptions([]));
     
     api.get("/patients/reports", authHeaders).then((res) => {
-      setReports(res.data.reports || []);
+      setReports(normalizeReportsList(res.data.reports || []));
     }).catch(() => setReports([]));
     
     api.get("/doctors", authHeaders).then((res) => {

@@ -24,6 +24,7 @@ services:
     env_file:
       - ./services/auth-service/.env
 
+  # Code changes are not picked up until you rebuild: docker compose build patient-service && docker compose up -d patient-service
   patient-service:
     build: ./services/patient-service
     ports:

@@ -1,13 +1,99 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link } from "react-router-dom";
 import api from "../api/client";
 import PatientShell from "../components/PatientShell";
 import { useAuth } from "../context/AuthContext";
+import { useAuthMediaSrc } from "../hooks/useAuthMediaSrc";
+import { openProtectedFile, downloadProtectedFile } from "../utils/openProtectedFile";
+import { normalizeReportsList, normalizeReportForClient } from "../utils/normalizePatientReports";
 
 const CATEGORIES = ["Lab Results", "Radiology", "Cardiology", "Dermatology", "Monitoring", "Other"];
 
+function reportLooksLikeImage(report) {
+  const ft = report.fileType || "";
+  if (ft.includes("image")) return true;
+  return /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(report.fileName || "");
+}
+
+function reportFooterTypeLabel(report) {
+  const hasSize = typeof report.fileSize === "number" && report.fileSize > 0;
+  if (hasSize) return formatFileSizeStatic(report.fileSize);
+  const fn = (report.fileName || "").toLowerCase();
+  const ft = (report.fileType || "").toLowerCase();
+  if (ft.includes("pdf") || fn.endsWith(".pdf")) return "PDF";
+  if (ft.includes("image") || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fn)) return "Image";
+  if (fn.endsWith(".dcm") || fn.endsWith(".dicom")) return "DICOM";
+  return "File";
+}
+
+function formatFileSizeStatic(bytes) {
+  if (bytes == null || bytes <= 0) return "—";
+  const mb = bytes / (1024 * 1024);
+  return mb < 0.01 ? "< 0.01 MB" : `${mb.toFixed(1)} MB`;
+}
+
+function ReportCardThumbnail({ report, token }) {
+  const [imgError, setImgError] = useState(false);
+  const src = useAuthMediaSrc(report.filePath, token);
+  const tryImage = reportLooksLikeImage(report);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [report._id, report.filePath]);
+
+  if (report.needsReupload) {
+    return (
+      <div className="report-thumbnail-pdf" style={{ borderColor: "#fbbf24", background: "#fffbeb" }}>
+        <span style={{ fontSize: "11px", color: "#b45309", textAlign: "center", padding: "10px", lineHeight: 1.4 }}>
+          No working file link for this entry. Delete it, then upload again (files are stored on Cloudinary).
+        </span>
+      </div>
+    );
+  }
+
+  if (tryImage && src && !imgError) {
+    return (
+      <img
+        src={src}
+        alt=""
+        onError={() => setImgError(true)}
+        loading="lazy"
+      />
+    );
+  }
+
+  if (tryImage && !src && report.filePath) {
+    return (
+      <div className="report-thumbnail-pdf" style={{ opacity: 0.6 }}>
+        <span style={{ fontSize: "12px", color: "#94a3b8" }}>Loading…</span>
+      </div>
+    );
+  }
+
+  if (tryImage && !report.filePath) {
+    return (
+      <div className="report-thumbnail-pdf">
+        <span style={{ fontSize: "12px", color: "#94a3b8" }}>No preview</span>
+      </div>
+    );
+  }
+
+  const isPdf =
+    (report.fileType || "").includes("pdf") || /\.pdf$/i.test(report.fileName || "");
+  return (
+    <div className="report-thumbnail-pdf">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <path d="M9 13h6" />
+        <path d="M9 17h3" />
+      </svg>
+      <span>{isPdf ? "PDF" : "FILE"}</span>
+    </div>
+  );
+}
+
 export default function MedicalReportsPage() {
-  const { token, authHeaders, user } = useAuth();
+  const { token, authHeaders } = useAuth();
   const [file, setFile] = useState(null);
   const [reports, setReports] = useState([]);
   const [message, setMessage] = useState("");
@@ -17,7 +103,10 @@ export default function MedicalReportsPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
-  
+  const [cloudinaryOffOnServer, setCloudinaryOffOnServer] = useState(false);
+  const [cloudinaryApiFail, setCloudinaryApiFail] = useState(null);
+  const [patientServiceHealth, setPatientServiceHealth] = useState(null);
+
   // Upload form state
   const [reportTitle, setReportTitle] = useState("");
   const [category, setCategory] = useState("Lab Results");
@@ -26,7 +115,11 @@ export default function MedicalReportsPage() {
   const loadReports = async () => {
     try {
       const res = await api.get("/patients/reports", authHeaders);
-      setReports(res.data.reports || []);
+      const rawList = res.data.reports || [];
+      if (import.meta.env.DEV && res.data._debug) {
+        console.debug("[MediFlow reports] listReports _debug", res.data._debug);
+      }
+      setReports(normalizeReportsList(rawList));
     } catch {
       setReports([]);
     }
@@ -34,6 +127,33 @@ export default function MedicalReportsPage() {
 
   useEffect(() => {
     loadReports();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get("/patients/health")
+      .then((res) => {
+        if (cancelled) return;
+        const h = res.data;
+        setPatientServiceHealth(h || null);
+        setCloudinaryOffOnServer(h?.cloudinaryConfigured === false);
+        if (h?.cloudinaryConfigured && h?.cloudinaryApiOk === false) {
+          setCloudinaryApiFail(h?.cloudinaryPingMessage || "Cloudinary API ping failed");
+        } else {
+          setCloudinaryApiFail(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPatientServiceHealth(null);
+          setCloudinaryOffOnServer(false);
+          setCloudinaryApiFail(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filteredReports = useMemo(() => {
@@ -63,6 +183,11 @@ export default function MedicalReportsPage() {
     });
     return counts;
   }, [reports]);
+
+  const staleReportCount = useMemo(
+    () => reports.filter((r) => r.needsReupload).length,
+    [reports]
+  );
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -94,17 +219,42 @@ export default function MedicalReportsPage() {
     
     setIsUploading(true);
     setUploadProgress(0);
-    
-    // Simulate progress since axios doesn't give real-time progress for FormData easily
-    const progressInterval = setInterval(() => {
-      setUploadProgress(prev => Math.min(prev + 10, 90));
-    }, 200);
-    
+
     try {
-      await api.post("/patients/upload-report", formData, {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
+      const uploadRes = await api.post("/patients/upload-report", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(import.meta.env.DEV ? { "X-MediFlow-Debug-Upload": "1" } : {})
+        },
+        timeout: 120000,
+        onUploadProgress: (ev) => {
+          if (ev.total) {
+            setUploadProgress(Math.min(99, Math.round((ev.loaded * 100) / ev.total)));
+          }
+        }
       });
-      clearInterval(progressInterval);
+      if (import.meta.env.DEV) {
+        const rev = uploadRes.headers["x-mediflow-patient-service-revision"];
+        const eng = uploadRes.headers["x-mediflow-upload-engine"];
+        const list = uploadRes.data?.reports || [];
+        const last = list[list.length - 1];
+        const lastNorm = last ? normalizeReportForClient(last) : null;
+        console.debug("[MediFlow reports] upload-report response", {
+          headers: { revision: rev, uploadEngine: eng },
+          lastReportFilePath: lastNorm?.filePath,
+          lastReportNeedsReupload: lastNorm?.needsReupload,
+          _debug: uploadRes.data?._debug,
+          _uploadTrace: uploadRes.data?._uploadTrace
+        });
+        if (uploadRes.data?._uploadTrace?.steps) {
+          console.table(uploadRes.data._uploadTrace.steps);
+        }
+        if (last && String(last.filePath || "").includes("/api/patients/uploads")) {
+          console.debug(
+            "[MediFlow reports] Upload response still has disk /uploads/ path — use patient-service with revision on /health and Cloudinary."
+          );
+        }
+      }
       setUploadProgress(100);
       setTimeout(() => {
         setFile(null);
@@ -114,10 +264,9 @@ export default function MedicalReportsPage() {
         setIsUploading(false);
         setMessage("Report uploaded successfully");
         loadReports();
-      }, 500);
+      }, 400);
       setTimeout(() => setMessage(""), 3000);
     } catch (err) {
-      clearInterval(progressInterval);
       setUploadProgress(0);
       setIsUploading(false);
       setMessage(err?.response?.data?.message || "Upload failed");
@@ -134,16 +283,16 @@ export default function MedicalReportsPage() {
     }
   };
 
-  const formatFileSize = (bytes) => {
-    if (!bytes) return "0 MB";
-    const mb = bytes / (1024 * 1024);
-    return mb < 0.01 ? "< 0.01 MB" : `${mb.toFixed(1)} MB`;
-  };
-
   const formatDate = (date) => {
     if (!date) return "";
     return new Date(date).toLocaleDateString("en-US", { day: "numeric", month: "short" });
   };
+
+  const showStaleReportsHint =
+    staleReportCount > 0 &&
+    !cloudinaryOffOnServer &&
+    !cloudinaryApiFail &&
+    (patientServiceHealth == null || patientServiceHealth.cloudinaryApiOk === true);
 
   return (
     <PatientShell>
@@ -151,6 +300,46 @@ export default function MedicalReportsPage() {
         {message && (
           <div className={`message-toast ${message.includes("success") ? "success" : "error"}`}>
             {message}
+          </div>
+        )}
+
+        {(cloudinaryOffOnServer || cloudinaryApiFail) && (
+          <div
+            className="message-toast error"
+            style={{ marginBottom: "12px", textAlign: "left", lineHeight: 1.5 }}
+            role="alert"
+          >
+            {cloudinaryOffOnServer && (
+              <p style={{ margin: "0 0 8px" }}>
+                <strong>Cloudinary is off</strong> on patient-service (<code>/api/patients/health</code> →{" "}
+                <code>cloudinaryConfigured: false</code>). Add <code>CLOUDINARY_CLOUD_NAME</code>,{" "}
+                <code>CLOUDINARY_API_KEY</code>, <code>CLOUDINARY_API_SECRET</code> to{" "}
+                <code>backend/services/patient-service/.env</code> (same file if you use Docker), restart, then reload
+                this page. After uploads work, delete old report cards that used <code>/uploads/</code> paths.
+              </p>
+            )}
+            {cloudinaryApiFail && (
+              <p style={{ margin: 0 }}>
+                <strong>Cloudinary credentials fail API check</strong> (<code>cloudinaryApiOk: false</code>). Copy keys
+                from Cloudinary Console → Programmable Media → API Keys (same cloud as{" "}
+                <code>CLOUDINARY_CLOUD_NAME</code>). {cloudinaryApiFail}
+              </p>
+            )}
+          </div>
+        )}
+
+        {showStaleReportsHint && (
+          <div
+            className="message-toast warning"
+            style={{ marginBottom: "12px", textAlign: "left", lineHeight: 1.5 }}
+            role="status"
+          >
+            <p style={{ margin: 0 }}>
+              <strong>Some reports need a fresh upload</strong> ({staleReportCount}): older file links no longer work.
+              Delete those cards here, or run <code>npm run cleanup:legacy-disk-reports</code> in{" "}
+              <code>patient-service</code> (set <code>APPLY_LEGACY_REPORT_CLEANUP=1</code> to apply), then upload again —
+              new files are stored on Cloudinary.
+            </p>
           </div>
         )}
 
@@ -353,18 +542,14 @@ export default function MedicalReportsPage() {
                   <div className="report-card" key={report._id || report.filePath}>
                     {/* Thumbnail */}
                     <div className="report-thumbnail">
-                      {report.fileType?.includes("image") || report.fileName?.match(/\.(jpg|jpeg|png|gif|dcm)$/i) ? (
-                        <img src={report.filePath} alt={report.fileName} />
-                      ) : (
-                        <div className="report-thumbnail-pdf">
-                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6"/><path d="M9 17h3"/>
-                          </svg>
-                          <span>PDF</span>
-                        </div>
-                      )}
+                      <ReportCardThumbnail report={report} token={token} />
                       <div className="report-overlay">
-                        <button className="view-btn" onClick={() => window.open(report.filePath, "_blank")}>
+                        <button
+                          type="button"
+                          className="view-btn"
+                          disabled={!report.filePath || report.needsReupload}
+                          onClick={() => openProtectedFile(report.filePath, token)}
+                        >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
                           </svg>
@@ -380,6 +565,12 @@ export default function MedicalReportsPage() {
                           {report.category || "Lab Results"}
                         </span>
                       </div>
+
+                      {report.needsReupload && (
+                        <p className="report-legacy-hint" style={{ fontSize: "12px", color: "#b45309", margin: "0 0 8px" }}>
+                          No working file link (old storage or missing URL). Delete this entry, then upload again — new files go to Cloudinary.
+                        </p>
+                      )}
 
                       {report.doctor && (
                         <div className="report-doctor">
@@ -403,25 +594,31 @@ export default function MedicalReportsPage() {
                             </svg>
                             {formatDate(report.uploadedAt || report.createdAt)}
                           </span>
-                          <span className="report-size">
-                            {report.fileSize ? formatFileSize(report.fileSize) : "PDF"}
-                          </span>
+                          <span className="report-size">{reportFooterTypeLabel(report)}</span>
                         </div>
                         <div className="report-actions">
-                          <a 
-                            href={report.filePath} 
-                            target="_blank" 
-                            rel="noreferrer"
+                          <button
+                            type="button"
                             className="action-btn download"
                             title="Download"
+                            disabled={!report.filePath || report.needsReupload}
+                            onClick={() =>
+                              downloadProtectedFile(
+                                report.filePath,
+                                token,
+                                report.fileName || "report"
+                              )
+                            }
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
                             </svg>
-                          </a>
-                          <button 
+                          </button>
+                          <button
+                            type="button"
                             className="action-btn view"
-                            onClick={() => window.open(report.filePath, "_blank")}
+                            disabled={!report.filePath || report.needsReupload}
+                            onClick={() => openProtectedFile(report.filePath, token)}
                             title="View"
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

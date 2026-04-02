@@ -2192,6 +2192,12 @@ button, .btn-primary {
   border: 1px solid #fecaca;
 }
 
+.message-toast.warning {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+}
+
 /* Profile Grid */
 .profile-grid {
   display: grid;

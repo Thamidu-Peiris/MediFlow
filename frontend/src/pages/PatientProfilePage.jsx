@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 import api from "../api/client";
 import PatientShell from "../components/PatientShell";
 import { useAuth } from "../context/AuthContext";
+import { useAuthMediaSrc } from "../hooks/useAuthMediaSrc";
+
+const DEFAULT_PROFILE_AVATAR =
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80";
 
 export default function PatientProfilePage() {
-  const { authHeaders } = useAuth();
+  const { authHeaders, token } = useAuth();
   const [profile, setProfile] = useState({
     fullName: "",
     email: "",
@@ -24,7 +28,8 @@ export default function PatientProfilePage() {
     confirmPassword: "",
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const heroAvatarSrc = useAuthMediaSrc(profile.avatar || "", token) || DEFAULT_PROFILE_AVATAR;
 
   useEffect(() => {
     api.get("/patients/me", authHeaders).then((res) => {
@@ -110,19 +115,24 @@ export default function PatientProfilePage() {
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     const formData = new FormData();
     formData.append("avatar", file);
-    
+
+    setAvatarUploading(true);
     try {
       const res = await api.post("/patients/upload-avatar", formData, {
-        headers: { ...authHeaders.headers, "Content-Type": "multipart/form-data" }
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 60000
       });
-      setProfile(p => ({ ...p, avatar: res.data.avatarUrl }));
+      setProfile((p) => ({ ...p, avatar: res.data.avatarUrl || p.avatar }));
       setMessage("Profile picture updated successfully");
       setTimeout(() => setMessage(""), 3000);
     } catch (err) {
       setMessage(err?.response?.data?.message || "Failed to upload avatar");
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -135,13 +145,15 @@ export default function PatientProfilePage() {
             <div className="profile-avatar-section">
               <div className="avatar-container-large">
                 <img 
-                  src={profile.avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80"} 
+                  src={heroAvatarSrc} 
                   alt={profile.fullName}
                   className="avatar-image"
                 />
                 <button 
+                  type="button"
                   className="avatar-edit-btn" 
-                  onClick={() => document.getElementById('avatar-input').click()}
+                  onClick={() => !avatarUploading && document.getElementById("avatar-input").click()}
+                  disabled={avatarUploading}
                   title="Change profile picture"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
