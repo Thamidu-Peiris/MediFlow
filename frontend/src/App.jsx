@@ -16,6 +16,16 @@ import MedicalHistoryPage from "./pages/MedicalHistoryPage";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import AppointmentHistoryPage from "./pages/AppointmentHistoryPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminBootstrapPage from "./pages/AdminBootstrapPage";
+import AdminShell from "./components/AdminShell";
+import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminDoctorsVerificationPage from "./pages/AdminDoctorsVerificationPage";
+import AdminAppointmentsPage from "./pages/AdminAppointmentsPage";
+import AdminPaymentsPage from "./pages/AdminPaymentsPage";
+import AdminReportsPage from "./pages/AdminReportsPage";
+import AdminNotificationsPage from "./pages/AdminNotificationsPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import AdminSettingsPage from "./pages/AdminSettingsPage";
 import AICheckerPage from "./pages/AICheckerPage";
 import PatientDoctorsPage from "./pages/PatientDoctorsPage";
 import PatientPaymentPage from "./pages/PatientPaymentPage";
@@ -41,7 +51,97 @@ export default function App() {
       <Route path="/doctors" element={<DoctorsPage />} />
 
       {/* Admin Routes */}
-      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboardPage /></ProtectedRoute>} />
+      <Route path="/admin/bootstrap" element={<AdminBootstrapPage />} />
+      <Route
+        path="/admin/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminShell>
+              <AdminDashboardPage />
+            </AdminShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminShell>
+              <AdminUsersPage />
+            </AdminShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/doctors-verification"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminShell>
+              <AdminDoctorsVerificationPage />
+            </AdminShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/appointments"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminShell>
+              <AdminAppointmentsPage />
+            </AdminShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/payments"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminShell>
+              <AdminPaymentsPage />
+            </AdminShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminShell>
+              <AdminReportsPage />
+            </AdminShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/notifications"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminShell>
+              <AdminNotificationsPage />
+            </AdminShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/analytics"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminShell>
+              <AdminAnalyticsPage />
+            </AdminShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminShell>
+              <AdminSettingsPage />
+            </AdminShell>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Patient Routes */}
       <Route path="/patient/dashboard" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientDashboardPage /></ProtectedRoute>} />
