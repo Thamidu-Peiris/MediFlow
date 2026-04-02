@@ -13,7 +13,12 @@ const {
   deleteAccount,
   getHistory,
   getPrescriptions,
-  getAppointments
+  getAppointments,
+  addHealthItem,
+  updateHealthItem,
+  deleteHealthItem,
+  setEmergencyContact,
+  clearEmergencyContact
 } = require("../controllers/patient.controller");
 const { verifyAuth, requirePatientRole } = require("../middleware/auth.middleware");
 const {
@@ -78,6 +83,18 @@ function handleMulter(mw) {
 }
 
 router.get("/me", verifyAuth, requirePatientRole, getMyProfile);
+/* Prefer /me/health/... through the gateway — avoids any clash with service GET /health (diagnostics). */
+router.put("/me/health/emergency-contact", verifyAuth, requirePatientRole, setEmergencyContact);
+router.delete("/me/health/emergency-contact", verifyAuth, requirePatientRole, clearEmergencyContact);
+router.post("/me/health/:section", verifyAuth, requirePatientRole, addHealthItem);
+router.put("/me/health/:section/:itemId", verifyAuth, requirePatientRole, updateHealthItem);
+router.delete("/me/health/:section/:itemId", verifyAuth, requirePatientRole, deleteHealthItem);
+/* Legacy aliases (same handlers) */
+router.put("/health/emergency-contact", verifyAuth, requirePatientRole, setEmergencyContact);
+router.delete("/health/emergency-contact", verifyAuth, requirePatientRole, clearEmergencyContact);
+router.post("/health/:section", verifyAuth, requirePatientRole, addHealthItem);
+router.put("/health/:section/:itemId", verifyAuth, requirePatientRole, updateHealthItem);
+router.delete("/health/:section/:itemId", verifyAuth, requirePatientRole, deleteHealthItem);
 router.put("/update-profile", verifyAuth, requirePatientRole, upsertProfile);
 router.delete("/delete-account", verifyAuth, requirePatientRole, deleteAccount);
 router.get("/avatar/me", verifyAuth, requirePatientRole, streamAvatar);

@@ -37,6 +37,23 @@ const appointmentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const healthItemSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true, trim: true, maxlength: 200 },
+    note: { type: String, default: "", trim: true, maxlength: 500 }
+  },
+  { timestamps: true }
+);
+
+const emergencyContactSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: "", trim: true, maxlength: 120 },
+    relationship: { type: String, default: "", trim: true, maxlength: 80 },
+    phone: { type: String, default: "", trim: true, maxlength: 40 }
+  },
+  { _id: false }
+);
+
 const patientSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true, unique: true, index: true },
@@ -54,6 +71,10 @@ const patientSchema = new mongoose.Schema(
     avatarGridFsId: { type: String, default: "" },
     avatarContentType: { type: String, default: "" },
     medicalHistory: [{ type: String }],
+    allergies: { type: [healthItemSchema], default: [] },
+    medicalConditions: { type: [healthItemSchema], default: [] },
+    currentMedications: { type: [healthItemSchema], default: [] },
+    emergencyContact: { type: emergencyContactSchema, default: () => ({}) },
     reports: [reportSchema],
     prescriptions: [prescriptionSchema],
     appointments: [appointmentSchema]

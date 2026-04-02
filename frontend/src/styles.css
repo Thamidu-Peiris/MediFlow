@@ -7628,6 +7628,252 @@ button, .btn-primary {
   border-color: #cbd5e1;
 }
 
+.health-info-grid-manage {
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .health-info-grid-manage {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .health-info-grid-manage {
+    grid-template-columns: 1fr;
+  }
+}
+
+.health-card-manage {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+.health-card-manage h4 {
+  text-align: left;
+}
+
+.health-value-empty {
+  margin-bottom: 10px !important;
+}
+
+.health-item-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.health-item-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.health-item-row:last-child {
+  border-bottom: none;
+}
+
+.health-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.health-item-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.health-item-note {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.health-item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.health-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.health-icon-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.health-icon-btn.danger:hover {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.health-emergency-read {
+  margin: 0 0 12px;
+  text-align: left;
+}
+
+.health-emergency-line {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.health-emergency-rel {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.health-emergency-phone {
+  margin: 0;
+  font-size: 13px;
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.health-emergency-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.add-health-btn-ghost {
+  background: transparent;
+}
+
+.add-health-btn-ghost:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.health-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.health-modal {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e2e8f0;
+}
+
+.health-modal-title {
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.health-modal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 14px;
+}
+
+.health-modal-label input,
+.health-modal-label textarea {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.health-modal-label input:focus,
+.health-modal-label textarea:focus {
+  outline: none;
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+}
+
+.health-modal-optional {
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.health-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.health-modal-cancel {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.health-modal-cancel:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.health-modal-save {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+
+.health-modal-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* Security Card */
 .security-card {
   display: flex;
