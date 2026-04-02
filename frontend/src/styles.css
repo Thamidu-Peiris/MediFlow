@@ -2025,6 +2025,33 @@ button, .btn-primary {
   grid-template-columns: repeat(5, minmax(180px, 1fr));
   gap: 12px;
 }
+
+/* Quick actions vertical list (line-by-line) */
+.ad-quick-actions-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.ad-quick-actions-list .ad-quick-action {
+  justify-content: flex-start;
+  padding: 10px 12px;
+  box-shadow: none;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.ad-quick-actions-list .ad-quick-title {
+  text-align: left;
+}
+
+.ad-quick-actions-list .ad-quick-icon {
+  font-size: 18px;
+}
+
+.ad-quick-actions-list .ad-quick-title {
+  font-size: 13px;
+}
 .ad-quick-action {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -2048,12 +2075,17 @@ button, .btn-primary {
 
 .ad-charts-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
   gap: 10px;
 }
 .ad-chart-card { padding: 16px; }
 .ad-chart-title { margin: 0 0 8px; font-size: 14px; font-weight: 950; color:#0f172a; display:flex; align-items:center; gap:8px; }
 .ad-chart-title-icon { color:#0d9488; font-variation-settings: "FILL" 1, "wght" 800, "GRAD" 0, "opsz" 24; }
+
+/* Keep analytics area compact */
+.ad-analytics-wrap {
+  max-width: 820px;
+}
 
 .ad-activity {
   background: #ffffff;
@@ -2115,6 +2147,25 @@ button, .btn-primary {
   grid-template-columns: repeat(2, minmax(420px, 1fr));
   gap: 12px;
   margin-top: 12px;
+}
+
+/* Top hero split: Analytics left, Quick Actions right */
+.ad-hero-split {
+  display: grid;
+  grid-template-columns: 1.35fr 0.65fr;
+  gap: 12px;
+  margin-top: 6px;
+  align-items: start;
+}
+
+.ad-hero-split > .ad-section {
+  margin-top: 0;
+}
+
+@media (max-width: 1200px) {
+  .ad-hero-split {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ad-pending-list { display: grid; gap: 10px; }
@@ -2239,8 +2290,12 @@ button, .btn-primary {
   .ad-dash-summary { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
   .ad-quick-actions-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
   .ad-two-col { grid-template-columns: 1fr; }
-  .ad-charts-grid { grid-template-columns: 1fr; }
+  .ad-charts-grid { grid-template-columns: repeat(2, minmax(210px, 1fr)); }
   .ad-heatmap-grid { gap: 4px; }
+}
+
+@media (max-width: 640px) {
+  .ad-charts-grid { grid-template-columns: 1fr; }
 }
 
 /* Admin search / export */

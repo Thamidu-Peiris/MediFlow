@@ -406,126 +406,137 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* QUICK ACTIONS PANEL */}
-      <div className="ad-section">
-        <div className="ad-section-head">
-          <h2>Quick Actions</h2>
-          <p>Admin shortcuts for the most common workflows.</p>
+      <div className="ad-hero-split">
+        {/* LEFT: Analytics (2x2) */}
+        <div className="ad-section">
+          <div className="ad-section-head">
+            <h2>Analytics</h2>
+            <p>Appointments, revenue, growth, and role distribution at a glance.</p>
+          </div>
+
+          <div className="ad-analytics-wrap">
+            <div className="ad-charts-grid">
+            <article className="pd-card ad-chart-card">
+              <h3 className="ad-chart-title">
+                <span className="ad-chart-title-icon material-symbols-outlined">event</span>
+                Appointment Trends
+              </h3>
+              <div style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={charts.appointmentTrends}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="bookings"
+                      name="Bookings"
+                      stroke="#0d9488"
+                      strokeWidth={3}
+                      dot={{ stroke: "#0d9488", strokeWidth: 2, r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </article>
+
+            <article className="pd-card ad-chart-card">
+              <h3 className="ad-chart-title">
+                <span className="ad-chart-title-icon material-symbols-outlined">payments</span>
+                Revenue Analytics
+              </h3>
+              <div style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={charts.revenueAnalytics}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="income" name="Income (LKR)" fill="#0d9488" radius={[10, 10, 2, 2]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </article>
+
+            <article className="pd-card ad-chart-card">
+              <h3 className="ad-chart-title">
+                <span className="ad-chart-title-icon material-symbols-outlined">people</span>
+                User Growth
+              </h3>
+              <div style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={charts.userGrowth}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="week" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="newUsers" name="New users" stroke="#6366f1" strokeWidth={3} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </article>
+
+            <article className="pd-card ad-chart-card">
+              <h3 className="ad-chart-title">
+                <span className="ad-chart-title-icon material-symbols-outlined">admin_panel_settings</span>
+                Role Distribution
+              </h3>
+              <div style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Tooltip />
+                    <Pie
+                      data={charts.roleDist}
+                      dataKey="value"
+                      outerRadius={110}
+                      innerRadius={60}
+                      stroke="none"
+                    >
+                      {charts.roleDist.map((r) => (
+                        <Cell key={r.name} fill={r.fill} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </article>
+          </div>
+          </div>
         </div>
 
-        <div className="ad-quick-actions-grid">
-          <Link to="/admin/doctors-verification" className="ad-quick-action">
-            <span className="material-symbols-outlined ad-quick-icon">verified_user</span>
-            <span className="ad-quick-title">Approve Doctors</span>
-          </Link>
-          <Link to="/admin/users" className="ad-quick-action">
-            <span className="material-symbols-outlined ad-quick-icon">groups</span>
-            <span className="ad-quick-title">Manage Users</span>
-          </Link>
-          <Link to="/admin/appointments" className="ad-quick-action">
-            <span className="material-symbols-outlined ad-quick-icon">event</span>
-            <span className="ad-quick-title">View Appointments</span>
-          </Link>
-          <Link to="/admin/payments" className="ad-quick-action">
-            <span className="material-symbols-outlined ad-quick-icon">payments</span>
-            <span className="ad-quick-title">Check Payments</span>
-          </Link>
-          <Link to="/admin/notifications" className="ad-quick-action">
-            <span className="material-symbols-outlined ad-quick-icon">notifications</span>
-            <span className="ad-quick-title">Send Notification</span>
-          </Link>
-        </div>
-      </div>
+        {/* RIGHT: Quick Actions (vertical list) */}
+        <div className="ad-section">
+          <div className="ad-section-head">
+            <h2>Quick Actions</h2>
+            <p>Admin shortcuts for the most common workflows.</p>
+          </div>
 
-      {/* CHARTS SECTION */}
-      <div className="ad-section">
-        <div className="ad-section-head">
-          <h2>Analytics</h2>
-          <p>Appointments, revenue, growth, and role distribution at a glance.</p>
-        </div>
-
-        <div className="ad-charts-grid">
-          <article className="pd-card ad-chart-card">
-            <h3 className="ad-chart-title">
-              <span className="ad-chart-title-icon material-symbols-outlined">event</span>
-              Appointment Trends
-            </h3>
-            <div style={{ height: 220 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={charts.appointmentTrends}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="bookings" name="Bookings" stroke="#0d9488" strokeWidth={3} dot={{ stroke: "#0d9488", strokeWidth: 2, r: 3 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
-
-          <article className="pd-card ad-chart-card">
-            <h3 className="ad-chart-title">
-              <span className="ad-chart-title-icon material-symbols-outlined">payments</span>
-              Revenue Analytics
-            </h3>
-            <div style={{ height: 220 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={charts.revenueAnalytics}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="income" name="Income (LKR)" fill="#0d9488" radius={[10, 10, 2, 2]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
-
-          <article className="pd-card ad-chart-card">
-            <h3 className="ad-chart-title">
-              <span className="ad-chart-title-icon material-symbols-outlined">people</span>
-              User Growth
-            </h3>
-            <div style={{ height: 220 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={charts.userGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="week" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="newUsers" name="New users" stroke="#6366f1" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
-
-          <article className="pd-card ad-chart-card">
-            <h3 className="ad-chart-title">
-              <span className="ad-chart-title-icon material-symbols-outlined">admin_panel_settings</span>
-              Role Distribution
-            </h3>
-            <div style={{ height: 220 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Tooltip />
-                  <Pie
-                    data={charts.roleDist}
-                    dataKey="value"
-                    outerRadius={110}
-                    innerRadius={60}
-                    stroke="none"
-                  >
-                    {charts.roleDist.map((r) => (
-                      <Cell key={r.name} fill={r.fill} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
+          <div className="ad-quick-actions-list">
+            <Link to="/admin/doctors-verification" className="ad-quick-action">
+              <span className="material-symbols-outlined ad-quick-icon">verified_user</span>
+              <span className="ad-quick-title">Approve Doctors</span>
+            </Link>
+            <Link to="/admin/users" className="ad-quick-action">
+              <span className="material-symbols-outlined ad-quick-icon">groups</span>
+              <span className="ad-quick-title">Manage Users</span>
+            </Link>
+            <Link to="/admin/appointments" className="ad-quick-action">
+              <span className="material-symbols-outlined ad-quick-icon">event</span>
+              <span className="ad-quick-title">View Appointments</span>
+            </Link>
+            <Link to="/admin/payments" className="ad-quick-action">
+              <span className="material-symbols-outlined ad-quick-icon">payments</span>
+              <span className="ad-quick-title">Check Payments</span>
+            </Link>
+            <Link to="/admin/notifications" className="ad-quick-action">
+              <span className="material-symbols-outlined ad-quick-icon">notifications</span>
+              <span className="ad-quick-title">Send Notification</span>
+            </Link>
+          </div>
         </div>
       </div>
 
