@@ -4757,7 +4757,7 @@ button, .btn-primary {
   display: block;
   width: 100%;
   padding: 14px 20px;
-  background: #6366f1;
+  background: #0d9488; /* teal */
   color: white;
   border-radius: 12px;
   font-weight: 700;
@@ -4765,13 +4765,13 @@ button, .btn-primary {
   text-align: center;
   text-decoration: none;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
 }
 
 .aura-book-btn:hover {
-  background: #4f46e5;
+  background: #0b7f77; /* darker teal */
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.45);
 }
 
 /* Sidebar Navigation */
@@ -4802,9 +4802,10 @@ button, .btn-primary {
 }
 
 .aura-nav-item.active {
-  background: #0d9488;
-  color: white;
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+  background: #ecfdf5; /* emerald-50 style */
+  color: #0d9488; /* teal-700 style */
+  font-weight: 700;
+  box-shadow: none;
 }
 
 .aura-nav-icon {
@@ -4812,6 +4813,16 @@ button, .btn-primary {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+/* Make sidebar icons feel bolder */
+.aura-nav-icon svg {
+  stroke-width: 2.5;
+}
+
+/* Stronger stroke on selected item */
+.aura-nav-item.active .aura-nav-icon svg {
+  stroke-width: 3.25;
 }
 
 .aura-nav-label {

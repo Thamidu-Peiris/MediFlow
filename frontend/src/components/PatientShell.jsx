@@ -105,7 +105,7 @@ export default function PatientShell({ children }) {
           </div>
           
           {/* Book Appointment Button */}
-          <Link to="/doctors" className="aura-book-btn">
+          <Link to="/patient/doctors" className="aura-book-btn">
             Book Appointment
           </Link>
         </div>
