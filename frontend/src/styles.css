@@ -2030,7 +2030,7 @@ button, .btn-primary {
 .ad-quick-actions-list {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 6px;
 }
 
 .ad-quick-actions-list .ad-quick-action {
@@ -2038,7 +2038,9 @@ button, .btn-primary {
   padding: 10px 12px;
   box-shadow: none;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  background: transparent;
+  width: 100%;
 }
 
 .ad-quick-actions-list .ad-quick-title {
@@ -2051,6 +2053,16 @@ button, .btn-primary {
 
 .ad-quick-actions-list .ad-quick-title {
   font-size: 13px;
+}
+
+.ad-quick-actions-list .ad-quick-action:hover {
+  background: rgba(13, 148, 136, 0.08);
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+
+.ad-quick-actions-list .ad-quick-icon {
+  color: #0d9488;
 }
 .ad-quick-action {
   background: #ffffff;

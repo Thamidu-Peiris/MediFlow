@@ -411,7 +411,6 @@ export default function AdminDashboardPage() {
         <div className="ad-section">
           <div className="ad-section-head">
             <h2>Analytics</h2>
-            <p>Appointments, revenue, growth, and role distribution at a glance.</p>
           </div>
 
           <div className="ad-analytics-wrap">
@@ -512,7 +511,6 @@ export default function AdminDashboardPage() {
         <div className="ad-section">
           <div className="ad-section-head">
             <h2>Quick Actions</h2>
-            <p>Admin shortcuts for the most common workflows.</p>
           </div>
 
           <div className="ad-quick-actions-list">
