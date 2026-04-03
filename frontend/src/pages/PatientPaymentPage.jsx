@@ -502,18 +502,6 @@ export default function PatientPaymentPage() {
                   <span className="material-symbols-outlined text-lg">account_balance_wallet</span>
                   Helakuru
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPayTab("paypal")}
-                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm transition-all ${
-                    payTab === "paypal"
-                      ? "bg-white font-bold text-primary shadow-sm"
-                      : "font-medium text-on-surface-variant hover:text-primary"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-lg">account_balance_wallet</span>
-                  PayPal
-                </button>
               </div>
 
               {payTab === "card" && (
@@ -569,7 +557,6 @@ export default function PatientPaymentPage() {
                 </div>
               )}
 
-              {payTab === "paypal" && <p className="text-on-surface-variant">PayPal checkout is coming soon.</p>}
             </div>
           </div>
         </div>
