@@ -5,7 +5,16 @@ const stripeService = require("../services/stripe.service");
 const payhereService = require("../services/payhere.service");
 
 const APPOINTMENT_URL = process.env.APPOINTMENT_SERVICE_URL || "http://localhost:8004";
-const DOCTOR_URL = process.env.DOCTOR_SERVICE_URL || "http://localhost:8003";
+// Docker Compose service name is `doctor-service`; localhost only works when payment runs on the host.
+const DOCTOR_URL =
+  process.env.DOCTOR_SERVICE_URL || process.env.DOCTOR_URL || "http://localhost:8003";
+
+function normalizeTimeLabel(t) {
+  return String(t || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toUpperCase();
+}
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -73,7 +82,13 @@ exports.createPendingBooking = async (req, res) => {
     const dayName = DAY_NAMES[dateObj.getDay()];
 
     // Validate against doctor weekly availability
-    const doctorsRes = await axios.get(`${DOCTOR_URL}/public`, { timeout: 10000 });
+    const doctorsRes = await axios.get(`${DOCTOR_URL}/public`, {
+      timeout: 10000,
+      validateStatus: (s) => s >= 200 && s < 500,
+    });
+    if (doctorsRes.status >= 400 || !doctorsRes.data) {
+      return res.status(502).json({ message: "Could not load doctor directory. Check DOCTOR_SERVICE_URL." });
+    }
     const doctor = (doctorsRes.data?.doctors || []).find((d) => d.userId === doctorUserId);
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found." });
@@ -89,10 +104,11 @@ exports.createPendingBooking = async (req, res) => {
     // Validate against existing appointments (already booked times)
     const occupiedRes = await axios.get(
       `${APPOINTMENT_URL}/public/doctor/${encodeURIComponent(doctorUserId)}/occupied`,
-      { params: { date }, timeout: 10000 }
+      { params: { date }, timeout: 10000, validateStatus: (s) => s >= 200 && s < 500 }
     );
-    const occupiedTimes = occupiedRes.data?.occupiedTimes || [];
-    if (occupiedTimes.includes(time)) {
+    const occupiedTimes = Array.isArray(occupiedRes.data?.occupiedTimes) ? occupiedRes.data.occupiedTimes : [];
+    const wantT = normalizeTimeLabel(time);
+    if (occupiedTimes.some((t) => normalizeTimeLabel(t) === wantT)) {
       return res.status(409).json({ message: "Selected time slot is already booked." });
     }
 
@@ -102,13 +118,17 @@ exports.createPendingBooking = async (req, res) => {
       const myAptRes = await axios.get(`${APPOINTMENT_URL}/my`, {
         headers: { Authorization: authHeader },
         timeout: 10000,
+        validateStatus: () => true,
       });
-      const myAppointments = myAptRes.data?.appointments || [];
+      const myAppointments =
+        myAptRes.status === 200 && Array.isArray(myAptRes.data?.appointments)
+          ? myAptRes.data.appointments
+          : [];
       const duplicateAppointment = myAppointments.some(
         (a) =>
           a.doctorId === doctorUserId &&
           a.date === date &&
-          a.time === time &&
+          normalizeTimeLabel(a.time) === wantT &&
           !["cancelled", "rejected"].includes(a.status)
       );
       if (duplicateAppointment) {
@@ -160,7 +180,18 @@ exports.createPendingBooking = async (req, res) => {
     });
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ message: "Failed to create pending booking" });
+    if (e.response?.data?.message) {
+      return res.status(e.response.status >= 400 && e.response.status < 600 ? e.response.status : 502).json({
+        message: e.response.data.message,
+      });
+    }
+    if (e.code === "ECONNREFUSED" || e.code === "ENOTFOUND" || e.code === "ECONNABORTED") {
+      return res.status(503).json({
+        message:
+          "Could not reach doctor or appointment service. In Docker, set DOCTOR_SERVICE_URL and APPOINTMENT_SERVICE_URL to your internal service URLs (e.g. http://doctor-service:8003).",
+      });
+    }
+    return res.status(500).json({ message: e.message || "Failed to create pending booking" });
   }
 };
 

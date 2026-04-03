@@ -74,7 +74,7 @@ exports.listDoctorOccupiedTimes = async (req, res) => {
         let pendingTimes = [];
         try {
             const pRes = await axios.get(
-                `${PAYMENT_SERVICE_URL}/api/payments/doctor-occupied`,
+                `${PAYMENT_SERVICE_URL}/doctor-occupied`,
                 { params: { doctorUserId: doctorId, date }, timeout: 3000 }
             );
             if (Array.isArray(pRes.data?.occupiedTimes)) {

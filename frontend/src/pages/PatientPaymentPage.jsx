@@ -185,7 +185,14 @@ export default function PatientPaymentPage() {
           return;
         }
 
-        const state = location.state || JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+        let state = location.state;
+        if (!state?.doctorUserId) {
+          try {
+            state = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+          } catch {
+            state = null;
+          }
+        }
         if (!state?.doctorUserId) {
           navigate("/patient/doctors", { replace: true });
           return;
@@ -217,8 +224,17 @@ export default function PatientPaymentPage() {
           navigate(`/patient/payment?pending=${pid}`, { replace: true });
         }
       } catch (e) {
-        if (!cancelled)
-          setError(e.response?.data?.detail || e.response?.data?.message || e.message || "Failed to load checkout");
+        if (!cancelled) {
+          const status = e.response?.status;
+          const body = e.response?.data;
+          const msg =
+            body?.message ||
+            body?.detail ||
+            (typeof body === "string" ? body : null) ||
+            e.message ||
+            "Failed to load checkout";
+          setError(status ? `${msg} (${status})` : msg);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -486,18 +502,6 @@ export default function PatientPaymentPage() {
                   <span className="material-symbols-outlined text-lg">account_balance_wallet</span>
                   Helakuru
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPayTab("paypal")}
-                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 px-4 text-sm transition-all ${
-                    payTab === "paypal"
-                      ? "bg-white font-bold text-primary shadow-sm"
-                      : "font-medium text-on-surface-variant hover:text-primary"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-lg">account_balance_wallet</span>
-                  PayPal
-                </button>
               </div>
 
               {payTab === "card" && (
@@ -553,7 +557,6 @@ export default function PatientPaymentPage() {
                 </div>
               )}
 
-              {payTab === "paypal" && <p className="text-on-surface-variant">PayPal checkout is coming soon.</p>}
             </div>
           </div>
         </div>
