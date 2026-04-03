@@ -28,6 +28,7 @@ import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import AdminSettingsPage from "./pages/AdminSettingsPage";
 import AICheckerPage from "./pages/AICheckerPage";
 import PatientDoctorsPage from "./pages/PatientDoctorsPage";
+import PatientDoctorBookingPage from "./pages/PatientDoctorBookingPage";
 import PatientPaymentPage from "./pages/PatientPaymentPage";
 
 // Doctor Portal Pages
@@ -146,6 +147,7 @@ export default function App() {
       {/* Patient Routes */}
       <Route path="/patient/dashboard" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientDashboardPage /></ProtectedRoute>} />
       <Route path="/patient/doctors" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientDoctorsPage /></ProtectedRoute>} />
+      <Route path="/patient/doctors/booking" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientDoctorBookingPage /></ProtectedRoute>} />
       <Route path="/patient/payment" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientPaymentPage /></ProtectedRoute>} />
       <Route path="/patient/appointments" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientAppointmentsPage /></ProtectedRoute>} />
       <Route path="/patient/profile" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientProfilePage /></ProtectedRoute>} />
