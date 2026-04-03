@@ -185,7 +185,14 @@ export default function PatientPaymentPage() {
           return;
         }
 
-        const state = location.state || JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+        let state = location.state;
+        if (!state?.doctorUserId) {
+          try {
+            state = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+          } catch {
+            state = null;
+          }
+        }
         if (!state?.doctorUserId) {
           navigate("/patient/doctors", { replace: true });
           return;
@@ -217,8 +224,17 @@ export default function PatientPaymentPage() {
           navigate(`/patient/payment?pending=${pid}`, { replace: true });
         }
       } catch (e) {
-        if (!cancelled)
-          setError(e.response?.data?.detail || e.response?.data?.message || e.message || "Failed to load checkout");
+        if (!cancelled) {
+          const status = e.response?.status;
+          const body = e.response?.data;
+          const msg =
+            body?.message ||
+            body?.detail ||
+            (typeof body === "string" ? body : null) ||
+            e.message ||
+            "Failed to load checkout";
+          setError(status ? `${msg} (${status})` : msg);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
