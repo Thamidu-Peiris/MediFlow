@@ -27,7 +27,7 @@ export default function DoctorShell({ children }) {
 
   const onLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   const portalName = doctorInfo?.clinicName || doctorInfo?.hospitalName || "MediFlow";
