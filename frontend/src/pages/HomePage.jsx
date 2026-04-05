@@ -1,39 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import api from "../api/client";
 
-const doctors = [
-  {
-    name: "Dr. Ruwan Senanayake",
-    specialty: "Orthopedics",
-    rating: "4.8",
-    image:
-      "https://images.unsplash.com/photo-1612277795421-9bc7706a4a41?auto=format&fit=crop&w=700&q=80"
-  },
-  {
-    name: "Dr. Tharushi Wijesinghe",
-    specialty: "Pediatrics",
-    rating: "4.9",
-    image:
-      "https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&w=700&q=80"
-  },
-  {
-    name: "Dr. Malith Gunasekara",
-    specialty: "ENT",
-    rating: "4.7",
-    image:
-      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=700&q=80"
-  },
-  {
-    name: "Dr. Dinithi Fernando",
-    specialty: "Endocrinology",
-    rating: "4.8",
-    image:
-      "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=700&q=80"
-  }
-];
-
-const doctorFallback =
-  "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=700&q=80";
+const doctorFallback = "/doctor-placeholder.svg";
 const bannerFallback =
   "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80";
 const testimonialFallback =
@@ -47,6 +16,7 @@ function fallbackToPlaceholder(e, placeholder) {
 export default function HomePage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [doctors, setDoctors] = useState([]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,6 +24,12 @@ export default function HomePage() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    api.get("/doctors/public").then((res) => {
+      setDoctors((res.data.doctors || []).slice(0, 4));
+    }).catch(() => {});
   }, []);
 
   function closeMobileMenu() {
@@ -271,33 +247,31 @@ export default function HomePage() {
             <p className="mf-section-subtitle">Consult with highly qualified medical professionals</p>
           </div>
           <div className="mf-doctor-grid">
-            {doctors.map((doctor) => (
-              <article key={doctor.name} className="mf-doctor-card">
-                <div className="mf-doctor-img-wrap">
-                  <img
-                    src={doctor.image}
-                    alt={doctor.name}
-                    onError={(e) => fallbackToPlaceholder(e, doctorFallback)}
-                  />
-                  <div className="mf-doctor-specialty-badge">{doctor.specialty}</div>
-                  <div className="mf-doctor-rating-badge">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                    </svg>
-                    {doctor.rating}
+            {doctors.length === 0 ? (
+              <p style={{ color: "#9ca3af", gridColumn: "1/-1", textAlign: "center" }}>No featured doctors available right now.</p>
+            ) : (
+              doctors.map((doctor) => (
+                <article key={doctor._id} className="mf-doctor-card">
+                  <div className="mf-doctor-img-wrap">
+                    <img
+                      src={doctor.image || doctorFallback}
+                      alt={doctor.fullName}
+                      onError={(e) => fallbackToPlaceholder(e, doctorFallback)}
+                    />
+                    <div className="mf-doctor-specialty-badge">{doctor.specialization || "General"}</div>
                   </div>
-                </div>
-                <div className="mf-doctor-info">
-                  <h4>{doctor.name}</h4>
-                  <Link className="mf-doctor-book-btn" to="/doctors">
-                    Book Now
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                  </Link>
-                </div>
-              </article>
-            ))}
+                  <div className="mf-doctor-info">
+                    <h4>{doctor.fullName}</h4>
+                    <Link className="mf-doctor-book-btn" to="/doctors">
+                      Book Now
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                      </svg>
+                    </Link>
+                  </div>
+                </article>
+              ))
+            )}
           </div>
         </div>
       </section>

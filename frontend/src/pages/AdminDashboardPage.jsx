@@ -137,21 +137,55 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const buildActivity = (pendingCount) => {
-    const base = [
-      { icon: "person_add", title: "New patient registered", when: "Just now" },
-      { icon: "verified", title: "Doctor approved", when: "5 mins ago" },
-      { icon: "event", title: "Appointment booked", when: "12 mins ago" },
-      { icon: "payments", title: "Payment completed", when: "25 mins ago" },
-    ];
+  function activityTimeAgo(dateStr) {
+    if (!dateStr) return 'recently';
+    const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+    if (diff < 60) return 'just now';
+    const mins = Math.floor(diff / 60);
+    if (diff < 3600) return mins + ' min' + (mins > 1 ? 's' : '') + ' ago';
+    const hrs = Math.floor(diff / 3600);
+    if (diff < 86400) return hrs + ' hour' + (hrs > 1 ? 's' : '') + ' ago';
+    const days = Math.floor(diff / 86400);
+    return days + ' day' + (days > 1 ? 's' : '') + ' ago';
+  }
 
-    // Add/adjust based on pending doctors count for a “live” feel.
-    const extra = pendingCount > 0
-      ? { icon: "schedule", title: "Doctor approval queue updated", when: `${Math.min(59, pendingCount * 3)} mins ago` }
-      : { icon: "check_circle", title: "Queue is clear", when: "1 hour ago" };
+  const buildActivity = (allUsers, allAppointments) => {
+    const events = [];
 
-    // Keep fixed length for premium layout.
-    return [extra, ...base].slice(0, 7);
+    const recentUsers = [...(allUsers || [])]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 4);
+    recentUsers.forEach((u) => {
+      const isDoc = u.role === 'doctor';
+      const icon = isDoc ? (u.isDoctorVerified ? 'verified' : 'schedule') : 'person_add';
+      let title;
+      if (isDoc) {
+        title = u.isDoctorVerified
+          ? 'Doctor ' + u.name + ' approved'
+          : 'Doctor ' + u.name + ' pending review';
+      } else {
+        title = 'Patient ' + u.name + ' registered';
+      }
+      events.push({ icon, title, when: activityTimeAgo(u.createdAt), _ts: new Date(u.createdAt).getTime() });
+    });
+
+    const recentApts = [...(allAppointments || [])]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 3);
+    recentApts.forEach((a) => {
+      const done = a.status === 'completed';
+      const icon = done ? 'task_alt' : 'event';
+      const patName = a.patientName || 'Patient';
+      const title = done
+        ? 'Appointment completed - ' + patName
+        : 'Appointment booked - ' + patName;
+      events.push({ icon, title, when: activityTimeAgo(a.createdAt), _ts: new Date(a.createdAt).getTime() });
+    });
+
+    return events
+      .sort((a, b) => (b._ts || 0) - (a._ts || 0))
+      .slice(0, 7)
+      .map(({ _ts, ...rest }) => rest);
   };
 
   const loadData = async () => {
@@ -189,8 +223,7 @@ export default function AdminDashboardPage() {
       setReports(normalizeReportsList(rawReports));
 
       const pendingDoctors = (nextUsers || []).filter((u) => u.role === "doctor" && !u.isDoctorVerified);
-      const pendingCount = pendingDoctors.length;
-      setActivity(buildActivity(pendingCount));
+      setActivity(buildActivity(nextUsers, nextAppointments));
 
       await loadDoctorDetails(pendingDoctors);
     } catch (err) {
@@ -221,7 +254,7 @@ export default function AdminDashboardPage() {
     try {
       await api.patch(`/auth/admin/doctors/${id}/verify`, { verified }, authHeaders);
       setActivity((prev) => [
-        { icon: verified ? "verified_user" : "cancel", title: verified ? "Doctor approved" : "Doctor rejected", when: "Just now" },
+        { icon: verified ? "verified_user" : "cancel", title: verified ? "Doctor approved" : "Doctor rejected", when: "just now" },
         ...prev,
       ].slice(0, 7));
       await loadData();
@@ -310,16 +343,9 @@ export default function AdminDashboardPage() {
   }, [globalSearchQuery, users, appointments]);
 
   const recentPayments = useMemo(() => {
-    // Backend doesn’t expose admin payment history yet, so we show UI-ready demo rows.
-    const rev = metrics?.grossRevenueLkr ?? 0;
-    const base = Math.max(1, Math.round(rev / 6));
-    return [
-      { user: "Patient A", amount: base + 2000, status: "verified" },
-      { user: "Patient B", amount: base + 8000, status: "pending" },
-      { user: "Patient C", amount: base - 500, status: "failed" },
-      { user: "Patient D", amount: base + 3000, status: "verified" },
-    ].slice(0, 4);
-  }, [metrics]);
+    // No admin payment history API available yet.
+    return [];
+  }, []);
 
   const recentReportsPreview = useMemo(() => {
     return (reports || []).slice(0, 6);

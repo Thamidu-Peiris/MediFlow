@@ -103,7 +103,7 @@ export default function DashboardPage() {
           <button
             onClick={() => {
               logout();
-              navigate("/login");
+              navigate("/");
             }}
             type="button"
           >

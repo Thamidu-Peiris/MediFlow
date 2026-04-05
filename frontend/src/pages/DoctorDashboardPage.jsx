@@ -4,11 +4,43 @@ import api from "../api/client";
 import DoctorShell from "../components/DoctorShell";
 import { useAuth } from "../context/AuthContext";
 
+function todayDateKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function parseTimeMins(timeStr) {
+  if (!timeStr) return 9999;
+  const m = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return 9999;
+  let h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h === 12) h = 0;
+  if (m[3].toUpperCase() === "PM") h += 12;
+  return h * 60 + min;
+}
+
+function formatTimeDisplay(timeStr) {
+  if (!timeStr) return { hour: "--:--", period: "" };
+  const m = String(timeStr).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return { hour: timeStr, period: "" };
+  return { hour: `${String(m[1]).padStart(2, "0")}:${m[2]}`, period: m[3].toUpperCase() };
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return "";
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 60) return `${diff} secs ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} mins ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hour${Math.floor(diff / 3600) > 1 ? "s" : ""} ago`;
+  return `${Math.floor(diff / 86400)} day${Math.floor(diff / 86400) > 1 ? "s" : ""} ago`;
+}
+
 export default function DoctorDashboardPage() {
   const { authHeaders, user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [doctorInfo, setDoctorInfo] = useState(null);
-  const [today, setToday] = useState(new Date());
+  const [today] = useState(new Date());
 
   useEffect(() => {
     api.get("/doctors/me", authHeaders).then((res) => {
@@ -20,10 +52,28 @@ export default function DoctorDashboardPage() {
     }).catch(() => setAppointments([]));
   }, [authHeaders]);
 
-  const confirmed = appointments.filter((a) => a.status === "confirmed" || a.status === "scheduled");
+  const todayKey = todayDateKey();
   const pending = appointments.filter((a) => a.status === "pending");
+  const todayAppointments = appointments
+    .filter((a) => a.date === todayKey && a.status !== "rejected" && a.status !== "cancelled")
+    .sort((a, b) => parseTimeMins(a.time) - parseTimeMins(b.time));
 
-  const todayStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  // Monthly earnings: completed appointments this month × consultationFee
+  const thisMonth = today.getMonth();
+  const thisYear = today.getFullYear();
+  const completedThisMonth = appointments.filter((a) => {
+    if (a.status !== "completed") return false;
+    const d = new Date(a.createdAt || a.date);
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+  });
+  const monthlyEarnings = completedThisMonth.length * (doctorInfo?.consultationFee || 0);
+
+  // Recent activity: 3 most recently created appointments
+  const recentActivity = [...appointments]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 3);
+
+  const todayStr = today.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 
   return (
     <DoctorShell>
@@ -34,7 +84,7 @@ export default function DoctorDashboardPage() {
           <div className="flex justify-between items-end mb-8">
             <div>
               <h1 className="text-4xl font-headline font-extrabold text-on-surface tracking-tight mb-1">
-                Good Morning, Dr. {doctorInfo?.fullName || user?.name?.split(' ')[0] || 'Doctor'}
+                Good Morning, Dr. {doctorInfo?.fullName || user?.name?.split(" ")[0] || "Doctor"}
               </h1>
               <p className="text-on-surface-variant font-body">Here is what is happening with your practice today.</p>
             </div>
@@ -58,10 +108,10 @@ export default function DoctorDashboardPage() {
                 <div className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600">
                   <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>calendar_month</span>
                 </div>
-                <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-full">+12%</span>
+                <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-full">All time</span>
               </div>
               <p className="text-label-md text-on-surface-variant mb-1 uppercase tracking-wider text-[10px] font-bold">Total Appointments</p>
-              <p className="text-3xl font-headline font-extrabold text-on-surface">{appointments.length || 342}</p>
+              <p className="text-3xl font-headline font-extrabold text-on-surface">{appointments.length}</p>
             </div>
 
             {/* Today's Consultations */}
@@ -70,10 +120,10 @@ export default function DoctorDashboardPage() {
                 <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
                   <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>medical_information</span>
                 </div>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{confirmed.length} remaining</span>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{todayAppointments.length} remaining</span>
               </div>
               <p className="text-label-md text-on-surface-variant mb-1 uppercase tracking-wider text-[10px] font-bold">Today's Consultations</p>
-              <p className="text-3xl font-headline font-extrabold text-on-surface">{confirmed.length || 12}</p>
+              <p className="text-3xl font-headline font-extrabold text-on-surface">{todayAppointments.length}</p>
             </div>
 
             {/* Pending Requests */}
@@ -85,7 +135,7 @@ export default function DoctorDashboardPage() {
                 <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-full">New</span>
               </div>
               <p className="text-label-md text-on-surface-variant mb-1 uppercase tracking-wider text-[10px] font-bold">Pending Requests</p>
-              <p className="text-3xl font-headline font-extrabold text-on-surface">{pending.length || 8}</p>
+              <p className="text-3xl font-headline font-extrabold text-on-surface">{pending.length}</p>
             </div>
 
             {/* Monthly Earnings */}
@@ -95,7 +145,9 @@ export default function DoctorDashboardPage() {
                   <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>payments</span>
                 </div>
                 <p className="text-label-md text-teal-50/70 mb-1 uppercase tracking-wider text-[10px] font-bold">Monthly Earnings</p>
-                <p className="text-2xl font-headline font-extrabold">LKR 450,200.00</p>
+                <p className="text-2xl font-headline font-extrabold">
+                  LKR {monthlyEarnings.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
               </div>
               <div className="absolute -right-4 -bottom-4 opacity-10">
                 <span className="material-symbols-outlined text-[100px]">monetization_on</span>
@@ -117,106 +169,110 @@ export default function DoctorDashboardPage() {
             </div>
 
             <div className="space-y-4">
-              {/* Slot 09:00 AM - Video Call */}
-              <div className="group flex gap-6 p-6 bg-surface-container-lowest rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-teal-900/5 items-center">
-                <div className="w-20 shrink-0">
-                  <p className="text-lg font-headline font-bold text-on-surface">09:00</p>
-                  <p className="text-xs text-on-surface-variant font-bold uppercase tracking-tighter">AM</p>
+              {todayAppointments.length === 0 && (
+                <div className="group flex gap-6 p-6 bg-slate-50 border border-dashed border-slate-300 rounded-2xl items-center opacity-60">
+                  <div className="flex-1 text-center">
+                    <p className="text-sm font-body text-slate-500 font-medium italic">No appointments scheduled for today</p>
+                  </div>
                 </div>
-                <div className="w-px h-12 bg-slate-100"></div>
-                <div className="flex-1 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden">
-                      <img alt="Sarah Jenkins" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" />
-                    </div>
-                    <div>
-                      <h4 className="font-headline font-bold text-on-surface">Sarah Jenkins</h4>
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-xs text-teal-600 font-bold bg-teal-50 px-2 py-0.5 rounded-full">
-                          <span className="material-symbols-outlined text-[10px]" style={{fontVariationSettings: "'FILL' 1"}}>videocam</span>
-                          Video Call
-                        </span>
-                        <span className="text-xs text-on-surface-variant">Follow-up Check</span>
+              )}
+
+              {todayAppointments.map((appt) => {
+                const { hour, period } = formatTimeDisplay(appt.time);
+                const isUrgent = String(appt.reason || "").toLowerCase().includes("urgent") ||
+                  String(appt.notes || "").toLowerCase().includes("urgent");
+                const isPending = appt.status === "pending";
+
+                if (isUrgent) {
+                  return (
+                    <div key={appt._id} className="group flex gap-6 p-6 bg-error-container/30 border border-error/10 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-red-900/5 items-center">
+                      <div className="w-20 shrink-0">
+                        <p className="text-lg font-headline font-bold text-error">{hour}</p>
+                        <p className="text-xs text-error font-bold uppercase tracking-tighter">{period}</p>
                       </div>
+                      <div className="w-px h-12 bg-error/20"></div>
+                      <div className="flex-1 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-error">
+                            <img
+                              alt={appt.patientName}
+                              className="w-full h-full object-cover"
+                              src={appt.patientImage || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80"}
+                            />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <h4 className="font-headline font-bold text-on-surface">{appt.patientName || "Patient"}</h4>
+                              <span className="text-[9px] uppercase tracking-widest bg-error text-white px-2 py-0.5 rounded-full font-extrabold animate-pulse">Urgent</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="flex items-center gap-1 text-xs text-red-700 font-bold bg-red-100 px-2 py-0.5 rounded-full">
+                                <span className="material-symbols-outlined text-[10px]" style={{fontVariationSettings: "'FILL' 1"}}>monitor_heart</span>
+                                {appt.reason || "Consultation"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Link to="/doctor/appointments" className="bg-error text-white text-sm font-bold px-5 py-2 rounded-full hover:opacity-90 transition-all active:scale-95">
+                          Emergency Review
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={appt._id} className="group flex gap-6 p-6 bg-surface-container-lowest rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-teal-900/5 items-center">
+                    <div className="w-20 shrink-0">
+                      <p className="text-lg font-headline font-bold text-on-surface">{hour}</p>
+                      <p className="text-xs text-on-surface-variant font-bold uppercase tracking-tighter">{period}</p>
+                    </div>
+                    <div className="w-px h-12 bg-slate-100"></div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full overflow-hidden">
+                          <img
+                            alt={appt.patientName}
+                            className="w-full h-full object-cover"
+                            src={appt.patientImage || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"}
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-headline font-bold text-on-surface">{appt.patientName || "Patient"}</h4>
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center gap-1 text-xs text-teal-600 font-bold bg-teal-50 px-2 py-0.5 rounded-full">
+                              <span className="material-symbols-outlined text-[10px]" style={{fontVariationSettings: "'FILL' 1"}}>
+                                {isPending ? "pending_actions" : "event_available"}
+                              </span>
+                              {isPending ? "Pending" : "Confirmed"}
+                            </span>
+                            {appt.reason && (
+                              <span className="text-xs text-on-surface-variant">{appt.reason}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <Link to="/doctor/patients" className="text-primary text-sm font-bold px-5 py-2 rounded-full border border-primary hover:bg-teal-50 transition-all active:scale-95">
+                        View Profile
+                      </Link>
                     </div>
                   </div>
-                  <Link to="/doctor/telemedicine" className="bg-primary text-on-primary text-sm font-bold px-5 py-2 rounded-full hover:bg-primary-container transition-all active:scale-95">
-                    Join Call
-                  </Link>
-                </div>
-              </div>
+                );
+              })}
 
-              {/* Slot 10:30 AM - In-person */}
-              <div className="group flex gap-6 p-6 bg-surface-container-lowest rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-teal-900/5 items-center">
-                <div className="w-20 shrink-0">
-                  <p className="text-lg font-headline font-bold text-on-surface">10:30</p>
-                  <p className="text-xs text-on-surface-variant font-bold uppercase tracking-tighter">AM</p>
-                </div>
-                <div className="w-px h-12 bg-slate-100"></div>
-                <div className="flex-1 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden">
-                      <img alt="Mark Thompson" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" />
-                    </div>
-                    <div>
-                      <h4 className="font-headline font-bold text-on-surface">Mark Thompson</h4>
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full">
-                          <span className="material-symbols-outlined text-[10px]" style={{fontVariationSettings: "'FILL' 1"}}>person</span>
-                          In-person
-                        </span>
-                        <span className="text-xs text-on-surface-variant">New Consultation</span>
-                      </div>
-                    </div>
+              {/* Available Slot placeholder when fewer than 3 real slots */}
+              {todayAppointments.length < 3 && (
+                <div className="group flex gap-6 p-6 bg-slate-50 border border-dashed border-slate-300 rounded-2xl items-center opacity-60">
+                  <div className="w-20 shrink-0">
+                    <p className="text-lg font-headline font-bold text-slate-400">--:--</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">--</p>
                   </div>
-                  <Link to="/doctor/patients" className="text-primary text-sm font-bold px-5 py-2 rounded-full border border-primary hover:bg-teal-50 transition-all active:scale-95">
-                    View Profile
-                  </Link>
-                </div>
-              </div>
-
-              {/* Urgent Slot 01:15 PM */}
-              <div className="group flex gap-6 p-6 bg-error-container/30 border border-error/10 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-red-900/5 items-center">
-                <div className="w-20 shrink-0">
-                  <p className="text-lg font-headline font-bold text-error">01:15</p>
-                  <p className="text-xs text-error font-bold uppercase tracking-tighter">PM</p>
-                </div>
-                <div className="w-px h-12 bg-error/20"></div>
-                <div className="flex-1 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-error">
-                      <img alt="Alex Rivera" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="font-headline font-bold text-on-surface">Alex Rivera</h4>
-                        <span className="text-[9px] uppercase tracking-widest bg-error text-white px-2 py-0.5 rounded-full font-extrabold animate-pulse">Urgent</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-xs text-red-700 font-bold bg-red-100 px-2 py-0.5 rounded-full">
-                          <span className="material-symbols-outlined text-[10px]" style={{fontVariationSettings: "'FILL' 1"}}>monitor_heart</span>
-                          Post-op Checkup
-                        </span>
-                      </div>
-                    </div>
+                  <div className="w-px h-12 bg-slate-200"></div>
+                  <div className="flex-1 text-center">
+                    <p className="text-sm font-body text-slate-500 font-medium italic">Available for Appointment Slot</p>
                   </div>
-                  <button className="bg-error text-white text-sm font-bold px-5 py-2 rounded-full hover:opacity-90 transition-all active:scale-95">
-                    Emergency Review
-                  </button>
                 </div>
-              </div>
-
-              {/* Available Slot 03:00 PM */}
-              <div className="group flex gap-6 p-6 bg-slate-50 border border-dashed border-slate-300 rounded-2xl items-center opacity-60">
-                <div className="w-20 shrink-0">
-                  <p className="text-lg font-headline font-bold text-slate-400">03:00</p>
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">PM</p>
-                </div>
-                <div className="w-px h-12 bg-slate-200"></div>
-                <div className="flex-1 text-center">
-                  <p className="text-sm font-body text-slate-500 font-medium italic">Available for Appointment Slot</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -226,38 +282,41 @@ export default function DoctorDashboardPage() {
             <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-headline font-bold text-on-surface">Recent Patient Activity</h3>
-                <button className="text-primary text-xs font-bold hover:underline">See All</button>
+                <Link to="/doctor/appointments" className="text-primary text-xs font-bold hover:underline">See All</Link>
               </div>
               <div className="space-y-6">
-                <div className="flex gap-4 relative">
-                  <div className="w-2 bg-teal-500/20 rounded-full h-full absolute left-[15px] top-8"></div>
-                  <div className="z-10 bg-teal-100 text-teal-700 w-8 h-8 rounded-full shrink-0 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-sm">upload_file</span>
+                {recentActivity.length === 0 && (
+                  <p className="text-sm text-on-surface-variant text-center py-4">No recent activity</p>
+                )}
+                {recentActivity.map((appt, i) => (
+                  <div key={appt._id} className="flex gap-4 relative">
+                    {i < recentActivity.length - 1 && (
+                      <div className="w-2 bg-teal-500/20 rounded-full h-full absolute left-[15px] top-8"></div>
+                    )}
+                    <div className={`z-10 w-8 h-8 rounded-full shrink-0 flex items-center justify-center ${
+                      appt.status === "completed" ? "bg-blue-100 text-blue-700" :
+                      appt.status === "accepted" ? "bg-teal-100 text-teal-700" :
+                      "bg-amber-100 text-amber-700"
+                    }`}>
+                      <span className="material-symbols-outlined text-sm">
+                        {appt.status === "completed" ? "task_alt" :
+                         appt.status === "accepted" ? "event_available" : "pending_actions"}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-on-surface">
+                        <span className="font-bold">{appt.patientName || "Patient"}</span>{" "}
+                        {appt.status === "completed" ? "completed a consultation" :
+                         appt.status === "accepted" ? "appointment confirmed" :
+                         appt.status === "cancelled" || appt.status === "rejected" ? "cancelled appointment" :
+                         "booked an appointment"}
+                      </p>
+                      <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-tighter">
+                        {timeAgo(appt.createdAt)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-on-surface"><span className="font-bold">Sarah Jenkins</span> uploaded a lab report</p>
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-tighter">24 mins ago</p>
-                  </div>
-                </div>
-                <div className="flex gap-4 relative">
-                  <div className="w-2 bg-teal-500/20 rounded-full h-full absolute left-[15px] top-8"></div>
-                  <div className="z-10 bg-blue-100 text-blue-700 w-8 h-8 rounded-full shrink-0 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-sm">payments</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-on-surface"><span className="font-bold">Mark Thompson</span> settled pending invoice</p>
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-tighter">1 hour ago</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="z-10 bg-amber-100 text-amber-700 w-8 h-8 rounded-full shrink-0 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-sm">notification_important</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-on-surface"><span className="font-bold">Pharmacy Alert</span>: Refill request for Room 302</p>
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-tighter">2 hours ago</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -306,4 +365,3 @@ export default function DoctorDashboardPage() {
     </DoctorShell>
   );
 }
-
