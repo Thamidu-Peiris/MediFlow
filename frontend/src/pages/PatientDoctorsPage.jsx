@@ -59,19 +59,22 @@ export default function PatientDoctorsPage() {
     api.get("/doctors/public")
       .then((res) => {
         const docs = res.data.doctors || [];
-        const enhancedDocs = docs.map((doc, idx) => ({
-          ...doc,
-          rating: (4 + Math.random()).toFixed(1),
-          reviewCount: Math.floor(Math.random() * 100) + 10,
-          consultationFee: doc.consultationFee || [1500, 2500, 3500, 4500][idx % 4],
-          image: doc.image || `https://images.unsplash.com/photo-${[
-            "1612349317150-e413f6a5b16d",
-            "1559839734-2b71ea197ec2",
-            "1594824476967-48c8b964273f",
-            "1622253692010-333f2da6031d"
-          ][idx % 4]}?auto=format&fit=crop&w=300&q=80`,
-          availableSlots: timeSlots.slice(0, 4 + (idx % 4))
-        }));
+        const enhancedDocs = docs.map((doc) => {
+          const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+          const todayAvail = (doc.availability || []).find((a) => a.day === today);
+          const availableSlots = (todayAvail?.slots || []).map((s) => {
+            const [h, m] = String(s.start || "").split(":").map(Number);
+            if (isNaN(h)) return null;
+            const ampm = h >= 12 ? "PM" : "AM";
+            const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+            return `${String(h12).padStart(2, "0")}:${String(m || 0).padStart(2, "0")} ${ampm}`;
+          }).filter(Boolean);
+          return {
+            ...doc,
+            image: doc.image || "/doctor-placeholder.svg",
+            availableSlots
+          };
+        });
         setDoctors(enhancedDocs);
         setFilteredDoctors(enhancedDocs);
       })
@@ -303,7 +306,7 @@ export default function PatientDoctorsPage() {
         ) : (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
             {filteredDoctors.map((doctor, idx) => {
-              const verified = parseFloat(doctor.rating) >= 4.5;
+              const verified = doctor.isVerified === true;
               const exp = experienceYears(doctor, idx);
               return (
                 <article
@@ -324,13 +327,15 @@ export default function PatientDoctorsPage() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
+                      {doctor.rating && (
                       <div className="mb-1 flex items-center gap-1 text-primary-container">
                         <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
                           star
                         </span>
                         <span className="text-sm font-bold">{doctor.rating}</span>
-                        <span className="text-xs text-on-surface-variant/60">({doctor.reviewCount} reviews)</span>
+                        {doctor.reviewCount > 0 && <span className="text-xs text-on-surface-variant/60">({doctor.reviewCount} reviews)</span>}
                       </div>
+                    )}
                       <h3 className="mb-1 font-headline text-xl font-bold leading-tight text-on-surface transition-colors group-hover:text-primary">
                         {doctor.fullName}
                       </h3>

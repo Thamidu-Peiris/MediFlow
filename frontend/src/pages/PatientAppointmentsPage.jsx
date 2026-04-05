@@ -105,17 +105,11 @@ export default function PatientAppointmentsPage() {
         api.get("/patients/appointments", authHeaders)
       );
       const apps = res.data?.appointments || [];
-      // Enhance with mock data for demo
-      const enhanced = apps.map((app, idx) => ({
+      const enhanced = apps.map((app) => ({
         ...app,
-        status: app.status || ["confirmed", "pending", "completed", "cancelled"][idx % 4],
-        doctorImage: app.doctorImage || `https://images.unsplash.com/photo-${[
-          "1612349317150-e413f6a5b16d",
-          "1559839734-2b71ea197ec2",
-          "1594824476967-48c8b964273f"
-        ][idx % 3]}?auto=format&fit=crop&w=150&q=80`,
-        specialty: app.specialty || app.specialization || ["Cardiology", "Dermatology", "Neurology", "General"][idx % 4],
-        consultationFee: app.consultationFee || [1500, 2500, 3500][idx % 3]
+        doctorImage: app.doctorImage || "/doctor-placeholder.svg",
+        specialty: app.specialty || app.specialization || "",
+        consultationFee: app.consultationFee || 0
       }));
       setAppointments(enhanced);
     } catch (err) {
@@ -366,9 +360,6 @@ export default function PatientAppointmentsPage() {
                         <span>{appointment.time || "Time TBD"}</span>
                       </div>
                       <div className="aura-appointment-fee">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
                         <span>LKR {appointment.consultationFee?.toLocaleString()}</span>
                       </div>
                     </div>

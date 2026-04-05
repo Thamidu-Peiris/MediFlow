@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import api from "../api/client";
@@ -103,19 +103,19 @@ export default function PatientDashboardPage() {
     api.get("/patients/me", authHeaders).then((res) => {
       setPatientInfo(res.data.patient || {});
     }).catch(() => {});
-    
+
     api.get("/patients/appointments", authHeaders).then((res) => {
       setAppointments(res.data.appointments || []);
     }).catch(() => setAppointments([]));
-    
+
     api.get("/patients/prescriptions", authHeaders).then((res) => {
       setPrescriptions(res.data.prescriptions || []);
     }).catch(() => setPrescriptions([]));
-    
+
     api.get("/patients/reports", authHeaders).then((res) => {
       setReports(normalizeReportsList(res.data.reports || []));
     }).catch(() => setReports([]));
-    
+
     api.get("/doctors", authHeaders).then((res) => {
       setDoctors(res.data.doctors?.slice(0, 3) || []);
     }).catch(() => setDoctors([]));
@@ -130,33 +130,41 @@ export default function PatientDashboardPage() {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const formattedDate = today.toLocaleDateString('en-US', options);
 
-  // Chart Data - Appointment Activity (last 6 months)
-  const appointmentData = [
-    { month: "Jan", visits: 2 },
-    { month: "Feb", visits: 5 },
-    { month: "Mar", visits: 3 },
-    { month: "Apr", visits: 4 },
-    { month: "May", visits: 6 },
-    { month: "Jun", visits: upcoming.length || 2 },
-  ];
+  // Chart Data — computed from real appointments (last 6 months)
+  const appointmentData = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const month = d.toLocaleDateString("en-US", { month: "short" });
+      const visits = appointments.filter((a) => {
+        const ad = new Date(a.date || a.createdAt);
+        return ad.getFullYear() === d.getFullYear() && ad.getMonth() === d.getMonth();
+      }).length;
+      return { month, visits };
+    });
+  }, [appointments]);
 
   // Prescription Status Data
   const activePrescriptions = prescriptions.filter(p => p.status === "active" || !p.endDate || new Date(p.endDate) > new Date()).length;
   const completedPrescriptions = prescriptions.filter(p => p.status === "completed" || (p.endDate && new Date(p.endDate) <= new Date())).length;
   const prescriptionData = [
-    { name: "Active", value: activePrescriptions || 2, color: COLORS.teal },
-    { name: "Completed", value: completedPrescriptions || 5, color: COLORS.gray },
+    { name: "Active", value: activePrescriptions, color: COLORS.teal },
+    { name: "Completed", value: completedPrescriptions, color: COLORS.gray },
   ];
 
-  // Reports Upload Trend
-  const reportsData = [
-    { month: "Jan", reports: 1 },
-    { month: "Feb", reports: 3 },
-    { month: "Mar", reports: 2 },
-    { month: "Apr", reports: 4 },
-    { month: "May", reports: 2 },
-    { month: "Jun", reports: reports.length || 1 },
-  ];
+  // Reports Upload Trend — computed from real reports (last 6 months)
+  const reportsData = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const month = d.toLocaleDateString("en-US", { month: "short" });
+      const count = reports.filter((r) => {
+        const rd = new Date(r.uploadedAt || r.createdAt);
+        return rd.getFullYear() === d.getFullYear() && rd.getMonth() === d.getMonth();
+      }).length;
+      return { month, reports: count };
+    });
+  }, [reports]);
 
   // Summary stats
   const totalVisits = appointments.length;
@@ -168,7 +176,7 @@ export default function PatientDashboardPage() {
       <div className="aura-dashboard">
         <header className="aura-header">
           <div>
-            <h1 className="aura-title">Good morning, {patientInfo?.fullName?.split(' ')[0] || user?.name?.split(' ')[0] || 'Sarah'}</h1>
+            <h1 className="aura-title">Good morning, {patientInfo?.fullName?.split(' ')[0] || user?.name?.split(' ')[0] || 'Patient'}</h1>
             <p className="aura-subtitle">{formattedDate} • You have {upcoming.length} appointment{upcoming.length !== 1 ? 's' : ''} today.</p>
           </div>
         </header>
@@ -244,15 +252,21 @@ export default function PatientDashboardPage() {
               <div className="aura-consultation-content">
                 <div className="aura-consultation-info">
                   <span className="aura-badge" style={{ color: 'white' }}>Next Appointment</span>
-                  <h2 className="aura-doctor-name" style={{ color: 'white' }}>{nextAppointment?.doctorName || 'Dr. Sarah Jenkins'}</h2>
-                  <p className="aura-doctor-specialty" style={{ color: 'rgba(255,255,255,0.9)' }}>{nextAppointment?.specialty || 'Cardiology Specialist'} • {nextAppointment?.time || '10:30 AM Today'}</p>
-                  {nextAppointment && (
-                    <p className="aura-countdown" style={{ color: 'rgba(255,255,255,0.9)' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                      </svg>
-                      {getTimeUntil(new Date(nextAppointment.date))}
-                    </p>
+                  {nextAppointment ? (
+                    <>
+                      <h2 className="aura-doctor-name" style={{ color: 'white' }}>{nextAppointment.doctorName}</h2>
+                      <p className="aura-doctor-specialty" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                        {nextAppointment.specialty || nextAppointment.specialization || ''}{nextAppointment.time ? ` • ${nextAppointment.time}` : ''}
+                      </p>
+                      <p className="aura-countdown" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        {getTimeUntil(new Date(nextAppointment.date))}
+                      </p>
+                    </>
+                  ) : (
+                    <h2 className="aura-doctor-name" style={{ color: 'white' }}>No upcoming appointments</h2>
                   )}
                   <div className="aura-consultation-actions">
                     <Link to={nextAppointment ? `/patient/appointments` : '/doctors'} className="aura-btn-primary">
@@ -264,7 +278,7 @@ export default function PatientDashboardPage() {
                   </div>
                 </div>
                 <div className="aura-doctor-image">
-                  <img src={nextAppointment?.doctorImage || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=300&q=80"} alt="Doctor" />
+                  <img src={nextAppointment?.doctorImage || "/doctor-placeholder.svg"} alt="Doctor" />
                 </div>
               </div>
             </div>
@@ -361,56 +375,9 @@ export default function PatientDashboardPage() {
               </div>
               <div className="aura-documents-list">
                 {recentPrescriptions.length === 0 ? (
-                  <>
-                    <div className="aura-document-item">
-                      <div className="aura-doc-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                        </svg>
-                      </div>
-                      <div className="aura-doc-info">
-                        <p className="aura-doc-name">Blood Test Results</p>
-                        <p className="aura-doc-meta">May 15, 2024 • LabCorp</p>
-                      </div>
-                      <button className="aura-doc-action">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="aura-document-item">
-                      <div className="aura-doc-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>
-                        </svg>
-                      </div>
-                      <div className="aura-doc-info">
-                        <p className="aura-doc-name">Prescription Renewal - Lisinopril</p>
-                        <p className="aura-doc-meta">May 10, 2024 • Dr. Aris Thorne</p>
-                      </div>
-                      <button className="aura-doc-action">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="aura-document-item">
-                      <div className="aura-doc-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                        </svg>
-                      </div>
-                      <div className="aura-doc-info">
-                        <p className="aura-doc-name">Annual Physical Summary</p>
-                        <p className="aura-doc-meta">April 22, 2024 • Aura Wellness</p>
-                      </div>
-                      <button className="aura-doc-action">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </>
+                  <div style={{ padding: '24px', textAlign: 'center', color: '#9ca3af', fontStyle: 'italic' }}>
+                    No documents yet.
+                  </div>
                 ) : (
                   recentPrescriptions.map((item, idx) => (
                     <div key={item._id || idx} className="aura-document-item">
@@ -441,48 +408,19 @@ export default function PatientDashboardPage() {
               <h3 className="aura-card-title" style={{ marginBottom: '24px' }}>My Medical Team</h3>
               <div className="aura-doctors-grid">
                 {doctors.length === 0 ? (
-                  <>
-                    <div className="aura-doctor-item">
-                      <div className="aura-doctor-avatar">
-                        <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=150&q=80" alt="Dr. A. Thorne" />
-                        <span className="aura-status online"></span>
-                      </div>
-                      <div className="aura-doctor-info-sm">
-                        <p className="aura-doctor-name-sm">Dr. A. Thorne</p>
-                        <p className="aura-doctor-spec">Primary Care</p>
-                      </div>
-                    </div>
-                    <div className="aura-doctor-item">
-                      <div className="aura-doctor-avatar">
-                        <img src="https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=150&q=80" alt="Dr. L. Chen" />
-                        <span className="aura-status offline"></span>
-                      </div>
-                      <div className="aura-doctor-info-sm">
-                        <p className="aura-doctor-name-sm">Dr. L. Chen</p>
-                        <p className="aura-doctor-spec">Neurology</p>
-                      </div>
-                    </div>
-                    <div className="aura-doctor-item">
-                      <div className="aura-doctor-avatar">
-                        <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=150&q=80" alt="Dr. K. Miller" />
-                        <span className="aura-status online"></span>
-                      </div>
-                      <div className="aura-doctor-info-sm">
-                        <p className="aura-doctor-name-sm">Dr. K. Miller</p>
-                        <p className="aura-doctor-spec">Orthopedics</p>
-                      </div>
-                    </div>
-                  </>
+                  <div style={{ padding: '16px', textAlign: 'center', color: '#9ca3af', fontStyle: 'italic' }}>
+                    No doctors assigned yet.
+                  </div>
                 ) : (
                   doctors.map((doctor) => (
                     <div key={doctor._id} className="aura-doctor-item">
                       <div className="aura-doctor-avatar">
-                        <img src={doctor.image || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=150&q=80"} alt={doctor.name} />
+                        <img src={doctor.image || "/doctor-placeholder.svg"} alt={doctor.fullName} />
                         <span className={`aura-status ${doctor.status === 'online' ? 'online' : 'offline'}`}></span>
                       </div>
                       <div className="aura-doctor-info-sm">
-                        <p className="aura-doctor-name-sm">{doctor.name}</p>
-                        <p className="aura-doctor-spec">{doctor.specialty}</p>
+                        <p className="aura-doctor-name-sm">{doctor.fullName}</p>
+                        <p className="aura-doctor-spec">{doctor.specialization}</p>
                       </div>
                     </div>
                   ))
