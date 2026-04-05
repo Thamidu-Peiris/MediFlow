@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../api/client";
 import DoctorShell from "../components/DoctorShell";
 import { useAuth } from "../context/AuthContext";
@@ -14,6 +14,8 @@ export default function DoctorProfilePage() {
         bio: "",
         consultationFee: 0
     });
+    const [imagePreview, setImagePreview] = useState("");
+    const fileInputRef = useRef(null);
     const [loading, setLoading] = useState(true);
     const [msg, setMsg] = useState("");
     const [saving, setSaving] = useState(false);
@@ -32,6 +34,7 @@ export default function DoctorProfilePage() {
                         bio: d.bio || "",
                         consultationFee: d.consultationFee || 0
                     });
+                    if (d.image) setImagePreview(d.image);
                 }
             })
             .catch((e) => {
@@ -44,6 +47,35 @@ export default function DoctorProfilePage() {
 
     const handleChange = (e) => {
         setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            setMsg("Image must be under 2MB");
+            return;
+        }
+        // Show local preview immediately
+        const reader = new FileReader();
+        reader.onload = (ev) => setImagePreview(ev.target.result);
+        reader.readAsDataURL(file);
+
+        // Upload to Cloudinary via backend
+        try {
+            setSaving(true);
+            setMsg("Uploading image...");
+            const formPayload = new FormData();
+            formPayload.append("image", file);
+            // Pass only the Authorization header — let Axios set Content-Type with boundary automatically for FormData
+            const res = await api.post("/doctors/upload-image", formPayload, authHeaders);
+            setImagePreview(res.data.imageUrl);
+            setMsg("Image uploaded successfully!");
+        } catch (err) {
+            setMsg(err.response?.data?.message || "Failed to upload image");
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -101,6 +133,33 @@ export default function DoctorProfilePage() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Profile Image Upload */}
+                        <div className="flex flex-col items-center gap-3 pb-2">
+                            <div className="relative">
+                                <img
+                                    src={imagePreview || "/doctor-placeholder.svg"}
+                                    alt="Profile"
+                                    className="w-28 h-28 rounded-full object-cover border-4 border-teal-500/20 shadow"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1.5 shadow hover:bg-teal-700 transition-all"
+                                    title="Change photo"
+                                >
+                                    <span className="material-symbols-outlined text-sm">photo_camera</span>
+                                </button>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleImageChange}
+                            />
+                            <p className="text-xs text-on-surface-variant">Click the camera icon to upload a profile photo (max 2MB)</p>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label className="block text-sm font-bold text-on-surface-variant mb-2 uppercase tracking-wider">Full Name</label>

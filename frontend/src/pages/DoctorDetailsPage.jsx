@@ -9,11 +9,6 @@ const timeSlots = [
   "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM"
 ];
 
-const reviews = [
-  { id: 1, name: "Sarah M.", rating: 5, date: "2 weeks ago", text: "Excellent doctor! Very thorough and professional. Highly recommend." },
-  { id: 2, name: "John D.", rating: 5, date: "1 month ago", text: "Dr. was very patient and explained everything clearly. Great experience." },
-  { id: 3, name: "Emily R.", rating: 4, date: "2 months ago", text: "Good consultation. Wait time was a bit long but worth it." }
-];
 
 export default function DoctorDetailsPage() {
   const { id } = useParams();
@@ -37,20 +32,15 @@ export default function DoctorDetailsPage() {
         const found = docs.find(d => d._id === id || d.userId === id);
         
         if (found) {
+          const availableDays = (found.availability || [])
+            .filter((a) => a.slots?.length > 0)
+            .map((a) => a.day.slice(0, 3));
           setDoctor({
             ...found,
-            rating: (4 + Math.random()).toFixed(1),
-            reviewCount: Math.floor(Math.random() * 100) + 20,
-            experience: Math.floor(Math.random() * 15) + 5,
-            image: found.image || `https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=400&q=80`,
-            about: found.about || "Experienced medical professional dedicated to providing quality healthcare services. Committed to patient care and staying updated with the latest medical advancements.",
-            education: [
-              "MBBS - University of Colombo",
-              "MD - Specialty Training",
-              "Board Certified"
-            ],
-            languages: ["English", "Sinhala", "Tamil"],
-            availableDays: ["Mon", "Tue", "Wed", "Thu", "Fri"]
+            image: found.image || "/doctor-placeholder.svg",
+            about: found.bio || found.about || "",
+            education: found.qualifications?.length ? found.qualifications : [],
+            availableDays
           });
         }
       } catch (err) {
@@ -182,24 +172,17 @@ export default function DoctorDetailsPage() {
             <h1>{doctor.fullName}</h1>
             <p className="aura-doctor-profile-specialty">{doctor.specialization || "General Practitioner"}</p>
             
-            <div className="aura-doctor-profile-rating">
-              <div className="aura-stars">{renderStars(doctor.rating)}</div>
-              <span className="aura-rating-value">{doctor.rating}</span>
-              <span className="aura-review-count">({doctor.reviewCount} reviews)</span>
-            </div>
+            {doctor.rating && (
+              <div className="aura-doctor-profile-rating">
+                <div className="aura-stars">{renderStars(doctor.rating)}</div>
+                <span className="aura-rating-value">{doctor.rating}</span>
+                {doctor.reviewCount > 0 && <span className="aura-review-count">({doctor.reviewCount} reviews)</span>}
+              </div>
+            )}
 
             <div className="aura-doctor-profile-meta">
               <div className="aura-meta-item">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                </svg>
-                <span>{doctor.experience}+ years experience</span>
-              </div>
-              <div className="aura-meta-item">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-                <span>LKR {doctor.consultationFee?.toLocaleString() || "2000"} per session</span>
+                <span>LKR {(doctor.consultationFee || 0).toLocaleString()} per session</span>
               </div>
               <div className="aura-meta-item">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -241,16 +224,6 @@ export default function DoctorDetailsPage() {
             </ul>
           </div>
 
-          {/* Languages Section */}
-          <div className="aura-details-card">
-            <h3>Languages</h3>
-            <div className="aura-languages">
-              {doctor.languages?.map(lang => (
-                <span key={lang} className="aura-language-tag">{lang}</span>
-              ))}
-            </div>
-          </div>
-
           {/* Available Slots Section */}
           <div className="aura-details-card">
             <h3>Available Time Slots</h3>
@@ -263,23 +236,9 @@ export default function DoctorDetailsPage() {
 
           {/* Reviews Section */}
           <div className="aura-details-card aura-reviews-card">
-            <h3>Patient Reviews ({doctor.reviewCount})</h3>
+            <h3>Patient Reviews</h3>
             <div className="aura-reviews-list">
-              {reviews.map(review => (
-                <div key={review.id} className="aura-review-item">
-                  <div className="aura-review-header">
-                    <div className="aura-review-avatar">{review.name.charAt(0)}</div>
-                    <div>
-                      <p className="aura-review-name">{review.name}</p>
-                      <p className="aura-review-date">{review.date}</p>
-                    </div>
-                    <div className="aura-review-stars">
-                      {renderStars(review.rating)}
-                    </div>
-                  </div>
-                  <p className="aura-review-text">{review.text}</p>
-                </div>
-              ))}
+              <p style={{ color: "#9ca3af", fontStyle: "italic" }}>No reviews yet.</p>
             </div>
           </div>
         </div>
@@ -313,10 +272,7 @@ export default function DoctorDetailsPage() {
               <div className="aura-form-group">
                 <label>Consultation Fee</label>
                 <div className="aura-fee-display">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  </svg>
-                  <span>LKR {(doctor.consultationFee || 2000).toLocaleString()}</span>
+                  <span>LKR {(doctor.consultationFee || 0).toLocaleString()}</span>
                 </div>
               </div>
 

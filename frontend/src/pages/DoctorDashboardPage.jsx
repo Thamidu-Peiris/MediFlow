@@ -108,7 +108,7 @@ export default function DoctorDashboardPage() {
                 <div className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600">
                   <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>calendar_month</span>
                 </div>
-                <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-full">+12%</span>
+                <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-full">All time</span>
               </div>
               <p className="text-label-md text-on-surface-variant mb-1 uppercase tracking-wider text-[10px] font-bold">Total Appointments</p>
               <p className="text-3xl font-headline font-extrabold text-on-surface">{appointments.length}</p>

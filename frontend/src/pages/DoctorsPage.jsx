@@ -67,19 +67,22 @@ export default function DoctorsPage() {
       .then((res) => {
         const docs = res.data.doctors || [];
         // Add mock data for demo
-        const enhancedDocs = docs.map((doc, idx) => ({
-          ...doc,
-          rating: (4 + Math.random()).toFixed(1),
-          reviewCount: Math.floor(Math.random() * 100) + 10,
-          consultationFee: doc.consultationFee || [1500, 2500, 3500, 4500][idx % 4],
-          image: doc.image || `https://images.unsplash.com/photo-${[
-            "1612349317150-e413f6a5b16d",
-            "1559839734-2b71ea197ec2",
-            "1594824476967-48c8b964273f",
-            "1622253692010-333f2da6031d"
-          ][idx % 4]}?auto=format&fit=crop&w=300&q=80`,
-          availableSlots: timeSlots.slice(0, 4 + (idx % 4))
-        }));
+        const enhancedDocs = docs.map((doc) => {
+          const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+          const todayAvail = (doc.availability || []).find((a) => a.day === today);
+          const availableSlots = (todayAvail?.slots || []).map((s) => {
+            const [h, m] = String(s.start || "").split(":").map(Number);
+            if (isNaN(h)) return null;
+            const ampm = h >= 12 ? "PM" : "AM";
+            const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+            return `${String(h12).padStart(2, "0")}:${String(m || 0).padStart(2, "0")} ${ampm}`;
+          }).filter(Boolean);
+          return {
+            ...doc,
+            image: doc.image || "/doctor-placeholder.svg",
+            availableSlots
+          };
+        });
         setDoctors(enhancedDocs);
         setFilteredDoctors(enhancedDocs);
       })
@@ -326,16 +329,15 @@ export default function DoctorsPage() {
                   <h3 className="aura-doctor-name">{doctor.fullName}</h3>
                   <p className="aura-doctor-specialty">{doctor.specialization || "General Practitioner"}</p>
                   
-                  <div className="aura-doctor-rating">
-                    <div className="aura-stars">{renderStars(doctor.rating)}</div>
-                    <span className="aura-rating-value">{doctor.rating}</span>
-                    <span className="aura-review-count">({doctor.reviewCount} reviews)</span>
-                  </div>
+                  {doctor.rating && (
+                    <div className="aura-doctor-rating">
+                      <div className="aura-stars">{renderStars(doctor.rating)}</div>
+                      <span className="aura-rating-value">{doctor.rating}</span>
+                      {doctor.reviewCount > 0 && <span className="aura-review-count">({doctor.reviewCount} reviews)</span>}
+                    </div>
+                  )}
                   
                   <div className="aura-doctor-fee">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
                     <span>LKR {doctor.consultationFee?.toLocaleString()}</span>
                   </div>
 
@@ -345,18 +347,19 @@ export default function DoctorsPage() {
                     </p>
                   )}
 
-                  {/* Available Time Slots */}
-                  <div className="aura-timeslots">
-                    <label>Available Today:</label>
-                    <div className="aura-timeslot-list">
-                      {doctor.availableSlots?.slice(0, 4).map((slot) => (
-                        <span key={slot} className="aura-timeslot">{slot}</span>
-                      ))}
-                      {doctor.availableSlots?.length > 4 && (
-                        <span className="aura-timeslot-more">+{doctor.availableSlots.length - 4} more</span>
-                      )}
+                  {doctor.availableSlots?.length > 0 && (
+                    <div className="aura-timeslots">
+                      <label>Available Today:</label>
+                      <div className="aura-timeslot-list">
+                        {doctor.availableSlots.slice(0, 4).map((slot) => (
+                          <span key={slot} className="aura-timeslot">{slot}</span>
+                        ))}
+                        {doctor.availableSlots.length > 4 && (
+                          <span className="aura-timeslot-more">+{doctor.availableSlots.length - 4} more</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="aura-doctor-actions">
@@ -413,9 +416,6 @@ export default function DoctorsPage() {
               <div className="aura-form-group">
                 <label>Consultation Fee</label>
                 <div className="aura-fee-display">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  </svg>
                   <span>LKR {selectedDoctor.consultationFee?.toLocaleString()}</span>
                 </div>
               </div>
@@ -505,9 +505,6 @@ export default function DoctorsPage() {
                   <span>({selectedDoctor.reviewCount} reviews)</span>
                 </div>
                 <div className="aura-profile-fee">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  </svg>
                   LKR {selectedDoctor.consultationFee?.toLocaleString()} per session
                 </div>
               </div>
