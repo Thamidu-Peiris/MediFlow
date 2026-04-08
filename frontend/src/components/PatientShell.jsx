@@ -82,7 +82,7 @@ export default function PatientShell({ children }) {
 
   const onLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   return (

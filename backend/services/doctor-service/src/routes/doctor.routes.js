@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 const {
     upsertProfile,
     getMyProfile,
@@ -8,11 +9,20 @@ const {
     getDoctorById,
     getPatientReports,
     issuePrescription,
-    listIssuedPrescriptions
+    listIssuedPrescriptions,
+    uploadProfileImage
 } = require("../controllers/doctor.controller");
 const { verifyAuth, requireDoctorRole } = require("../middleware/auth.middleware");
 
 const router = express.Router();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith("image/")) cb(null, true);
+        else cb(new Error("Only image files are allowed"));
+    }
+});
 
 // Public
 router.get("/public", getPublicDoctors);
@@ -25,6 +35,7 @@ router.get("/all", verifyAuth, getAllDoctors);
 router.get("/me", verifyAuth, requireDoctorRole, getMyProfile);
 router.put("/update-profile", verifyAuth, requireDoctorRole, upsertProfile);
 router.put("/availability", verifyAuth, requireDoctorRole, setAvailability);
+router.post("/upload-image", verifyAuth, requireDoctorRole, upload.single("image"), uploadProfileImage);
 
 router.get("/prescriptions", verifyAuth, requireDoctorRole, listIssuedPrescriptions);
 router.post("/prescriptions", verifyAuth, requireDoctorRole, issuePrescription);

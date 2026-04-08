@@ -27,7 +27,7 @@ export default function DoctorShell({ children }) {
 
   const onLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   const portalName = doctorInfo?.clinicName || doctorInfo?.hospitalName || "MediFlow";
@@ -128,9 +128,6 @@ export default function DoctorShell({ children }) {
                 aria-label="Notifications"
               >
                 <span className="material-symbols-rounded text-[22px]">notifications</span>
-                <span className="absolute -top-1 -left-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#dc2626] px-1 text-[10px] font-bold text-white">
-                  3
-                </span>
               </button>
               <Link
                 to="/doctor/profile"

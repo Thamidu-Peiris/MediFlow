@@ -38,6 +38,7 @@ const doctorSchema = new mongoose.Schema(
         qualifications: [{ type: String }],
         bio: { type: String, default: "" },
         consultationFee: { type: Number, default: 0 },
+        image: { type: String, default: "" },
         isVerified: { type: Boolean, default: false },
         availability: [dayScheduleSchema],
         prescriptions: [prescriptionSchema]

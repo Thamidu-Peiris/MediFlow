@@ -121,7 +121,7 @@ export default function AdminShell({ children }) {
             className="aura-logout-btn"
             onClick={() => {
               logout();
-              navigate("/login");
+              navigate("/");
             }}
           >
             <span className="material-symbols-outlined">logout</span>
@@ -167,7 +167,7 @@ export default function AdminShell({ children }) {
                     onClick={() => {
                       setProfileOpen(false);
                       logout();
-                      navigate("/login");
+                      navigate("/");
                     }}
                   >
                     <span className="material-symbols-outlined">logout</span>

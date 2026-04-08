@@ -1,4 +1,5 @@
 const axios = require("axios");
+const cloudinary = require("../config/cloudinary");
 const Doctor = require("../models/doctor.model");
 
 // ── Profile ──────────────────────────────────────────────────────────────────
@@ -12,27 +13,31 @@ exports.upsertProfile = async (req, res) => {
             specialization = "",
             qualifications = [],
             bio = "",
-            consultationFee = 0
+            consultationFee = 0,
+            image
         } = req.body;
 
         if (!fullName) {
             return res.status(400).json({ message: "fullName is required" });
         }
 
+        const updateFields = {
+            userId: req.user.sub,
+            fullName,
+            email: email.toLowerCase(),
+            phone,
+            specialization,
+            qualifications,
+            bio,
+            consultationFee
+        };
+        if (image !== undefined) {
+            updateFields.image = image;
+        }
+
         const doctor = await Doctor.findOneAndUpdate(
             { userId: req.user.sub },
-            {
-                $set: {
-                    userId: req.user.sub,
-                    fullName,
-                    email: email.toLowerCase(),
-                    phone,
-                    specialization,
-                    qualifications,
-                    bio,
-                    consultationFee
-                }
-            },
+            { $set: updateFields },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
@@ -91,7 +96,7 @@ exports.getPublicDoctors = async (req, res) => {
         }
 
         const doctors = await Doctor.find({ isVerified: true })
-            .select("_id userId fullName specialization qualifications bio consultationFee availability")
+            .select("_id userId fullName specialization qualifications bio consultationFee availability image")
             .sort({ fullName: 1 });
         return res.status(200).json({ doctors });
     } catch (error) {
@@ -107,7 +112,7 @@ exports.getAllDoctors = async (req, res) => {
         }
 
         const doctors = await Doctor.find()
-            .select("_id userId fullName specialization qualifications bio consultationFee availability isVerified")
+            .select("_id userId fullName specialization qualifications bio consultationFee availability isVerified image")
             .sort({ fullName: 1 });
         return res.status(200).json({ doctors });
     } catch (error) {
@@ -118,7 +123,7 @@ exports.getAllDoctors = async (req, res) => {
 exports.getDoctorById = async (req, res) => {
     try {
         const doctor = await Doctor.findById(req.params.id).select(
-            "_id userId fullName specialization qualifications bio consultationFee availability"
+            "_id userId fullName specialization qualifications bio consultationFee availability image"
         );
         if (!doctor) {
             return res.status(404).json({ message: "Doctor not found" });
@@ -198,5 +203,41 @@ exports.listIssuedPrescriptions = async (req, res) => {
         return res.status(200).json({ prescriptions: doctor.prescriptions || [] });
     } catch (error) {
         return res.status(500).json({ message: "Failed to fetch prescriptions" });
+    }
+};
+
+// ── Profile Image Upload ───────────────────────────────────────────────────────
+
+exports.uploadProfileImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No image file provided" });
+        }
+
+        const result = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                {
+                    folder: "mediflow/doctors",
+                    public_id: "doctor_" + req.user.sub,
+                    overwrite: true,
+                    transformation: [{ width: 400, height: 400, crop: "fill", gravity: "face" }]
+                },
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result);
+                }
+            );
+            stream.end(req.file.buffer);
+        });
+
+        await Doctor.findOneAndUpdate(
+            { userId: req.user.sub },
+            { $set: { image: result.secure_url } }
+        );
+
+        return res.status(200).json({ imageUrl: result.secure_url });
+    } catch (error) {
+        console.error("Cloudinary upload error:", error);
+        return res.status(500).json({ message: "Failed to upload image" });
     }
 };

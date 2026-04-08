@@ -1,7 +1,16 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const mongoose = require("mongoose");
 const User = require("../models/user.model");
 const { generateToken } = require("../services/auth.service");
+
+// Minimal reference to the doctors collection (owned by doctor-service, same DB)
+const DoctorRef =
+  mongoose.models.DoctorRef ||
+  mongoose.model(
+    "DoctorRef",
+    new mongoose.Schema({ userId: { type: String, index: true }, isVerified: Boolean }, { collection: "doctors" })
+  );
 
 exports.register = async (req, res) => {
   try {
@@ -236,6 +245,12 @@ exports.verifyDoctor = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Doctor not found" });
     }
+
+    // Sync isVerified to the doctors collection (doctor-service, same DB)
+    await DoctorRef.updateOne(
+      { userId: user._id.toString() },
+      { $set: { isVerified: Boolean(verified) } }
+    );
 
     return res.status(200).json({ user });
   } catch (error) {
