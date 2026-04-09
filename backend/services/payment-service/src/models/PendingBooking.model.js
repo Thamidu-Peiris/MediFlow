@@ -10,6 +10,7 @@ const pendingBookingSchema = new mongoose.Schema(
     date: { type: String, required: true },
     time: { type: String, required: true },
     reason: { type: String, default: "" },
+    appointmentType: { type: String, enum: ["physical", "online"], default: "physical" },
     currency: { type: String, default: "LKR" },
     consultationFeeCents: { type: Number, required: true },
     serviceFeeCents: { type: Number, default: 0 },

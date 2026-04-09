@@ -245,7 +245,7 @@ export default function DoctorsPage() {
                         <button type="button" onClick={() => navigate(`/doctors/${doctor._id}`)} className="rounded-full bg-secondary-container px-6 py-4 text-sm font-headline font-bold text-on-secondary-fixed-variant transition-all hover:bg-surface-container-high active:scale-[0.98]">View Profile</button>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>

@@ -63,6 +63,7 @@ export default function PatientDoctorBookingPage() {
   const [occupiedTimes, setOccupiedTimes] = useState([]);
   const [myBookedTimes, setMyBookedTimes] = useState([]);
   const [reason, setReason] = useState("");
+  const [appointmentType, setAppointmentType] = useState("physical");
   const [bookingMsg, setBookingMsg] = useState("");
 
   useEffect(() => {
@@ -216,6 +217,7 @@ export default function PatientDoctorBookingPage() {
       date: selectedDate,
       time: selectedTime,
       reason,
+      appointmentType,
       consultationFee: doctor.consultationFee || 0,
     };
     try {
@@ -465,6 +467,42 @@ export default function PatientDoctorBookingPage() {
                 </div>
 
                 <div className="mt-6 w-full text-left">
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">
+                    Appointment Type
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAppointmentType("physical")}
+                      className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 py-3 px-2 text-xs font-bold transition-all ${
+                        appointmentType === "physical"
+                          ? "border-primary bg-primary-fixed/20 text-primary"
+                          : "border-outline-variant/20 bg-surface-container-lowest text-on-surface-variant hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-xl" style={appointmentType === "physical" ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                        local_hospital
+                      </span>
+                      In-Person
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAppointmentType("online")}
+                      className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 py-3 px-2 text-xs font-bold transition-all ${
+                        appointmentType === "online"
+                          ? "border-primary bg-primary-fixed/20 text-primary"
+                          : "border-outline-variant/20 bg-surface-container-lowest text-on-surface-variant hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-xl" style={appointmentType === "online" ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                        videocam
+                      </span>
+                      Online
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 w-full text-left">
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">
                     Reason for visit
                   </label>

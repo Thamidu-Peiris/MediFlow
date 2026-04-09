@@ -206,6 +206,7 @@ export default function PatientPaymentPage() {
           date: state.date,
           time: state.time,
           reason: state.reason,
+          appointmentType: state.appointmentType || "physical",
           consultationFee: state.consultationFee,
         };
         if (!createPendingBookingFlight) {
