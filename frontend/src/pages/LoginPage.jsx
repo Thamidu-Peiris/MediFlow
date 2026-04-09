@@ -44,7 +44,7 @@ export default function LoginPage() {
         <span className="material-symbols-outlined select-none text-[360px] md:text-[600px]">add_notes</span>
       </div>
 
-      <main className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1100px] items-center gap-12 px-6 pb-10 pt-28 lg:grid-cols-2">
+      <main className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1100px] items-center gap-8 px-6 pb-6 pt-24 lg:grid-cols-2">
         <section className="hidden space-y-12 lg:flex lg:flex-col">
           <div className="space-y-6">
             <Link to="/" className="flex w-fit items-center gap-2">
@@ -62,39 +62,11 @@ export default function LoginPage() {
               protection.
             </p>
           </div>
-
-          <div className="rounded-xl border border-outline-variant/10 bg-surface-container-low p-6 shadow-[0px_20px_40px_rgba(0,29,50,0.04)]">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-headline text-sm font-bold uppercase tracking-widest text-on-surface-variant">Recent Activity</h3>
-              <span className="material-symbols-outlined text-sm text-primary">security</span>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 rounded-lg bg-surface-container-lowest p-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container">
-                  <span className="material-symbols-outlined text-xl text-on-surface-variant">laptop_mac</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">Windows Desktop</p>
-                  <p className="text-xs text-on-surface-variant">Sri Lanka • 2 hours ago</p>
-                </div>
-                <div className="h-2 w-2 rounded-full bg-primary" />
-              </div>
-              <div className="flex items-center gap-4 rounded-lg bg-surface-container-lowest/50 p-3 opacity-60">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container">
-                  <span className="material-symbols-outlined text-xl text-on-surface-variant">smartphone</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">Mobile Device</p>
-                  <p className="text-xs text-on-surface-variant">Yesterday</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </section>
 
         <section className="mx-auto w-full max-w-[480px]">
-          <div className="relative overflow-hidden rounded-3xl bg-surface-container-lowest p-8 shadow-[0px_20px_40px_rgba(0,29,50,0.06)] md:p-12">
-            <div className="mb-10 flex flex-col items-center lg:hidden">
+          <div className="relative overflow-hidden rounded-3xl bg-surface-container-lowest p-4 shadow-[0px_20px_40px_rgba(0,29,50,0.06)] md:p-6">
+            <div className="mb-6 flex flex-col items-center lg:hidden">
               <Link to="/" className="mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-3xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
                   health_and_safety
@@ -103,7 +75,7 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <div className="mb-8 text-center lg:text-left">
+            <div className="mb-4 text-center lg:text-left">
               <h2 className="mb-2 font-headline text-3xl font-extrabold text-on-surface">Welcome Back</h2>
               <p className="font-medium text-on-surface-variant">Continue to your clinical dashboard</p>
             </div>
@@ -115,13 +87,13 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={onSubmit} className="space-y-6">
+            <form onSubmit={onSubmit} className="space-y-4">
               <div className="group relative">
                 <div className="pointer-events-none absolute left-4 top-1/2 flex -translate-y-1/2 items-center text-on-surface-variant transition-colors group-focus-within:text-primary">
                   <span className="material-symbols-outlined">mail</span>
                 </div>
                 <input
-                  className="w-full rounded-xl border-none bg-surface-container-low py-4 pl-12 pr-4 font-medium text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl border-none bg-surface-container-low py-3.5 pl-12 pr-4 font-medium text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20"
                   placeholder="Email Address"
                   type="email"
                   value={form.email}
@@ -135,7 +107,7 @@ export default function LoginPage() {
                   <span className="material-symbols-outlined">lock</span>
                 </div>
                 <input
-                  className="w-full rounded-xl border-none bg-surface-container-low py-4 pl-12 pr-12 font-medium text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl border-none bg-surface-container-low py-3.5 pl-12 pr-12 font-medium text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20"
                   placeholder="Password"
                   type={showPassword ? "text" : "password"}
                   value={form.password}
@@ -167,7 +139,7 @@ export default function LoginPage() {
               </div>
 
               <button
-                className="flex w-full items-center justify-center gap-3 rounded-full bg-primary py-4 text-lg font-bold text-on-primary shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex w-full items-center justify-center gap-3 rounded-full bg-primary py-3.5 text-lg font-bold text-on-primary shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
                 type="submit"
                 disabled={loading}
               >
@@ -190,9 +162,9 @@ export default function LoginPage() {
                 <div className="flex-grow border-t border-outline-variant/30" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <button
-                  className="flex items-center justify-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container px-4 py-3 text-sm font-bold transition-colors hover:bg-surface-container-high"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container px-4 py-2.5 text-sm font-bold transition-colors hover:bg-surface-container-high"
                   type="button"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -204,7 +176,7 @@ export default function LoginPage() {
                   Google
                 </button>
                 <button
-                  className="group flex items-center justify-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container px-4 py-3 text-sm font-bold transition-colors hover:bg-surface-container-high"
+                  className="group flex items-center justify-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container px-4 py-2.5 text-sm font-bold transition-colors hover:bg-surface-container-high"
                   type="button"
                 >
                   <span className="material-symbols-outlined text-primary transition-transform group-hover:scale-110">fingerprint</span>
