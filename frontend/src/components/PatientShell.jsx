@@ -6,7 +6,7 @@ import { useAuthMediaSrc } from "../hooks/useAuthMediaSrc";
 
 const navItems = [
   { to: "/patient/dashboard", label: "Dashboard", icon: "dashboard" },
-  { to: "/patient/appointments", label: "Appointments", icon: "calendar" },
+  { to: "/patient/appointments", label: "Appointments", icon: "calendar_month" },
   { to: "/patient/doctors", label: "Doctors", icon: "medical_services" },
   { to: "/patient/reports", label: "Reports", icon: "description" },
   { to: "/ai-checker", label: "AI Checker", icon: "psychology" },
@@ -64,20 +64,23 @@ const pageTitles = {
   "/ai-checker": { title: "AI Symptom Checker", subtitle: "AI-powered symptom analysis and health insights" },
 };
 
-const DEFAULT_AVATAR = `${import.meta.env.BASE_URL}default-profile-avatar.png`;
-
 export default function PatientShell({ children }) {
-  const { user, logout, authHeaders, token } = useAuth();
+  const { logout, authHeaders, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [patientInfo, setPatientInfo] = useState(null);
   const resolvedAvatar = useAuthMediaSrc(patientInfo?.avatar || "", token);
-  const avatarImgSrc = resolvedAvatar || DEFAULT_AVATAR;
+  const avatarImgSrc = resolvedAvatar || "";
 
   useEffect(() => {
-    api.get("/patients/me", authHeaders).then((res) => {
-      setPatientInfo(res.data.patient || {});
-    }).catch(() => {});
+    api
+      .get("/patients/me", authHeaders)
+      .then((res) => {
+        setPatientInfo(res.data.patient || null);
+      })
+      .catch(() => {
+        setPatientInfo(null);
+      });
   }, [authHeaders]);
 
   const onLogout = () => {
@@ -85,89 +88,115 @@ export default function PatientShell({ children }) {
     navigate("/");
   };
 
+  const activePageTitle = (() => {
+    const p = location.pathname;
+    if (p === "/patient/dashboard" || p.startsWith("/patient/dashboard/")) return "Dashboard";
+    if (p === "/patient/appointments" || p.startsWith("/patient/appointments/")) return "Appointments";
+    if (p === "/patient/doctors" || p.startsWith("/patient/doctors/")) return "Doctors";
+    if (p === "/patient/reports" || p.startsWith("/patient/reports/")) return "Reports";
+    if (p === "/ai-checker" || p.startsWith("/ai-checker/")) return "AI Checker";
+    if (p === "/patient/prescriptions" || p.startsWith("/patient/prescriptions/")) return "Prescriptions";
+    if (p === "/patient/profile" || p.startsWith("/patient/profile/")) return "Profile";
+    return "Dashboard";
+  })();
   return (
-    <div className="aura-shell">
-      {/* Sidebar */}
-      <aside className="aura-sidebar">
-        <div className="aura-sidebar-header">
-          {/* User Profile Section */}
-          <div className="aura-user-profile">
-            <div className="aura-user-avatar">
-              <img 
-                src={avatarImgSrc} 
-                alt={patientInfo?.fullName || user?.name} 
-              />
-            </div>
-            <div className="aura-user-info">
-              <p className="aura-welcome-text">Welcome back</p>
-              <p className="aura-user-name">{patientInfo?.fullName || user?.name || "Sarah Jenkins"}</p>
-            </div>
-          </div>
-          
-          {/* Book Appointment Button */}
-          <Link to="/patient/doctors" className="aura-book-btn">
+    <div className="flex min-h-screen bg-slate-100 text-on-surface">
+      <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 shrink-0 flex-col border-r border-slate-200/80 bg-white py-6 shadow-[1px_0_0_rgba(0,0,0,0.04)]">
+        <div className="mb-8 px-6">
+          <h1 className="font-headline text-xl font-bold tracking-tight text-teal-800">MediFlow</h1>
+          <p className="text-xs font-medium uppercase tracking-widest text-on-surface-variant">Patient Portal</p>
+        </div>
+
+        <div className="mb-6 px-6">
+          <Link
+            to="/patient/doctors"
+            className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-sm transition-colors hover:bg-primary-container"
+          >
+            <span className="material-symbols-outlined text-[18px]">calendar_month</span>
             Book Appointment
           </Link>
         </div>
 
-        {/* Navigation */}
-        <nav className="aura-sidebar-nav">
+        <nav className="flex-1 space-y-1 px-4">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+            const isActive =
+              item.to === "/patient/dashboard"
+                ? location.pathname === "/patient/dashboard"
+                : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
             return (
-              <Link 
-                key={item.to} 
-                to={item.to} 
-                className={`aura-nav-item ${isActive ? "active" : ""}`}
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
+                  isActive
+                    ? "-mr-4 rounded-r-full bg-emerald-50 pr-8 font-bold text-teal-700"
+                    : "rounded-lg text-slate-600 hover:bg-slate-50 group"
+                }`}
               >
-                <span className="aura-nav-icon">{sidebarIcons[item.icon]}</span>
-                <span className="aura-nav-label">{item.label}</span>
+                <span
+                  className={`material-symbols-outlined ${
+                    isActive ? "text-primary" : "text-slate-400 group-hover:text-primary"
+                  }`}
+                >
+                  {item.icon}
+                </span>
+                <span className="text-sm font-medium">{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="aura-sidebar-footer">
-          <button className="aura-logout-btn" onClick={onLogout}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Logout
-          </button>
+        <div className="mt-auto px-6">
+          <div className="space-y-3 border-t border-slate-200 pt-6">
+            <Link
+              to="/patient/profile"
+              className="mb-1 flex items-center gap-3 rounded-lg px-4 py-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-primary"
+            >
+              <span className="material-symbols-outlined text-[20px]">info</span>
+              <span className="text-sm font-medium">Help Center</span>
+            </Link>
+            <button
+              type="button"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+              onClick={onLogout}
+            >
+              <span className="material-symbols-outlined text-[20px]">logout</span>
+              Logout
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="aura-main">
-        {/* Top Navigation Bar */}
-        <header className="aura-topbar">
-          <div className="aura-topbar-left">
-            <span className="aura-logo">MediFlow</span>
-          </div>
-          <div className="aura-topbar-right">
-            <button className="aura-icon-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
+      <main className="ml-64 flex min-h-screen min-w-0 flex-1 flex-col bg-slate-100">
+        <header className="fixed left-64 right-0 top-0 z-50 flex min-h-[80px] items-center justify-between border-b border-slate-200/80 bg-white px-8 py-2 shadow-sm">
+          <div className="font-headline text-2xl font-black tracking-tight text-teal-800">{activePageTitle}</div>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              className="grid h-10 w-10 place-items-center bg-transparent p-0 text-[#0B3B5B] shadow-none border-none transition-colors hover:bg-transparent hover:text-[#0B3B5B]"
+              aria-label="Notifications"
+            >
+              <span className="material-symbols-rounded text-[22px]">notifications</span>
             </button>
-            <button className="aura-icon-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-              </svg>
-            </button>
-            <div className="aura-user-menu">
-              <img 
-                src={avatarImgSrc} 
-                alt="User" 
-                className="aura-user-thumb"
-              />
-            </div>
+            <Link
+              to="/patient/profile"
+              className="grid h-10 w-10 place-items-center bg-transparent p-0 text-[#0B3B5B] shadow-none border-none transition-colors hover:bg-transparent hover:text-[#0B3B5B]"
+              aria-label="Profile settings"
+            >
+              <span className="material-symbols-rounded text-[22px]">settings</span>
+            </Link>
+            <Link
+              to="/patient/profile"
+              className="grid h-10 w-10 place-items-center rounded-full border border-slate-300 bg-slate-100 text-slate-700 transition-colors hover:border-primary hover:text-primary"
+              aria-label="Profile"
+              title="Profile"
+            >
+              <span className="material-symbols-rounded text-[22px]">person</span>
+            </Link>
           </div>
         </header>
 
-        {/* Page Content */}
-        <div className="aura-content">
+        <div className="flex-1 px-8 pt-24">
           {children}
         </div>
       </main>

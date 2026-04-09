@@ -84,7 +84,7 @@ function getTimeUntil(date) {
 }
 
 export default function PatientDashboardPage() {
-  const { authHeaders, user } = useAuth();
+  const { authHeaders } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -100,25 +100,32 @@ export default function PatientDashboardPage() {
   }, []);
 
   useEffect(() => {
-    api.get("/patients/me", authHeaders).then((res) => {
-      setPatientInfo(res.data.patient || {});
-    }).catch(() => {});
+    let mounted = true;
 
-    api.get("/patients/appointments", authHeaders).then((res) => {
-      setAppointments(res.data.appointments || []);
-    }).catch(() => setAppointments([]));
+    Promise.allSettled([
+      api.get("/patients/me", authHeaders),
+      api.get("/patients/appointments", authHeaders),
+      api.get("/patients/prescriptions", authHeaders),
+      api.get("/patients/reports", authHeaders),
+      api.get("/doctors", authHeaders),
+    ])
+      .then(([meRes, appointmentsRes, prescriptionsRes, reportsRes, doctorsRes]) => {
+        if (!mounted) return;
 
-    api.get("/patients/prescriptions", authHeaders).then((res) => {
-      setPrescriptions(res.data.prescriptions || []);
-    }).catch(() => setPrescriptions([]));
+        setPatientInfo(meRes.status === "fulfilled" ? (meRes.value.data.patient || null) : null);
+        setAppointments(appointmentsRes.status === "fulfilled" ? (appointmentsRes.value.data.appointments || []) : []);
+        setPrescriptions(prescriptionsRes.status === "fulfilled" ? (prescriptionsRes.value.data.prescriptions || []) : []);
+        setReports(
+          reportsRes.status === "fulfilled"
+            ? normalizeReportsList(reportsRes.value.data.reports || [])
+            : []
+        );
+        setDoctors(doctorsRes.status === "fulfilled" ? (doctorsRes.value.data.doctors?.slice(0, 3) || []) : []);
+      });
 
-    api.get("/patients/reports", authHeaders).then((res) => {
-      setReports(normalizeReportsList(res.data.reports || []));
-    }).catch(() => setReports([]));
-
-    api.get("/doctors", authHeaders).then((res) => {
-      setDoctors(res.data.doctors?.slice(0, 3) || []);
-    }).catch(() => setDoctors([]));
+    return () => {
+      mounted = false;
+    };
   }, [authHeaders]);
 
   const upcoming = appointments.filter((a) => a.status === "upcoming" || a.status === "scheduled");
@@ -170,13 +177,16 @@ export default function PatientDashboardPage() {
   const totalVisits = appointments.length;
   const totalReports = reports.length;
   const totalPrescriptions = prescriptions.length;
+  const firstName = (patientInfo?.fullName || "").trim().split(/\s+/)[0] || "";
 
   return (
     <PatientShell>
       <div className="aura-dashboard">
         <header className="aura-header">
           <div>
-            <h1 className="aura-title">Good morning, {patientInfo?.fullName?.split(' ')[0] || user?.name?.split(' ')[0] || 'Patient'}</h1>
+            <h1 className="aura-title">
+              {firstName ? `Good morning, ${firstName}` : "Good morning"}
+            </h1>
             <p className="aura-subtitle">{formattedDate} • You have {upcoming.length} appointment{upcoming.length !== 1 ? 's' : ''} today.</p>
           </div>
         </header>
