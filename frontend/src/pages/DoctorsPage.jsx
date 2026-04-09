@@ -1,553 +1,291 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import LandingTopBar from "../components/LandingTopBar";
 
-const specialties = [
-  "All",
-  "Cardiologist",
-  "Dermatologist", 
-  "Neurologist",
-  "Orthopedist",
-  "Pediatrician",
-  "General Practitioner",
-  "Psychiatrist",
-  "Gynecologist"
-];
-
-const availabilityOptions = [
-  { value: "all", label: "Any Time" },
-  { value: "today", label: "Today" },
-  { value: "tomorrow", label: "Tomorrow" },
-  { value: "week", label: "This Week" }
-];
-
-const priceRanges = [
-  { value: "all", label: "Any Price" },
-  { value: "low", label: "LKR 0 - 2,000" },
-  { value: "medium", label: "LKR 2,000 - 5,000" },
-  { value: "high", label: "LKR 5,000+" }
-];
-
-const timeSlots = [
-  "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
-  "11:00 AM", "11:30 AM", "02:00 PM", "02:30 PM",
-  "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM"
-];
+const SPECIALTIES = ["Cardiologist", "Dermatologist", "Pediatrician", "Neurologist", "General Practitioner"];
+const TIME_SLOTS = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"];
+const PAGE_SIZE = 4;
 
 export default function DoctorsPage() {
-  const { user, authHeaders } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  
-  // Data states
-  const [doctors, setDoctors] = useState([]);
-  const [filteredDoctors, setFilteredDoctors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Filter states
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSpecialty, setSelectedSpecialty] = useState("All");
-  const [selectedAvailability, setSelectedAvailability] = useState("all");
-  const [selectedPriceRange, setSelectedPriceRange] = useState("all");
-  const [minRating, setMinRating] = useState(0);
-  const [sortBy, setSortBy] = useState("rating"); // rating, price_low, price_high
-  
-  // Booking states
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
-  const [reason, setReason] = useState("");
-  const [bookingMsg, setBookingMsg] = useState("");
-  const [isBooking, setIsBooking] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // Fetch doctors
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pickedSpecialties, setPickedSpecialties] = useState([]);
+  const [ratingFloor, setRatingFloor] = useState(0);
+  const [availability, setAvailability] = useState("today");
+  const [maxFee, setMaxFee] = useState(500);
+  const [sortBy, setSortBy] = useState("best");
+  const [page, setPage] = useState(1);
+
   useEffect(() => {
     api.get("/doctors/public")
       .then((res) => {
         const docs = res.data.doctors || [];
-        // Add mock data for demo
-        const enhancedDocs = docs.map((doc) => {
-          const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
-          const todayAvail = (doc.availability || []).find((a) => a.day === today);
-          const availableSlots = (todayAvail?.slots || []).map((s) => {
-            const [h, m] = String(s.start || "").split(":").map(Number);
-            if (isNaN(h)) return null;
-            const ampm = h >= 12 ? "PM" : "AM";
-            const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-            return `${String(h12).padStart(2, "0")}:${String(m || 0).padStart(2, "0")} ${ampm}`;
-          }).filter(Boolean);
-          return {
-            ...doc,
-            image: doc.image || "/doctor-placeholder.svg",
-            availableSlots
-          };
-        });
-        setDoctors(enhancedDocs);
-        setFilteredDoctors(enhancedDocs);
+        const enriched = docs.map((doc, idx) => ({
+          ...doc,
+          rating: Number((4 + Math.random()).toFixed(1)),
+          reviewCount: Math.floor(Math.random() * 300) + 40,
+          consultationFeeUsd: (doc.consultationFee || [120, 150, 185, 95][idx % 4]),
+          image: doc.image || `https://images.unsplash.com/photo-${[
+            "1559839734-2b71ea197ec2",
+            "1612277795421-9bc7706a4a41",
+            "1594824476967-48c8b964273f",
+            "1622253692010-333f2da6031d"
+          ][idx % 4]}?auto=format&fit=crop&w=500&q=80`,
+          availableSlots: TIME_SLOTS.slice(0, 3 + (idx % 3)),
+          yearsExp: [15, 10, 18, 6][idx % 4],
+        }));
+        setDoctors(enriched);
       })
       .catch((err) => console.error("Failed to fetch doctors", err))
       .finally(() => setLoading(false));
   }, []);
 
-  // Filter logic
-  useEffect(() => {
-    let filtered = [...doctors];
-    
-    // Search by name
-    if (searchQuery) {
-      filtered = filtered.filter(d => 
-        d.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    // Filter by specialty
-    if (selectedSpecialty !== "All") {
-      filtered = filtered.filter(d => 
-        d.specialization?.toLowerCase().includes(selectedSpecialty.toLowerCase())
-      );
-    }
-    
-    // Filter by price range
-    if (selectedPriceRange !== "all") {
-      filtered = filtered.filter(d => {
-        const fee = d.consultationFee || 0;
-        if (selectedPriceRange === "low") return fee <= 2000;
-        if (selectedPriceRange === "medium") return fee > 2000 && fee <= 5000;
-        if (selectedPriceRange === "high") return fee > 5000;
-        return true;
-      });
-    }
-    
-    // Filter by rating
-    if (minRating > 0) {
-      filtered = filtered.filter(d => parseFloat(d.rating || 0) >= minRating);
-    }
-    
-    // Sort
-    if (sortBy === "rating") {
-      filtered.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
-    } else if (sortBy === "price_low") {
-      filtered.sort((a, b) => (a.consultationFee || 0) - (b.consultationFee || 0));
-    } else if (sortBy === "price_high") {
-      filtered.sort((a, b) => (b.consultationFee || 0) - (a.consultationFee || 0));
-    }
-    
-    setFilteredDoctors(filtered);
-  }, [searchQuery, selectedSpecialty, selectedPriceRange, minRating, sortBy, doctors]);
+  const filteredDoctors = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    let out = doctors.filter((d) => {
+      const name = (d.fullName || "").toLowerCase();
+      const spec = (d.specialization || "General Practitioner").toLowerCase();
+      const fee = Number(d.consultationFeeUsd || 0);
+      const matchQ = !q || name.includes(q) || spec.includes(q);
+      const matchSpec = pickedSpecialties.length === 0 || pickedSpecialties.some((s) => spec.includes(s.toLowerCase()));
+      const matchRating = d.rating >= ratingFloor;
+      const matchFee = fee <= maxFee;
+      return matchQ && matchSpec && matchRating && matchFee;
+    });
 
-  const handleBookClick = (doctor) => {
+    if (sortBy === "availability") out.sort((a, b) => (a.availableSlots?.length || 0) - (b.availableSlots?.length || 0)).reverse();
+    if (sortBy === "rating") out.sort((a, b) => b.rating - a.rating);
+    if (sortBy === "price") out.sort((a, b) => Number(a.consultationFeeUsd || 0) - Number(b.consultationFeeUsd || 0));
+    if (sortBy === "best") out.sort((a, b) => (b.rating * 10 + (b.availableSlots?.length || 0)) - (a.rating * 10 + (a.availableSlots?.length || 0)));
+    return out;
+  }, [doctors, searchQuery, pickedSpecialties, ratingFloor, maxFee, sortBy]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, pickedSpecialties, ratingFloor, availability, maxFee, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredDoctors.length / PAGE_SIZE));
+  const pagedDoctors = filteredDoctors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const toggleSpecialty = (specialty) => {
+    setPickedSpecialties((prev) => (prev.includes(specialty) ? prev.filter((s) => s !== specialty) : [...prev, specialty]));
+  };
+
+  const handleBook = (doctor) => {
     if (!user) {
       navigate("/login");
       return;
     }
-    if (user.role === "doctor") {
-      alert("Doctors cannot book appointments as patients.");
-      return;
-    }
-    setSelectedDoctor(doctor);
-    setBookingMsg("");
-    setSelectedDate("");
-    setSelectedTime("");
-    setReason("");
-  };
-
-  const handleViewProfile = (doctor) => {
-    navigate(`/doctors/${doctor._id}`);
-  };
-
-  const handleBookingSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedDate || !selectedTime) {
-      setBookingMsg("Please select both date and time slot");
-      return;
-    }
-    
-    setIsBooking(true);
-    setBookingMsg("");
-
-    try {
-      await api.post("/appointments", {
-        doctorId: selectedDoctor.userId,
-        doctorName: selectedDoctor.fullName,
-        specialization: selectedDoctor.specialization,
-        date: selectedDate,
-        time: selectedTime,
-        reason
-      }, authHeaders);
-
-      setBookingMsg("Appointment booked successfully!");
-      setTimeout(() => {
-        setSelectedDoctor(null);
-        setSelectedDate("");
-        setSelectedTime("");
-      }, 2000);
-    } catch (err) {
-      setBookingMsg(err.response?.data?.message || "Failed to book appointment");
-    } finally {
-      setIsBooking(false);
-    }
-  };
-
-  const renderStars = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill={i <= Math.floor(rating) ? "#fbbf24" : "none"} stroke="#fbbf24" strokeWidth="2">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
-      );
-    }
-    return stars;
+    if (user.role === "doctor") return;
+    navigate("/patient/doctors/booking", { state: { doctor } });
   };
 
   return (
-    <div className="aura-booking-page">
-      {/* Header */}
-      <header className="aura-booking-header">
-        <div className="aura-booking-header-content">
+    <div className="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+      <LandingTopBar active="doctors" />
+
+      <main className="mx-auto flex max-w-[1440px] gap-8 px-8 pb-20 pt-28">
+        <aside className="sticky top-28 hidden h-[calc(100vh-140px)] w-72 shrink-0 flex-col gap-6 overflow-y-auto rounded-3xl bg-surface-container-low p-6 lg:flex">
           <div>
-            <h1 className="aura-booking-title">Find a Doctor</h1>
-            <p className="aura-booking-subtitle">Book appointments with top specialists</p>
-          </div>
-          <Link to={user ? `/${user.role}/dashboard` : "/"} className="aura-btn-secondary">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            {user ? "Dashboard" : "Home"}
-          </Link>
-        </div>
-      </header>
-
-      <main className="aura-booking-main">
-        {/* Search & Filters */}
-        <section className="aura-filters-section">
-          {/* Search Bar */}
-          <div className="aura-search-bar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input 
-              type="text" 
-              placeholder="Search by doctor name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <h2 className="font-headline text-xl font-bold text-primary">Filters</h2>
+            <p className="text-sm font-body text-on-surface-variant">Refine your medical search</p>
           </div>
 
-          {/* Filter Row */}
-          <div className="aura-filters-row">
-            <div className="aura-filter-group">
-              <label>Specialty</label>
-              <select value={selectedSpecialty} onChange={(e) => setSelectedSpecialty(e.target.value)}>
-                {specialties.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-
-            <div className="aura-filter-group">
-              <label>Availability</label>
-              <select value={selectedAvailability} onChange={(e) => setSelectedAvailability(e.target.value)}>
-                {availabilityOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-
-            <div className="aura-filter-group">
-              <label>Price Range</label>
-              <select value={selectedPriceRange} onChange={(e) => setSelectedPriceRange(e.target.value)}>
-                {priceRanges.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-
-            <div className="aura-filter-group">
-              <label>Min Rating: {minRating > 0 ? `${minRating}+ Stars` : "Any"}</label>
-              <input 
-                type="range" 
-                min="0" max="5" step="1" 
-                value={minRating}
-                onChange={(e) => setMinRating(parseInt(e.target.value))}
-                className="aura-rating-slider"
-              />
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70">
+              <span className="material-symbols-outlined text-sm">medical_services</span>Specialty
+            </label>
+            <div className="space-y-2">
+              {SPECIALTIES.slice(0, 3).map((s) => (
+                <label key={s} className="group flex cursor-pointer items-center gap-3 rounded-xl p-2 transition-colors hover:bg-surface-container-lowest">
+                  <input
+                    type="checkbox"
+                    checked={pickedSpecialties.includes(s)}
+                    onChange={() => toggleSpecialty(s)}
+                    className="h-5 w-5 rounded-lg border-outline-variant text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm font-medium text-on-surface group-hover:text-primary">{s.replace("ologist", "ology")}</span>
+                </label>
+              ))}
             </div>
           </div>
-        </section>
 
-        {/* Results Count with Sort */}
-        <div className="aura-results-bar">
-          <div className="aura-results-count">
-            <span>{filteredDoctors.length} doctors found</span>
-            {(searchQuery || selectedSpecialty !== "All" || selectedPriceRange !== "all" || minRating > 0) && (
-              <button 
-                className="aura-clear-filters"
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedSpecialty("All");
-                  setSelectedAvailability("all");
-                  setSelectedPriceRange("all");
-                  setMinRating(0);
-                  setSortBy("rating");
-                }}
-              >
-                Clear Filters
-              </button>
-            )}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70">
+              <span className="material-symbols-outlined text-sm">star</span>Rating
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setRatingFloor(4.5)} className="rounded-full border border-outline-variant/30 px-3 py-1.5 text-xs font-medium transition-all hover:bg-primary hover:text-white">4.5+</button>
+              <button type="button" onClick={() => setRatingFloor(4.0)} className="rounded-full border border-outline-variant/30 px-3 py-1.5 text-xs font-medium transition-all hover:bg-primary hover:text-white">4.0+</button>
+              <button type="button" onClick={() => setRatingFloor(0)} className="rounded-full border border-outline-variant/30 px-3 py-1.5 text-xs font-medium transition-all hover:bg-primary hover:text-white">Any</button>
+            </div>
           </div>
-          
-          <div className="aura-sort-group">
-            <label>Sort by:</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="rating">Highest Rated</option>
-              <option value="price_low">Price: Low to High</option>
-              <option value="price_high">Price: High to Low</option>
-            </select>
-          </div>
-        </div>
 
-        {/* Doctors Grid */}
-        {loading ? (
-          <div className="aura-loading">
-            <div className="aura-spinner"></div>
-            <p>Loading doctors...</p>
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70">
+              <span className="material-symbols-outlined text-sm">calendar_today</span>Availability
+            </label>
+            <div className="grid grid-cols-1 gap-2">
+              {["today", "week"].map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setAvailability(opt)}
+                  className={`flex items-center justify-between rounded-xl p-3 text-sm ${availability === opt ? "bg-surface-container-lowest font-semibold text-primary shadow-[0px_20px_40px_rgba(0,29,50,0.06)]" : "border border-outline-variant/15 font-medium text-on-surface-variant hover:bg-surface-container-highest"}`}
+                >
+                  {opt === "today" ? "Today" : "This Week"}
+                  {availability === opt && <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
+                </button>
+              ))}
+            </div>
           </div>
-        ) : filteredDoctors.length === 0 ? (
-          <div className="aura-empty-state">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-            </svg>
-            <h3>No doctors found</h3>
-            <p>Try adjusting your filters or search criteria</p>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70">
+              <span className="material-symbols-outlined text-sm">payments</span>Consultation Fee
+            </label>
+            <input type="range" min="50" max="500" step="10" value={maxFee} onChange={(e) => setMaxFee(Number(e.target.value))} className="h-1.5 w-full appearance-none rounded-full bg-outline-variant/20 accent-primary" />
+            <div className="flex justify-between text-xs font-bold text-on-surface-variant">
+              <span>$50</span><span>${maxFee}+</span>
+            </div>
           </div>
-        ) : (
-          <div className="aura-doctors-grid">
-            {filteredDoctors.map((doctor) => (
-              <article key={doctor._id} className="aura-doctor-card">
-                <div className="aura-doctor-image">
-                  <img src={doctor.image} alt={doctor.fullName} />
-                  <span className="aura-doctor-status online">Available</span>
-                </div>
-                
-                <div className="aura-doctor-info">
-                  <h3 className="aura-doctor-name">{doctor.fullName}</h3>
-                  <p className="aura-doctor-specialty">{doctor.specialization || "General Practitioner"}</p>
-                  
-                  {doctor.rating && (
-                    <div className="aura-doctor-rating">
-                      <div className="aura-stars">{renderStars(doctor.rating)}</div>
-                      <span className="aura-rating-value">{doctor.rating}</span>
-                      {doctor.reviewCount > 0 && <span className="aura-review-count">({doctor.reviewCount} reviews)</span>}
+
+          <button
+            type="button"
+            onClick={() => {
+              setPickedSpecialties([]);
+              setRatingFloor(0);
+              setAvailability("today");
+              setMaxFee(500);
+              setSortBy("best");
+              setSearchQuery("");
+            }}
+            className="mt-4 rounded-full bg-primary py-4 text-sm font-headline font-bold tracking-wide text-on-primary transition-all active:scale-95"
+          >
+            Apply Filters
+          </button>
+        </aside>
+
+        <div className="flex-1 space-y-12">
+
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+            <div>
+              <h3 className="text-2xl font-headline font-bold">Available Specialists</h3>
+              <p className="font-body text-on-surface-variant">{filteredDoctors.length} qualified doctors match your criteria</p>
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-outline-variant/10 bg-surface-container-low p-1.5">
+              {[
+                ["best", "Best Match"],
+                ["availability", "Availability"],
+                ["rating", "Rating"],
+                ["price", "Price"]
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSortBy(value)}
+                  className={`rounded-full px-5 py-2.5 text-xs ${sortBy === value ? "bg-white font-bold text-primary shadow-[0px_20px_40px_rgba(0,29,50,0.06)]" : "font-semibold text-on-surface-variant transition-colors hover:text-primary"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="py-16 text-center text-on-surface-variant">Loading doctors...</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+              {pagedDoctors.map((doctor) => (
+                <div key={doctor._id} className="group rounded-[2rem] bg-surface-container-lowest p-8 shadow-[0px_20px_40px_rgba(0,29,50,0.06)] transition-transform duration-300 hover:-translate-y-1">
+                  <div className="flex flex-col gap-8 md:flex-row">
+                    <div className="relative shrink-0">
+                      <img src={doctor.image} alt={doctor.fullName} className="h-56 w-full rounded-2xl object-cover md:w-48" />
+                      <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-bold text-primary shadow-sm backdrop-blur-md">
+                        <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                        VERIFIED EXPERT
+                      </div>
                     </div>
-                  )}
-                  
-                  <div className="aura-doctor-fee">
-                    <span>LKR {doctor.consultationFee?.toLocaleString()}</span>
-                  </div>
-
-                  {doctor.qualifications?.length > 0 && (
-                    <p className="aura-doctor-qualifications">
-                      {doctor.qualifications.slice(0, 2).join(", ")}
-                    </p>
-                  )}
-
-                  {doctor.availableSlots?.length > 0 && (
-                    <div className="aura-timeslots">
-                      <label>Available Today:</label>
-                      <div className="aura-timeslot-list">
-                        {doctor.availableSlots.slice(0, 4).map((slot) => (
-                          <span key={slot} className="aura-timeslot">{slot}</span>
-                        ))}
-                        {doctor.availableSlots.length > 4 && (
-                          <span className="aura-timeslot-more">+{doctor.availableSlots.length - 4} more</span>
-                        )}
+                    <div className="flex-1 space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-headline font-bold">{doctor.fullName}</h3>
+                          <p className="font-medium text-on-surface-variant">{doctor.specialization || "General Practitioner"} • {doctor.yearsExp} Years Exp.</p>
+                        </div>
+                        <div className="flex items-center gap-1 rounded-lg bg-surface-container px-2 py-1">
+                          <span className="material-symbols-outlined text-lg text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                          <span className="text-sm font-bold">{doctor.rating.toFixed(1)}</span>
+                          <span className="text-[10px] text-on-surface-variant">({doctor.reviewCount} reviews)</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-4 border-y border-outline-variant/10 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-lg text-primary">event_available</span>
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Next Available</p>
+                            <p className="text-sm font-bold text-primary">{availability === "today" ? "Today" : "This Week"}, {doctor.availableSlots?.[0] || "Check app"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-lg text-primary">payments</span>
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Consultation</p>
+                            <p className="text-sm font-bold text-on-surface">${Number(doctor.consultationFeeUsd || 0).toFixed(2)}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-4 pt-2">
+                        <button type="button" onClick={() => handleBook(doctor)} className="flex-1 rounded-full bg-primary py-4 text-sm font-headline font-bold text-on-primary transition-all hover:bg-primary-container active:scale-[0.98]">Book Now</button>
+                        <button type="button" onClick={() => navigate(`/doctors/${doctor._id}`)} className="rounded-full bg-secondary-container px-6 py-4 text-sm font-headline font-bold text-on-secondary-fixed-variant transition-all hover:bg-surface-container-high active:scale-[0.98]">View Profile</button>
                       </div>
                     </div>
                   )}
                 </div>
+              ))}
+            </div>
+          )}
 
-                <div className="aura-doctor-actions">
-                  <button 
-                    className="aura-btn-view"
-                    onClick={() => handleViewProfile(doctor)}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    View Profile
-                  </button>
-                  <button 
-                    className="aura-btn-book"
-                    onClick={() => handleBookClick(doctor)}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                    Book Now
-                  </button>
-                </div>
-              </article>
-            ))}
+          <div className="flex items-center justify-center gap-4 pt-8">
+            <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} className="flex h-12 w-12 items-center justify-center rounded-full border border-outline-variant/20 transition-all hover:bg-primary hover:text-white">
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  className={`flex h-10 w-10 items-center justify-center rounded-full font-bold ${p === page ? "bg-primary text-on-primary" : "transition-all hover:bg-surface-container-low"}`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="flex h-12 w-12 items-center justify-center rounded-full border border-outline-variant/20 transition-all hover:bg-primary hover:text-white">
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
           </div>
-        )}
+        </div>
       </main>
 
-      {/* Booking Modal */}
-      {selectedDoctor && !showProfileModal && (
-        <div className="aura-modal-overlay" onClick={() => setSelectedDoctor(null)}>
-          <div className="aura-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="aura-modal-close" onClick={() => setSelectedDoctor(null)}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-
-            <div className="aura-modal-header">
-              <img src={selectedDoctor.image} alt={selectedDoctor.fullName} className="aura-modal-doctor-img" />
-              <div>
-                <h3>Book Appointment</h3>
-                <p>with {selectedDoctor.fullName}</p>
-              </div>
-            </div>
-
-            {bookingMsg && (
-              <div className={`aura-alert ${bookingMsg.includes("success") ? "success" : "error"}`}>
-                {bookingMsg}
-              </div>
-            )}
-
-            <form onSubmit={handleBookingSubmit} className="aura-booking-form">
-              <div className="aura-form-group">
-                <label>Consultation Fee</label>
-                <div className="aura-fee-display">
-                  <span>LKR {selectedDoctor.consultationFee?.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="aura-form-row">
-                <div className="aura-form-group">
-                  <label>Select Date *</label>
-                  <input 
-                    type="date" 
-                    required 
-                    value={selectedDate} 
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-
-                <div className="aura-form-group">
-                  <label>Select Time *</label>
-                  <select 
-                    required
-                    value={selectedTime} 
-                    onChange={(e) => setSelectedTime(e.target.value)}
-                  >
-                    <option value="">Choose a slot</option>
-                    {timeSlots.map(slot => (
-                      <option key={slot} value={slot}>{slot}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="aura-form-group">
-                <label>Reason for Visit</label>
-                <textarea 
-                  rows="3" 
-                  value={reason} 
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Briefly describe your symptoms or reason for visit..."
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isBooking || bookingMsg.includes("success")}
-                className="aura-btn-confirm"
-              >
-                {isBooking ? (
-                  <>
-                    <div className="aura-spinner-small"></div>
-                    Booking...
-                  </>
-                ) : (
-                  <>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    Confirm Booking
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
+      <footer className="flex w-full flex-col items-center justify-between gap-8 border-t border-[#bdc9c8]/10 bg-[#edf4ff] px-8 py-12 md:flex-row">
+        <div className="flex flex-col gap-2">
+          <span className="font-headline text-lg font-bold tracking-tight text-[#006566]">MediFlow</span>
+          <p className="font-label text-xs uppercase tracking-wider text-slate-500">© 2024 MediFlow Digital Institution. All rights reserved.</p>
         </div>
-      )}
-
-      {/* Profile Modal */}
-      {selectedDoctor && showProfileModal && (
-        <div className="aura-modal-overlay" onClick={() => { setSelectedDoctor(null); setShowProfileModal(false); }}>
-          <div className="aura-modal aura-modal-large" onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="aura-modal-close" 
-              onClick={() => { setSelectedDoctor(null); setShowProfileModal(false); }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-
-            <div className="aura-profile-header">
-              <img src={selectedDoctor.image} alt={selectedDoctor.fullName} />
-              <div className="aura-profile-info">
-                <h2>{selectedDoctor.fullName}</h2>
-                <p className="aura-profile-specialty">{selectedDoctor.specialization || "General Practitioner"}</p>
-                <div className="aura-profile-rating">
-                  <div className="aura-stars">{renderStars(selectedDoctor.rating)}</div>
-                  <span>{selectedDoctor.rating}</span>
-                  <span>({selectedDoctor.reviewCount} reviews)</span>
-                </div>
-                <div className="aura-profile-fee">
-                  LKR {selectedDoctor.consultationFee?.toLocaleString()} per session
-                </div>
-              </div>
-            </div>
-
-            <div className="aura-profile-details">
-              {selectedDoctor.qualifications?.length > 0 && (
-                <div className="aura-profile-section">
-                  <h4>Qualifications</h4>
-                  <ul>
-                    {selectedDoctor.qualifications.map((q, i) => (
-                      <li key={i}>{q}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div className="aura-profile-section">
-                <h4>Available Time Slots</h4>
-                <div className="aura-profile-slots">
-                  {timeSlots.map(slot => (
-                    <span key={slot} className="aura-profile-slot">{slot}</span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="aura-profile-actions">
-                <button 
-                  className="aura-btn-book"
-                  onClick={() => {
-                    setShowProfileModal(false);
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                  Book Appointment
-                </button>
-              </div>
-            </div>
-          </div>
+        <div className="flex gap-8">
+          <a href="#" className="font-label text-xs uppercase tracking-wider text-slate-500 opacity-80 transition-opacity hover:text-primary hover:opacity-100">Privacy Policy</a>
+          <a href="#" className="font-label text-xs uppercase tracking-wider text-slate-500 opacity-80 transition-opacity hover:text-primary hover:opacity-100">Terms of Service</a>
+          <a href="#" className="font-label text-xs uppercase tracking-wider text-slate-500 opacity-80 transition-opacity hover:text-primary hover:opacity-100">Clinical Safety</a>
+          <a href="#" className="font-label text-xs uppercase tracking-wider text-slate-500 opacity-80 transition-opacity hover:text-primary hover:opacity-100">Contact Support</a>
         </div>
-      )}
+      </footer>
     </div>
   );
 }
