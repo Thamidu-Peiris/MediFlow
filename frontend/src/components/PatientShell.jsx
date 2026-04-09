@@ -7,6 +7,7 @@ import { useAuthMediaSrc } from "../hooks/useAuthMediaSrc";
 const navItems = [
   { to: "/patient/dashboard", label: "Dashboard", icon: "dashboard" },
   { to: "/patient/appointments", label: "Appointments", icon: "calendar_month" },
+  { to: "/patient/telemedicine", label: "Video Consultations", icon: "videocam" },
   { to: "/patient/doctors", label: "Doctors", icon: "medical_services" },
   { to: "/patient/reports", label: "Reports", icon: "description" },
   { to: "/ai-checker", label: "AI Checker", icon: "psychology" },
@@ -92,6 +93,7 @@ export default function PatientShell({ children }) {
     const p = location.pathname;
     if (p === "/patient/dashboard" || p.startsWith("/patient/dashboard/")) return "Dashboard";
     if (p === "/patient/appointments" || p.startsWith("/patient/appointments/")) return "Appointments";
+    if (p === "/patient/telemedicine" || p.startsWith("/patient/telemedicine/")) return "Video Consultations";
     if (p === "/patient/doctors" || p.startsWith("/patient/doctors/")) return "Doctors";
     if (p === "/patient/reports" || p.startsWith("/patient/reports/")) return "Reports";
     if (p === "/ai-checker" || p.startsWith("/ai-checker/")) return "AI Checker";
