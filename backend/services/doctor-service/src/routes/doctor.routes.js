@@ -4,6 +4,8 @@ const {
     upsertProfile,
     getMyProfile,
     setAvailability,
+    setPhysicalAvailability,
+    setOnlineAvailability,
     getPublicDoctors,
     getAllDoctors,
     getDoctorById,
@@ -35,6 +37,8 @@ router.get("/all", verifyAuth, getAllDoctors);
 router.get("/me", verifyAuth, requireDoctorRole, getMyProfile);
 router.put("/update-profile", verifyAuth, requireDoctorRole, upsertProfile);
 router.put("/availability", verifyAuth, requireDoctorRole, setAvailability);
+router.put("/physical-availability", verifyAuth, requireDoctorRole, setPhysicalAvailability);
+router.put("/online-availability", verifyAuth, requireDoctorRole, setOnlineAvailability);
 router.post("/upload-image", verifyAuth, requireDoctorRole, upload.single("image"), uploadProfileImage);
 
 router.get("/prescriptions", verifyAuth, requireDoctorRole, listIssuedPrescriptions);
