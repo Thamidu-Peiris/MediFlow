@@ -1,27 +1,25 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import LandingTopBar from "../components/LandingTopBar";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [form, setForm] = useState({ email: "", password: "", role: "patient" });
+  const [form, setForm] = useState({ email: "", password: "", rememberMe: false });
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
     setLoading(true);
     try {
-      const loggedInUser = await login(form.email, form.password, form.role);
-      if (loggedInUser.role === "patient") {
-        navigate("/patient/dashboard");
-      } else if (loggedInUser.role === "admin") {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/doctor/dashboard", { replace: true });
-      }
+      const loggedInUser = await login(form.email, form.password, "patient");
+      if (loggedInUser.role === "admin") return navigate("/admin/dashboard");
+      if (loggedInUser.role === "doctor") return navigate("/doctor/dashboard", { replace: true });
+      return navigate("/patient/dashboard");
     } catch (err) {
       setMessage(err?.response?.data?.message || "Login failed");
     } finally {
@@ -30,142 +28,175 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="ap-page">
-      {/* Left Visual Panel */}
-      <div className="ap-panel">
-        <div className="ap-panel-bg" />
-        <div className="ap-panel-content">
-          <Link to="/" className="ap-logo">
-            <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
-              <defs>
-                <linearGradient id="apLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#93c5fd" />
-                  <stop offset="100%" stopColor="#ffffff" />
-                </linearGradient>
-              </defs>
-              <circle cx="20" cy="20" r="18" stroke="url(#apLogoGrad)" strokeWidth="2.5" fill="none"/>
-              <rect x="18" y="10" width="4" height="20" rx="2" fill="url(#apLogoGrad)"/>
-              <rect x="10" y="18" width="20" height="4" rx="2" fill="url(#apLogoGrad)"/>
-            </svg>
-            <span>MediFlow</span>
-          </Link>
-          <img
-            src="https://images.unsplash.com/photo-1585842378054-ee2e52f94ba2?auto=format&fit=crop&w=800&q=80"
-            alt="Doctor"
-            className="ap-panel-img"
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
-          />
-        </div>
+    <div className="relative min-h-screen overflow-x-hidden bg-surface text-on-surface">
+      <LandingTopBar />
+
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          backgroundColor: "#f7f9ff",
+          backgroundImage:
+            "radial-gradient(at 0% 0%, hsla(180, 100%, 93%, 1) 0px, transparent 50%), radial-gradient(at 100% 0%, hsla(181, 67%, 95%, 1) 0px, transparent 50%), radial-gradient(at 100% 100%, hsla(181, 74%, 90%, 1) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(180, 100%, 93%, 1) 0px, transparent 50%)"
+        }}
+      />
+
+      <div className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden opacity-[0.03]">
+        <span className="material-symbols-outlined select-none text-[360px] md:text-[600px]">add_notes</span>
       </div>
 
-      {/* Right Form Panel */}
-      <div className="ap-form-panel">
-        <div className="ap-form-wrap">
-          <div className="ap-form-header">
-            <div className="ap-form-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                <polyline points="10 17 15 12 10 7"/>
-                <line x1="15" y1="12" x2="3" y2="12"/>
-              </svg>
-            </div>
-            <h1>Welcome Back</h1>
-            <p>Sign in to your MediFlow account</p>
+      <main className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1100px] items-center gap-8 px-6 pb-6 pt-24 lg:grid-cols-2">
+        <section className="hidden space-y-12 lg:flex lg:flex-col">
+          <div className="space-y-6">
+            <Link to="/" className="flex w-fit items-center gap-2">
+              <span className="material-symbols-outlined text-3xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                health_and_safety
+              </span>
+              <span className="font-headline text-2xl font-bold tracking-tighter text-on-surface">MediFlow</span>
+            </Link>
+            <h1 className="font-headline text-5xl font-extrabold leading-[1.1] tracking-tight text-on-surface">
+              Your clinical <br />
+              <span className="text-primary">sanctuary</span> awaits.
+            </h1>
+            <p className="max-w-md text-lg leading-relaxed text-on-surface-variant">
+              Access your personalized health dashboard, medical records, and secure clinical consultations with encrypted data
+              protection.
+            </p>
           </div>
+        </section>
 
-          {message && (
-            <div className="ap-error">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              {message}
+        <section className="mx-auto w-full max-w-[480px]">
+          <div className="relative overflow-hidden rounded-3xl bg-surface-container-lowest p-4 shadow-[0px_20px_40px_rgba(0,29,50,0.06)] md:p-6">
+            <div className="mb-6 flex flex-col items-center lg:hidden">
+              <Link to="/" className="mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-3xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  health_and_safety
+                </span>
+                <span className="font-headline text-2xl font-bold tracking-tighter text-on-surface">MediFlow</span>
+              </Link>
             </div>
-          )}
 
-          <form onSubmit={onSubmit} className="ap-form">
-            <div className="ap-field">
-              <label>Email Address</label>
-              <div className="ap-input-wrap">
-                <svg className="ap-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
+            <div className="mb-4 text-center lg:text-left">
+              <h2 className="mb-2 font-headline text-3xl font-extrabold text-on-surface">Welcome Back</h2>
+              <p className="font-medium text-on-surface-variant">Continue to your clinical dashboard</p>
+            </div>
+
+            {message && (
+              <div className="mb-6 flex items-center gap-3 rounded-lg border border-error/15 bg-error-container/40 p-3">
+                <span className="material-symbols-outlined text-error">error</span>
+                <p className="text-sm font-semibold text-on-error-container">{message}</p>
+              </div>
+            )}
+
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="group relative">
+                <div className="pointer-events-none absolute left-4 top-1/2 flex -translate-y-1/2 items-center text-on-surface-variant transition-colors group-focus-within:text-primary">
+                  <span className="material-symbols-outlined">mail</span>
+                </div>
                 <input
+                  className="w-full rounded-xl border-none bg-surface-container-low py-3.5 pl-12 pr-4 font-medium text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20"
+                  placeholder="Email Address"
                   type="email"
-                  placeholder="you@email.com"
                   value={form.email}
                   onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
                   required
                 />
               </div>
-            </div>
 
-            <div className="ap-field">
-              <label>Password</label>
-              <div className="ap-input-wrap">
-                <svg className="ap-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
+              <div className="group relative">
+                <div className="pointer-events-none absolute left-4 top-1/2 flex -translate-y-1/2 items-center text-on-surface-variant transition-colors group-focus-within:text-primary">
+                  <span className="material-symbols-outlined">lock</span>
+                </div>
                 <input
+                  className="w-full rounded-xl border-none bg-surface-container-low py-3.5 pl-12 pr-12 font-medium text-on-surface placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20"
+                  placeholder="Password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
                   value={form.password}
                   onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
                   required
                 />
-                <button type="button" className="ap-eye-btn" onClick={() => setShowPassword(p => !p)}>
-                  {showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  )}
+                <button
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors hover:text-on-surface"
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                >
+                  <span className="material-symbols-outlined">{showPassword ? "visibility_off" : "visibility"}</span>
                 </button>
               </div>
-            </div>
 
-            <div className="ap-field">
-              <label>Login As</label>
-              <div className="ap-input-wrap">
-                <svg className="ap-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-                <select
-                  value={form.role}
-                  onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value }))}
-                  required
-                >
-                  <option value="patient">Patient</option>
-                  <option value="doctor">Doctor</option>
-                  <option value="admin">Admin</option>
-                </select>
+              <div className="flex items-center justify-between">
+                <label className="group flex cursor-pointer items-center gap-2">
+                  <input
+                    className="h-5 w-5 rounded border-outline-variant bg-surface-container-low text-primary focus:ring-primary/20"
+                    type="checkbox"
+                    checked={form.rememberMe}
+                    onChange={(e) => setForm((prev) => ({ ...prev, rememberMe: e.target.checked }))}
+                  />
+                  <span className="text-sm font-medium text-on-surface-variant group-hover:text-on-surface">Remember Me</span>
+                </label>
+                <Link to="/forgot-password" className="text-sm font-bold text-primary underline-offset-4 hover:underline">
+                  Forgot Password?
+                </Link>
               </div>
-            </div>
 
-            <div className="ap-forgot">
-              <Link to="/forgot-password">Forgot Password?</Link>
-            </div>
+              <button
+                className="flex w-full items-center justify-center gap-3 rounded-full bg-primary py-3.5 text-lg font-bold text-on-primary shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <svg className="h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" />
+                    </svg>
+                    Signing In...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </button>
 
-            <button type="submit" className="ap-submit-btn" disabled={loading}>
-              {loading ? (
-                <span className="ap-spinner" />
-              ) : (
-                <>
-                  Sign In
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
+              <div className="relative flex items-center py-1">
+                <div className="flex-grow border-t border-outline-variant/30" />
+                <span className="mx-4 flex-shrink text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">or</span>
+                <div className="flex-grow border-t border-outline-variant/30" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  className="flex items-center justify-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container px-4 py-2.5 text-sm font-bold transition-colors hover:bg-surface-container-high"
+                  type="button"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24">
+                    <path d="M12 5.04c1.94 0 3.51.68 4.79 1.84l3.52-3.52C18.1 1.45 15.34 0 12 0 7.31 0 3.26 2.69 1.27 6.6l3.98 3.1c.94-2.82 3.57-4.66 6.75-4.66z" fill="#EA4335" />
+                    <path d="M23.49 12.27c0-.86-.07-1.68-.21-2.48H12v4.69h6.44c-.28 1.47-1.12 2.72-2.38 3.56l3.82 2.96c2.23-2.06 3.52-5.09 3.52-8.73z" fill="#4285F4" />
+                    <path d="M5.25 14.7c-.24-.71-.38-1.47-.38-2.27s.14-1.56.38-2.27L1.27 7.06C.46 8.68 0 10.28 0 12s.46 3.32 1.27 4.94l3.98-3.24z" fill="#FBBC05" />
+                    <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.82-2.96c-1.09.73-2.49 1.16-4.11 1.16-3.18 0-5.81-2.15-6.77-5.05l-4.04 3.12C3.26 21.31 7.31 24 12 24z" fill="#34A853" />
                   </svg>
-                </>
-              )}
-            </button>
-          </form>
+                  Google
+                </button>
+                <button
+                  className="group flex items-center justify-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container px-4 py-2.5 text-sm font-bold transition-colors hover:bg-surface-container-high"
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-primary transition-transform group-hover:scale-110">fingerprint</span>
+                  Biometric
+                </button>
+              </div>
 
-          <p className="ap-switch">
-            Don't have an account? <Link to="/register">Create one free</Link>
-          </p>
-        </div>
-      </div>
-    </main>
+              <div className="pt-2 text-center">
+                <p className="font-medium text-on-surface-variant">
+                  Don&apos;t have an account?
+                  <Link to="/register" className="ml-1 font-bold text-primary underline-offset-4 hover:underline">
+                    Register
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </div>
+
+        </section>
+      </main>
+    </div>
   );
 }
