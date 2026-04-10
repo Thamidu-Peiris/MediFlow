@@ -60,6 +60,34 @@ exports.getMyProfile = async (req, res) => {
     }
 };
 
+// ── Availability helpers ──────────────────────────────────────────────────────
+
+function toMins(t) {
+    const [h, m] = String(t || "0:0").split(":").map(Number);
+    return h * 60 + m;
+}
+
+/**
+ * Returns true if any slot in scheduleA overlaps (by time) with any slot in
+ * scheduleB on the same day.  Both arguments are arrays of { day, slots[] }.
+ */
+function hasTimeConflict(scheduleA, scheduleB) {
+    for (const dayA of scheduleA) {
+        const dayB = scheduleB.find((d) => d.day === dayA.day);
+        if (!dayB || !dayB.slots.length) continue;
+        for (const slotA of dayA.slots) {
+            const sA = toMins(slotA.start);
+            const eA = toMins(slotA.end);
+            for (const slotB of dayB.slots) {
+                const sB = toMins(slotB.start);
+                const eB = toMins(slotB.end);
+                if (sA < eB && eA > sB) return true;
+            }
+        }
+    }
+    return false;
+}
+
 // ── Availability ─────────────────────────────────────────────────────────────
 
 exports.setAvailability = async (req, res) => {
@@ -86,6 +114,77 @@ exports.setAvailability = async (req, res) => {
     }
 };
 
+exports.setPhysicalAvailability = async (req, res) => {
+    try {
+        const { availability } = req.body;
+        if (!Array.isArray(availability)) {
+            return res.status(400).json({ message: "availability must be an array" });
+        }
+
+        const existing = await Doctor.findOne({ userId: req.user.sub })
+            .select("onlineAvailability");
+        if (!existing) {
+            return res.status(404).json({ message: "Create your profile first" });
+        }
+
+        if (existing.onlineAvailability?.length && hasTimeConflict(availability, existing.onlineAvailability)) {
+            return res.status(409).json({
+                message: "Time conflict with your online availability. Overlapping slots detected on one or more days."
+            });
+        }
+
+        // Also sync the legacy `availability` field so existing code keeps working.
+        const doctor = await Doctor.findOneAndUpdate(
+            { userId: req.user.sub },
+            { $set: { physicalAvailability: availability, availability } },
+            { new: true }
+        );
+
+        return res.status(200).json({ physicalAvailability: doctor.physicalAvailability });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Failed to update physical availability" });
+    }
+};
+
+exports.setOnlineAvailability = async (req, res) => {
+    try {
+        const { availability } = req.body;
+        if (!Array.isArray(availability)) {
+            return res.status(400).json({ message: "availability must be an array" });
+        }
+
+        const existing = await Doctor.findOne({ userId: req.user.sub })
+            .select("physicalAvailability availability");
+        if (!existing) {
+            return res.status(404).json({ message: "Create your profile first" });
+        }
+
+        // Use physicalAvailability if the doctor has migrated; otherwise fall back
+        // to the legacy `availability` field so pre-existing schedules are respected.
+        const physSched = existing.physicalAvailability?.length
+            ? existing.physicalAvailability
+            : (existing.availability || []);
+
+        if (physSched.length && hasTimeConflict(availability, physSched)) {
+            return res.status(409).json({
+                message: "Time conflict with your physical availability. Overlapping slots detected on one or more days."
+            });
+        }
+
+        const doctor = await Doctor.findOneAndUpdate(
+            { userId: req.user.sub },
+            { $set: { onlineAvailability: availability } },
+            { new: true }
+        );
+
+        return res.status(200).json({ onlineAvailability: doctor.onlineAvailability });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Failed to update online availability" });
+    }
+};
+
 // ── Public listing (no auth required) ────────────────────────────────────────
 
 exports.getPublicDoctors = async (req, res) => {
@@ -96,7 +195,7 @@ exports.getPublicDoctors = async (req, res) => {
         }
 
         const doctors = await Doctor.find({ isVerified: true })
-            .select("_id userId fullName specialization qualifications bio consultationFee availability image")
+            .select("_id userId fullName specialization qualifications bio consultationFee availability physicalAvailability onlineAvailability image")
             .sort({ fullName: 1 });
         return res.status(200).json({ doctors });
     } catch (error) {
@@ -112,7 +211,7 @@ exports.getAllDoctors = async (req, res) => {
         }
 
         const doctors = await Doctor.find()
-            .select("_id userId fullName specialization qualifications bio consultationFee availability isVerified image")
+            .select("_id userId fullName specialization qualifications bio consultationFee availability physicalAvailability onlineAvailability isVerified image")
             .sort({ fullName: 1 });
         return res.status(200).json({ doctors });
     } catch (error) {
@@ -123,7 +222,7 @@ exports.getAllDoctors = async (req, res) => {
 exports.getDoctorById = async (req, res) => {
     try {
         const doctor = await Doctor.findById(req.params.id).select(
-            "_id userId fullName specialization qualifications bio consultationFee availability image"
+            "_id userId fullName specialization qualifications bio consultationFee availability physicalAvailability onlineAvailability image"
         );
         if (!doctor) {
             return res.status(404).json({ message: "Doctor not found" });

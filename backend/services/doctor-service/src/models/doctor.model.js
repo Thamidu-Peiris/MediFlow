@@ -41,6 +41,8 @@ const doctorSchema = new mongoose.Schema(
         image: { type: String, default: "" },
         isVerified: { type: Boolean, default: false },
         availability: [dayScheduleSchema],
+        physicalAvailability: [dayScheduleSchema],
+        onlineAvailability: [dayScheduleSchema],
         prescriptions: [prescriptionSchema]
     },
     { timestamps: true }

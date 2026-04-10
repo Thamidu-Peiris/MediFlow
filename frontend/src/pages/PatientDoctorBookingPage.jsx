@@ -5,7 +5,7 @@ import api from "../api/client";
 import PatientShell from "../components/PatientShell";
 import { useAuth } from "../context/AuthContext";
 
-/** Hourly slots only; availability still gates what’s selectable */
+/** Hourly slots only; availability still gates what's selectable */
 const TIME_SLOTS = [
   "09:00 AM",
   "10:00 AM",
@@ -57,6 +57,9 @@ export default function PatientDoctorBookingPage() {
   const location = useLocation();
   const doctor = location.state?.doctor || null;
 
+  // ── Appointment type is now chosen FIRST ─────────────────────────────────
+  const [appointmentType, setAppointmentType] = useState("physical");
+
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -68,6 +71,15 @@ export default function PatientDoctorBookingPage() {
   useEffect(() => {
     if (!doctor) navigate("/patient/doctors", { replace: true });
   }, [doctor, navigate]);
+
+  // ── Clear date/time whenever the appointment type changes ─────────────────
+  useEffect(() => {
+    setSelectedDate("");
+    setSelectedTime("");
+    setOccupiedTimes([]);
+    setMyBookedTimes([]);
+    setBookingMsg("");
+  }, [appointmentType]);
 
   const weekStart = useMemo(
     () => startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 }),
@@ -91,23 +103,41 @@ export default function PatientDoctorBookingPage() {
     return `${format(weekStart, "MMM d")} – ${format(end, "MMM d, yyyy")}`;
   }, [weekStart]);
 
-  const isDateAvailableForDoctor = (isoDate) => {
+  /**
+   * Returns the correct availability array for the selected appointment type.
+   *  - physical → physicalAvailability (falls back to legacy availability)
+   *  - online   → onlineAvailability only (no fallback)
+   */
+  const getTypeAvailability = (type) => {
+    if (!doctor) return [];
+    if (type === "online") {
+      return doctor.onlineAvailability || [];
+    }
+    // physical: prefer the dedicated field, fall back to legacy
+    return doctor.physicalAvailability?.length
+      ? doctor.physicalAvailability
+      : (doctor.availability || []);
+  };
+
+  const isDateAvailableForDoctor = (isoDate, type = appointmentType) => {
     if (!doctor || !isoDate) return false;
     const d = new Date(`${isoDate}T12:00:00`);
     if (Number.isNaN(d.getTime())) return false;
     const dayName = DAY_NAMES[d.getDay()];
-    const dayAvailability = (doctor.availability || []).find((a) => a.day === dayName);
+    const avail = getTypeAvailability(type);
+    const dayAvailability = avail.find((a) => a.day === dayName);
     return Boolean(dayAvailability && Array.isArray(dayAvailability.slots) && dayAvailability.slots.length > 0);
   };
 
   const normalizeTime = (t) => String(t || "").trim().toUpperCase().replace(/\s+/g, " ");
 
-  const getAvailableSlotsForDate = (isoDate, blockedTimes = []) => {
+  const getAvailableSlotsForDate = (isoDate, blockedTimes = [], type = appointmentType) => {
     if (!doctor || !isoDate) return [];
     const d = new Date(`${isoDate}T12:00:00`);
     if (Number.isNaN(d.getTime())) return [];
     const dayName = DAY_NAMES[d.getDay()];
-    const dayAvailability = (doctor.availability || []).find((a) => a.day === dayName);
+    const avail = getTypeAvailability(type);
+    const dayAvailability = avail.find((a) => a.day === dayName);
     if (!dayAvailability?.slots?.length) return [];
     const blocked = new Set(blockedTimes.map(normalizeTime));
     return TIME_SLOTS.filter(
@@ -117,6 +147,7 @@ export default function PatientDoctorBookingPage() {
     );
   };
 
+  // ── Fetch occupied times when date changes ────────────────────────────────
   useEffect(() => {
     if (!doctor || !selectedDate || !isDateAvailableForDoctor(selectedDate)) {
       setOccupiedTimes([]);
@@ -142,6 +173,7 @@ export default function PatientDoctorBookingPage() {
       if (cancelled) return;
       const apptTimes = Array.isArray(apptRes.data?.occupiedTimes) ? apptRes.data.occupiedTimes : [];
       const pendingTimes = Array.isArray(pendingRes.data?.occupiedTimes) ? pendingRes.data.occupiedTimes : [];
+      // Block ALL occupied slots regardless of appointment type (per spec: same slot can't be double-booked)
       setOccupiedTimes(Array.from(new Set([...apptTimes, ...pendingTimes].map((t) => String(t).trim()))));
 
       const myAppts = Array.isArray(myRes.data?.appointments) ? myRes.data.appointments : [];
@@ -157,9 +189,7 @@ export default function PatientDoctorBookingPage() {
       setMyBookedTimes(Array.from(new Set(myTimes)));
     });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [doctor, selectedDate, authHeaders]);
 
   const blocked = useMemo(
@@ -169,8 +199,8 @@ export default function PatientDoctorBookingPage() {
 
   const availableSlots = useMemo(() => {
     if (!doctor) return [];
-    return getAvailableSlotsForDate(selectedDate, blocked);
-  }, [doctor, selectedDate, blocked]);
+    return getAvailableSlotsForDate(selectedDate, blocked, appointmentType);
+  }, [doctor, selectedDate, blocked, appointmentType]);
 
   const pickDay = (iso) => {
     const d = new Date(`${iso}T12:00:00`);
@@ -182,8 +212,11 @@ export default function PatientDoctorBookingPage() {
     setSelectedDate(iso);
     setSelectedTime("");
     setBookingMsg("");
-    if (!isDateAvailableForDoctor(iso)) {
-      setBookingMsg(`Doctor is not available on ${DAY_NAMES[d.getDay()]}.`);
+    if (!isDateAvailableForDoctor(iso, appointmentType)) {
+      const dayName = DAY_NAMES[d.getDay()];
+      setBookingMsg(
+        `Doctor is not available for ${appointmentType === "physical" ? "in-person" : "online"} appointments on ${dayName}.`
+      );
     }
   };
 
@@ -199,8 +232,8 @@ export default function PatientDoctorBookingPage() {
       setBookingMsg("Please select a date and time slot.");
       return;
     }
-    if (!isDateAvailableForDoctor(selectedDate)) {
-      setBookingMsg("Doctor is not available on the selected date.");
+    if (!isDateAvailableForDoctor(selectedDate, appointmentType)) {
+      setBookingMsg("Doctor is not available on the selected date for this appointment type.");
       return;
     }
     if (!availableSlots.includes(selectedTime)) {
@@ -216,6 +249,7 @@ export default function PatientDoctorBookingPage() {
       date: selectedDate,
       time: selectedTime,
       reason,
+      appointmentType,
       consultationFee: doctor.consultationFee || 0,
     };
     try {
@@ -235,9 +269,7 @@ export default function PatientDoctorBookingPage() {
 
   const slotsByPeriod = useMemo(() => {
     const groups = { morning: [], afternoon: [], evening: [] };
-    for (const t of TIME_SLOTS) {
-      groups[slotPeriod(t)].push(t);
-    }
+    for (const t of TIME_SLOTS) groups[slotPeriod(t)].push(t);
     return groups;
   }, []);
 
@@ -249,32 +281,23 @@ export default function PatientDoctorBookingPage() {
 
     if (selected) {
       return (
-        <button
-          key={label}
-          type="button"
-          onClick={() => pickSlot(label)}
-          className={`${base} bg-primary text-on-primary shadow-md shadow-primary/20 hover:scale-105 active:opacity-90`}
-        >
+        <button key={label} type="button" onClick={() => pickSlot(label)}
+          className={`${base} bg-primary text-on-primary shadow-md shadow-primary/20 hover:scale-105 active:opacity-90`}>
           {label}
         </button>
       );
     }
-
     if (enabled) {
       return (
-        <button
-          key={label}
-          type="button"
-          onClick={() => pickSlot(label)}
-          className={`${base} bg-surface-container-high text-primary hover:bg-primary-fixed/50 hover:scale-105`}
-        >
+        <button key={label} type="button" onClick={() => pickSlot(label)}
+          className={`${base} bg-surface-container-high text-primary hover:bg-primary-fixed/50 hover:scale-105`}>
           {label}
         </button>
       );
     }
-
     return (
-      <button key={label} type="button" disabled className={`${base} cursor-not-allowed bg-secondary-container text-slate-400`}>
+      <button key={label} type="button" disabled
+        className={`${base} cursor-not-allowed bg-secondary-container text-slate-400`}>
         {label}
       </button>
     );
@@ -285,16 +308,104 @@ export default function PatientDoctorBookingPage() {
   const locationText =
     doctor.clinicAddress || doctor.clinicName || doctor.hospitalName || doctor.address || "—";
 
+  // Check if doctor has online availability set at all
+  const hasOnlineAvailability = Boolean(doctor.onlineAvailability?.length);
+  const hasPhysicalAvailability = Boolean(
+    doctor.physicalAvailability?.length || doctor.availability?.length
+  );
+
   return (
     <PatientShell>
       <div className="mx-auto max-w-7xl px-4 pb-24 pt-2 font-body text-on-surface md:px-8">
+
+        {/* ── Step 1: Appointment Type (moved to top) ─────────────────────── */}
+        <div className="mb-8 rounded-3xl bg-surface-container-lowest p-6 shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
+          <div className="mb-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Step 1</p>
+            <h2 className="font-headline text-xl font-bold text-on-surface">Choose Appointment Type</h2>
+            <p className="text-sm text-on-surface-variant mt-1">
+              Select how you'd like to meet with {doctor.fullName}. Available dates will update accordingly.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 max-w-sm">
+            <button
+              type="button"
+              onClick={() => setAppointmentType("physical")}
+              disabled={!hasPhysicalAvailability}
+              className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 py-4 px-3 text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                appointmentType === "physical"
+                  ? "border-primary bg-primary-fixed/20 text-primary"
+                  : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-primary/40"
+              }`}
+            >
+              <span
+                className="material-symbols-outlined text-2xl"
+                style={appointmentType === "physical" ? { fontVariationSettings: "'FILL' 1" } : {}}
+              >
+                local_hospital
+              </span>
+              <span>In-Person</span>
+              {appointmentType === "physical" && (
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary"></span>
+              )}
+              {!hasPhysicalAvailability && (
+                <span className="text-[9px] font-normal text-slate-400">Not configured</span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAppointmentType("online")}
+              disabled={!hasOnlineAvailability}
+              className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 py-4 px-3 text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                appointmentType === "online"
+                  ? "border-violet-600 bg-violet-50 text-violet-700"
+                  : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-violet-300"
+              }`}
+            >
+              <span
+                className="material-symbols-outlined text-2xl"
+                style={appointmentType === "online" ? { fontVariationSettings: "'FILL' 1", color: "#7c3aed" } : {}}
+              >
+                videocam
+              </span>
+              <span>Online</span>
+              {appointmentType === "online" && (
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-violet-600"></span>
+              )}
+              {!hasOnlineAvailability && (
+                <span className="text-[9px] font-normal text-slate-400">Not configured</span>
+              )}
+            </button>
+          </div>
+
+          {appointmentType === "online" && hasOnlineAvailability && (
+            <p className="mt-3 text-xs text-violet-600 font-medium flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">videocam</span>
+              Online — you'll receive a video call link after booking confirmation.
+            </p>
+          )}
+          {appointmentType === "physical" && hasPhysicalAvailability && (
+            <p className="mt-3 text-xs text-teal-700 font-medium flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">location_on</span>
+              In-person — visit the doctor at their clinic.
+            </p>
+          )}
+        </div>
+
+        {/* ── Step 2: Date & Time ──────────────────────────────────────────── */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Available slots */}
           <div className="space-y-6 lg:col-span-8">
             <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div>
-                <h1 className="font-headline text-3xl font-extrabold tracking-tight text-on-surface">Available Slots</h1>
-                <p className="mt-1 font-body text-on-surface-variant">Select a time that works best for your schedule.</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Step 2</p>
+                <h1 className="font-headline text-3xl font-extrabold tracking-tight text-on-surface">
+                  {appointmentType === "physical" ? "In-Person" : "Online"} Available Slots
+                </h1>
+                <p className="mt-1 font-body text-on-surface-variant">
+                  Select a date and time for your {appointmentType === "physical" ? "in-person visit" : "video consultation"}.
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -321,7 +432,9 @@ export default function PatientDoctorBookingPage() {
             </header>
 
             {bookingMsg && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{bookingMsg}</div>
+              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+                {bookingMsg}
+              </div>
             )}
 
             <div className="rounded-3xl bg-surface-container-lowest p-6 shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
@@ -330,6 +443,8 @@ export default function PatientDoctorBookingPage() {
                   const today = startOfDay(new Date());
                   const isPast = isBefore(day.date, today);
                   const isSelected = selectedDate === day.iso;
+                  const isAvail = !isPast && isDateAvailableForDoctor(day.iso, appointmentType);
+
                   return (
                     <button
                       key={day.iso}
@@ -341,23 +456,31 @@ export default function PatientDoctorBookingPage() {
                           ? "cursor-not-allowed bg-slate-100"
                           : isSelected
                             ? "bg-[#E2F8F8]"
-                            : "border border-slate-200 bg-white hover:border-slate-300"
+                            : isAvail
+                              ? "border border-slate-200 bg-white hover:border-slate-300"
+                              : "border border-dashed border-slate-200 bg-slate-50 opacity-50"
                       }`}
+                      title={
+                        isPast
+                          ? "Past date"
+                          : isAvail
+                            ? `Available for ${appointmentType}`
+                            : `No ${appointmentType} slots this day`
+                      }
                     >
-                      <span
-                        className={`mb-1 block text-[10px] font-bold uppercase tracking-widest ${
-                          isPast ? "text-slate-400" : isSelected ? "text-[#006566]" : "text-slate-500"
-                        }`}
-                      >
+                      <span className={`mb-1 block text-[10px] font-bold uppercase tracking-widest ${
+                        isPast ? "text-slate-400" : isSelected ? "text-[#006566]" : isAvail ? "text-slate-500" : "text-slate-300"
+                      }`}>
                         {day.dow}
                       </span>
-                      <span
-                        className={`font-headline text-lg font-bold ${
-                          isPast ? "text-slate-400" : isSelected ? "text-[#006566]" : "text-slate-900"
-                        }`}
-                      >
+                      <span className={`font-headline text-lg font-bold ${
+                        isPast ? "text-slate-400" : isSelected ? "text-[#006566]" : isAvail ? "text-slate-900" : "text-slate-300"
+                      }`}>
                         {day.dayNum}
                       </span>
+                      {isAvail && !isSelected && (
+                        <span className="mt-1 block w-1 h-1 rounded-full bg-primary mx-auto"></span>
+                      )}
                     </button>
                   );
                 })}
@@ -374,7 +497,9 @@ export default function PatientDoctorBookingPage() {
                       <span className="material-symbols-outlined mr-2 text-lg">{section.icon}</span>
                       {section.title}
                     </h3>
-                    <div className="grid grid-cols-2 gap-3">{slotsByPeriod[section.key].map((label) => renderSlotButton(label))}</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {slotsByPeriod[section.key].map((label) => renderSlotButton(label))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -445,25 +570,38 @@ export default function PatientDoctorBookingPage() {
                   </div>
                   <div className="flex items-start">
                     <div className="mr-3 rounded-xl bg-surface-container-high p-2">
-                      <span className="material-symbols-outlined text-xl text-primary">medical_information</span>
+                      <span
+                        className="material-symbols-outlined text-xl"
+                        style={{ color: appointmentType === "online" ? "#7c3aed" : "var(--color-primary)" }}
+                      >
+                        {appointmentType === "online" ? "videocam" : "medical_information"}
+                      </span>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">Next step</p>
-                      <p className="text-xs font-semibold italic text-on-surface">Secure payment</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">Type</p>
+                      <p className="text-xs font-semibold text-on-surface">
+                        {appointmentType === "online" ? "Online / Video Consultation" : "In-Person Visit"}
+                      </p>
                     </div>
                   </div>
                 </div>
 
+                {/* Booking summary */}
                 <div className="mt-8 w-full rounded-2xl border border-primary-fixed/20 bg-primary-fixed/10 p-4">
                   <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-widest text-primary font-label">
                     Booking summary
                   </p>
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-xs mb-1">
                     <span className="text-slate-600">Selected time</span>
                     <span className="font-bold text-on-surface">{summaryLine}</span>
                   </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-600">Appointment type</span>
+                    <span className="font-bold text-on-surface capitalize">{appointmentType}</span>
+                  </div>
                 </div>
 
+                {/* Reason for visit */}
                 <div className="mt-6 w-full text-left">
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">
                     Reason for visit
@@ -476,7 +614,6 @@ export default function PatientDoctorBookingPage() {
                     className="w-full resize-none rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
-
               </div>
             </div>
 

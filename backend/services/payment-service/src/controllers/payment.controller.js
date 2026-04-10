@@ -63,6 +63,7 @@ exports.createPendingBooking = async (req, res) => {
       date,
       time,
       reason,
+      appointmentType = "physical",
       consultationFee,
       currency = "LKR",
     } = req.body;
@@ -162,6 +163,7 @@ exports.createPendingBooking = async (req, res) => {
       date,
       time,
       reason: reason || "",
+      appointmentType: ["physical", "online"].includes(appointmentType) ? appointmentType : "physical",
       currency,
       consultationFeeCents: consultationCents,
       serviceFeeCents: svc,
@@ -411,6 +413,7 @@ exports.completeBookingAfterPayment = async (req, res) => {
       time: doc.time,
       reason: doc.reason || `Consultation paid. Order ${doc.orderId}`,
       notes: doc.reason || `Consultation paid. Order ${doc.orderId}`,
+      appointmentType: doc.appointmentType || "physical",
     };
 
     try {
