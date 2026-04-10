@@ -1,6 +1,30 @@
 const { randomUUID } = require("crypto");
 const Session = require("../models/session.model");
 
+exports.getAgoraConfig = (req, res) => {
+    const appId = process.env.AGORA_API_KEY || "";
+    if (!appId) {
+        return res.status(503).json({ message: "Agora is not configured on this server." });
+    }
+    return res.status(200).json({ appId });
+};
+
+exports.getSessionByAppointment = async (req, res) => {
+    try {
+        const { appointmentId } = req.params;
+        const session = await Session.findOne({ appointmentId }).sort({ createdAt: -1 });
+        if (!session) {
+            return res.status(404).json({ message: "No session found for this appointment" });
+        }
+        if (session.doctorId !== req.user.sub && session.patientId !== req.user.sub && req.user.role !== "admin") {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        return res.status(200).json({ session });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch session" });
+    }
+};
+
 exports.createSession = async (req, res) => {
     try {
         const { appointmentId = "", patientId, patientName = "" } = req.body;

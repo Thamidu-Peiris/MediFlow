@@ -6,6 +6,41 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import InfoDialog from "../components/InfoDialog";
 import { useAuth } from "../context/AuthContext";
 
+/** Opens the Agora video call room in a new tab. Creates a session if needed. */
+async function openVideoCall({ appt, authHeaders, user }) {
+  try {
+    // Try to get existing session for this appointment
+    let roomId = null;
+    try {
+      const existRes = await api.get(`/telemedicine/by-appointment/${appt._id}`, authHeaders);
+      roomId = existRes.data?.session?.roomId || null;
+    } catch {
+      roomId = null;
+    }
+
+    if (!roomId) {
+      // Create a new session
+      const createRes = await api.post(
+        "/telemedicine",
+        {
+          appointmentId: String(appt._id),
+          patientId: appt.patientId || "",
+          patientName: appt.patientName || "Patient",
+        },
+        authHeaders
+      );
+      roomId = createRes.data?.session?.roomId;
+    }
+
+    if (!roomId) throw new Error("Could not obtain video room.");
+
+    const peer = encodeURIComponent(appt.patientName || "Patient");
+    window.open(`/video-call?channel=${roomId}&role=doctor&peer=${peer}`, "_blank");
+  } catch (err) {
+    alert(err?.response?.data?.message || err.message || "Could not start video call.");
+  }
+}
+
 const PAGE_SIZE = 10;
 
 function formatBloodType(bt) {
@@ -85,7 +120,7 @@ function estimateEndTime(timeStr, durationMins) {
 }
 
 export default function DoctorAppointmentsPage() {
-    const { authHeaders } = useAuth();
+    const { authHeaders, user } = useAuth();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("upcoming");
@@ -316,10 +351,12 @@ export default function DoctorAppointmentsPage() {
                     {!loading && filteredAppointments.length > 0 && (
                         <div className="mt-6 space-y-5 border-t border-slate-100 pt-6">
                             {paginatedAppointments.map((appt) => (
-                                <AppointmentRow
+                                        <AppointmentRow
                                     key={appt._id}
                                     appt={appt}
                                     onStatusUpdate={handleStatusUpdate}
+                                    authHeaders={authHeaders}
+                                    user={user}
                                 />
                             ))}
                         </div>
@@ -382,14 +419,22 @@ export default function DoctorAppointmentsPage() {
     );
 }
 
-function AppointmentRow({ appt, onStatusUpdate }) {
+function AppointmentRow({ appt, onStatusUpdate, authHeaders, user }) {
     const [confirmDialog, setConfirmDialog] = useState(null);
     const [reasonDialogOpen, setReasonDialogOpen] = useState(false);
+    const [videoLoading, setVideoLoading] = useState(false);
     const status = String(appt.status || "").toLowerCase();
     const isCancelled = status === "cancelled" || status === "rejected";
     const isPending = status === "pending";
     const isAccepted = status === "accepted" || status === "confirmed";
     const isCompleted = status === "completed";
+    const isOnline = String(appt.appointmentType || "").toLowerCase() === "online";
+
+    const handleStartVideoCall = async () => {
+        setVideoLoading(true);
+        await openVideoCall({ appt, authHeaders, user });
+        setVideoLoading(false);
+    };
     const rawDur = appt.durationMins ?? appt.duration;
     const durationMinsNum =
         typeof rawDur === "number" && !Number.isNaN(rawDur)
@@ -487,7 +532,21 @@ function AppointmentRow({ appt, onStatusUpdate }) {
                         </div>
                     </div>
                 </div>
-                <div className="flex w-[220px] shrink-0 items-center justify-end gap-3">
+                <div className="flex w-[260px] shrink-0 items-center justify-end gap-2">
+                    {/* Appointment type badge */}
+                    <span
+                        className="inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-[10px] font-bold uppercase tracking-wide"
+                        style={
+                            isOnline
+                                ? { background: "rgba(124,58,237,0.1)", color: "#7c3aed", border: "1px solid rgba(124,58,237,0.2)" }
+                                : { background: "rgba(0,106,97,0.08)", color: "#006a61", border: "1px solid rgba(0,106,97,0.15)" }
+                        }
+                    >
+                        <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                            {isOnline ? "videocam" : "local_hospital"}
+                        </span>
+                        {isOnline ? "Online" : "In-Person"}
+                    </span>
                     <button
                         type="button"
                         className={iconOutlineClass}
@@ -507,21 +566,38 @@ function AppointmentRow({ appt, onStatusUpdate }) {
             <div className="flex items-center gap-3 border-l border-slate-200 pl-6">
                 {isAccepted && !isCompleted && (
                     <>
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setConfirmDialog({
-                                    title: "Complete visit?",
-                                    message: `Mark this visit as completed for ${patientLabel}?`,
-                                    action: "complete",
-                                    confirmLabel: "Complete",
-                                    variant: "primary",
-                                })
-                            }
-                            className="inline-flex h-10 items-center justify-center rounded-full bg-black px-6 py-0 font-headline text-sm font-bold text-white transition-colors hover:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-400/40"
-                        >
-                            Start Call
-                        </button>
+                        {isOnline ? (
+                            /* ── Online appointment: Start Video Call via Agora ── */
+                            <button
+                                type="button"
+                                onClick={handleStartVideoCall}
+                                disabled={videoLoading}
+                                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full px-5 py-0 font-headline text-sm font-bold text-white transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-violet-400/40 disabled:opacity-60"
+                                style={{ background: "linear-gradient(135deg,#7c3aed,#5b21b6)" }}
+                            >
+                                <span className="material-symbols-outlined text-[17px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                    {videoLoading ? "hourglass_top" : "videocam"}
+                                </span>
+                                {videoLoading ? "Starting…" : "Start Video Call"}
+                            </button>
+                        ) : (
+                            /* ── Physical appointment: mark complete ── */
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setConfirmDialog({
+                                        title: "Complete visit?",
+                                        message: `Mark this visit as completed for ${patientLabel}?`,
+                                        action: "complete",
+                                        confirmLabel: "Complete",
+                                        variant: "primary",
+                                    })
+                                }
+                                className="inline-flex h-10 items-center justify-center rounded-full bg-black px-6 py-0 font-headline text-sm font-bold text-white transition-colors hover:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-400/40"
+                            >
+                                Complete Visit
+                            </button>
+                        )}
                     </>
                 )}
                 {isPending && (
