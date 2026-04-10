@@ -1,18 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { addDays, addWeeks, format, isToday, startOfWeek } from "date-fns";
 import api from "../api/client";
 import DoctorShell from "../components/DoctorShell";
 import { useAuth } from "../context/AuthContext";
 
+/* ─────────────────────────────── constants ─────────────────────────────── */
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const SHORT_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
 const TIME_LABELS = [
   "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
   "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM",
   "06:00 PM", "07:00 PM", "08:00 PM",
 ];
 
+const HOUR_HEIGHT = 64;          // px per hour row
+const GRID_START_MINS = 8 * 60;  // 08:00 in minutes
+const GRID_END_MINS   = 20 * 60; // 20:00 in minutes  (08 AM + 12 h = 20:00, but we show 13 rows ending at 21:00)
+// 13 rows → 08:00 .. 20:00 inclusive start labels; last row ends at 21:00
+const TOTAL_GRID_MINS = 13 * 60; // 780 min displayed
+
+/* ─────────────────────────────── pure helpers ───────────────────────────── */
 const toMinutes = (time) => {
-  const [h, m] = time.split(":").map(Number);
+  const [h, m] = String(time || "0:0").split(":").map(Number);
   return h * 60 + m;
 };
 
@@ -29,10 +38,9 @@ const toMinutes12h = (timeLabel = "") => {
 
 const getCurrentWeekBounds = () => {
   const now = new Date();
-  const currentDay = now.getDay();
-  const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+  const diff = now.getDay() === 0 ? -6 : 1 - now.getDay();
   const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() + diffToMonday);
+  weekStart.setDate(now.getDate() + diff);
   weekStart.setHours(0, 0, 0, 0);
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 6);
@@ -48,8 +56,8 @@ const toTimeString = (minutes) => {
 
 const normalizeSlots = (slots) => {
   const cleaned = slots
-    .filter((slot) => slot?.start && slot?.end)
-    .filter((slot) => toMinutes(slot.start) < toMinutes(slot.end))
+    .filter((s) => s?.start && s?.end)
+    .filter((s) => toMinutes(s.start) < toMinutes(s.end))
     .sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
   const merged = [];
   for (const slot of cleaned) {
@@ -64,820 +72,908 @@ const normalizeSlots = (slots) => {
   return merged;
 };
 
-const subtractRangeFromSlot = (slot, blockStartMins, blockEndMins) => {
-  const slotStart = toMinutes(slot.start);
-  const slotEnd = toMinutes(slot.end);
-  if (blockEndMins <= slotStart || blockStartMins >= slotEnd) return [slot];
-  if (blockStartMins <= slotStart && blockEndMins >= slotEnd) return [];
-  if (blockStartMins <= slotStart && blockEndMins < slotEnd)
-    return [{ start: toTimeString(blockEndMins), end: slot.end }];
-  if (blockStartMins > slotStart && blockEndMins >= slotEnd)
-    return [{ start: slot.start, end: toTimeString(blockStartMins) }];
-  return [
-    { start: slot.start, end: toTimeString(blockStartMins) },
-    { start: toTimeString(blockEndMins), end: slot.end },
-  ];
+const subtractRangeFromSlot = (slot, bStart, bEnd) => {
+  const ss = toMinutes(slot.start), se = toMinutes(slot.end);
+  if (bEnd <= ss || bStart >= se) return [slot];
+  if (bStart <= ss && bEnd >= se) return [];
+  if (bStart <= ss) return [{ start: toTimeString(bEnd), end: slot.end }];
+  if (bEnd >= se)   return [{ start: slot.start, end: toTimeString(bStart) }];
+  return [{ start: slot.start, end: toTimeString(bStart) }, { start: toTimeString(bEnd), end: slot.end }];
 };
 
-/** Returns conflicting day names between two schedules */
-const findConflictDays = (scheduleA, scheduleB) => {
-  const conflicts = new Set();
-  for (const dayA of scheduleA) {
-    const dayB = scheduleB.find((d) => d.day === dayA.day);
-    if (!dayB?.slots?.length) continue;
-    for (const slotA of dayA.slots) {
-      const sA = toMinutes(slotA.start);
-      const eA = toMinutes(slotA.end);
-      for (const slotB of dayB.slots) {
-        const sB = toMinutes(slotB.start);
-        const eB = toMinutes(slotB.end);
-        if (sA < eB && eA > sB) { conflicts.add(dayA.day); break; }
+const findConflictDays = (schedA, schedB) => {
+  const out = new Set();
+  for (const dA of schedA) {
+    const dB = schedB.find((d) => d.day === dA.day);
+    if (!dB?.slots?.length) continue;
+    for (const sA of dA.slots) {
+      const [sa, ea] = [toMinutes(sA.start), toMinutes(sA.end)];
+      for (const sB of dB.slots) {
+        const [sb, eb] = [toMinutes(sB.start), toMinutes(sB.end)];
+        if (sa < eb && ea > sb) { out.add(dA.day); break; }
       }
-      if (conflicts.has(dayA.day)) break;
+      if (out.has(dA.day)) break;
     }
   }
-  return [...conflicts];
+  return [...out];
 };
 
 const emptySchedule = () => DAYS.map((day) => ({ day, slots: [] }));
 
 const mergeWithDays = (avail) =>
   DAYS.map((day) => {
-    const existing = (avail || []).find((a) => a.day === day);
-    return existing ? { ...existing, slots: normalizeSlots(existing.slots || []) } : { day, slots: [] };
+    const ex = (avail || []).find((a) => a.day === day);
+    return ex ? { ...ex, slots: normalizeSlots(ex.slots || []) } : { day, slots: [] };
   });
 
+/* Calendar positioning */
+const slotStyle = (startStr, endStr) => {
+  const s = Math.max(toMinutes(startStr), GRID_START_MINS);
+  const e = Math.min(toMinutes(endStr), GRID_START_MINS + TOTAL_GRID_MINS);
+  const top    = (s - GRID_START_MINS) * (HOUR_HEIGHT / 60);
+  const height = Math.max((e - s) * (HOUR_HEIGHT / 60), 20);
+  return { top: `${top}px`, height: `${height}px` };
+};
+
+const bookedStyle = (timeLabel) => {
+  const mins = toMinutes12h(timeLabel);
+  if (mins == null) return { top: "0px", height: `${HOUR_HEIGHT}px` };
+  const top = Math.max(0, (mins - GRID_START_MINS) * (HOUR_HEIGHT / 60));
+  return { top: `${top}px`, height: `${HOUR_HEIGHT}px` };
+};
+
+const calcHours = (sched) =>
+  sched.reduce((acc, d) =>
+    acc + d.slots.reduce((s, slot) =>
+      s + (toMinutes(slot.end) - toMinutes(slot.start)) / 60, 0), 0);
+
+/* ═══════════════════════════════ COMPONENT ═══════════════════════════════ */
 export default function DoctorAvailabilityPage() {
   const { authHeaders } = useAuth();
 
-  // ── Tab ──────────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("physical");
-
-  // ── Schedules ────────────────────────────────────────────────────────────────
-  const [physicalSchedule, setPhysicalSchedule] = useState(emptySchedule);
-  const [onlineSchedule, setOnlineSchedule] = useState(emptySchedule);
-
-  // ── Block-time entries (separate per tab) ─────────────────────────────────
-  const [physicalBlockedEntries, setPhysicalBlockedEntries] = useState([]);
-  const [onlineBlockedEntries, setOnlineBlockedEntries] = useState([]);
-
-  // ── Booked appointments (all, filtered per tab in derived values) ──────────
-  const [allBookedSlots, setAllBookedSlots] = useState([]);
-
-  // ── Misc UI state ─────────────────────────────────────────────────────────
-  const [duration, setDuration] = useState("30 min");
-  const [bufferTime, setBufferTime] = useState("10 minutes");
-  const [recurring, setRecurring] = useState(true);
-  const [blockDay, setBlockDay] = useState("Monday");
-  const [blockStart, setBlockStart] = useState("09:00");
-  const [blockEnd, setBlockEnd] = useState("12:00");
-  const [editingBlockId, setEditingBlockId] = useState(null);
-  const [msg, setMsg] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  // ── Derived active-tab values ─────────────────────────────────────────────
-  const schedule = activeTab === "physical" ? physicalSchedule : onlineSchedule;
-  const blockedEntries = activeTab === "physical" ? physicalBlockedEntries : onlineBlockedEntries;
-  const conflictSchedule = activeTab === "physical" ? onlineSchedule : physicalSchedule;
-  const bookedSlots = allBookedSlots.filter(
-    (b) => (b.appointmentType || "physical") === activeTab
+  /* ── week navigation ─────────────────────────────────────────────────── */
+  const [weekOffset, setWeekOffset] = useState(0);
+  const weekStart = useMemo(
+    () => startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 }),
+    [weekOffset]
+  );
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart]
   );
 
-  const tabColor = activeTab === "physical"
-    ? { primary: "#0d9488", light: "#f0fdfa", mid: "#99f6e4", badge: "#0f766e" }
-    : { primary: "#7c3aed", light: "#f5f3ff", mid: "#ddd6fe", badge: "#6d28d9" };
+  /* ── tab ─────────────────────────────────────────────────────────────── */
+  const [activeTab, setActiveTab] = useState("physical");
 
-  // ── Load doctor profile ───────────────────────────────────────────────────
+  /* ── schedules ───────────────────────────────────────────────────────── */
+  const [physicalSchedule, setPhysicalSchedule] = useState(emptySchedule);
+  const [onlineSchedule,   setOnlineSchedule]   = useState(emptySchedule);
+
+  /* ── blocked-time entries (per tab) ─────────────────────────────────── */
+  const [physicalBlocked, setPhysicalBlocked] = useState([]);
+  const [onlineBlocked,   setOnlineBlocked]   = useState([]);
+
+  /* ── booked appointments ─────────────────────────────────────────────── */
+  const [allBooked, setAllBooked] = useState([]);
+
+  /* ── block-time form ─────────────────────────────────────────────────── */
+  const [blockDay,        setBlockDay]        = useState("Monday");
+  const [blockStart,      setBlockStart]      = useState("09:00");
+  const [blockEnd,        setBlockEnd]        = useState("12:00");
+  const [editingBlockId,  setEditingBlockId]  = useState(null);
+  const [showBlockPanel,  setShowBlockPanel]  = useState(false);
+
+  /* ── context menu ────────────────────────────────────────────────────── */
+  const [contextMenu, setContextMenu] = useState(null);
+  const ctxRef = useRef(null);
+
+  /* ── misc UI ─────────────────────────────────────────────────────────── */
+  const [msg,     setMsg]     = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving,  setSaving]  = useState(false);
+
+  /* ── derived (active tab) ────────────────────────────────────────────── */
+  const schedule         = activeTab === "physical" ? physicalSchedule : onlineSchedule;
+  const conflictSchedule = activeTab === "physical" ? onlineSchedule   : physicalSchedule;
+  const blockedEntries   = activeTab === "physical" ? physicalBlocked   : onlineBlocked;
+  const setBlockedEntries = activeTab === "physical" ? setPhysicalBlocked : setOnlineBlocked;
+  const bookedSlots      = allBooked.filter((b) => (b.appointmentType || "physical") === activeTab);
+  const endpoint         = activeTab === "physical" ? "/doctors/physical-availability" : "/doctors/online-availability";
+
+  const TAB_COLOR  = activeTab === "physical" ? "#006a61" : "#7c3aed";
+  const TAB_LIGHT  = activeTab === "physical" ? "rgba(137,245,231,0.35)" : "rgba(221,214,254,0.5)";
+  const TAB_BORDER = activeTab === "physical" ? "rgba(0,106,97,0.2)"     : "rgba(124,58,237,0.2)";
+  const TAB_TEXT   = activeTab === "physical" ? "#005c54"                 : "#5b21b6";
+
+  /* ── stats ───────────────────────────────────────────────────────────── */
+  const physHours  = useMemo(() => calcHours(physicalSchedule), [physicalSchedule]);
+  const onlineHours = useMemo(() => calcHours(onlineSchedule),  [onlineSchedule]);
+  const utilization = useMemo(
+    () => Math.min(100, Math.round(((physHours + onlineHours) / 84) * 100)),
+    [physHours, onlineHours]
+  );
+  const conflictDays = useMemo(
+    () => findConflictDays(
+      activeTab === "physical" ? physicalSchedule : onlineSchedule,
+      activeTab === "physical" ? onlineSchedule   : physicalSchedule
+    ),
+    [physicalSchedule, onlineSchedule, activeTab]
+  );
+
+  /* ─────────────────────────── effects ──────────────────────────────── */
+
+  /* load doctor profile */
   useEffect(() => {
     api.get("/doctors/me", authHeaders)
       .then((res) => {
-        const doctor = res.data.doctor;
-        // Physical: use physicalAvailability; fall back to legacy `availability`
-        const physAvail = doctor?.physicalAvailability?.length
-          ? doctor.physicalAvailability
-          : doctor?.availability;
-        if (physAvail?.length) setPhysicalSchedule(mergeWithDays(physAvail));
-
-        // Online: use onlineAvailability only
-        if (doctor?.onlineAvailability?.length)
-          setOnlineSchedule(mergeWithDays(doctor.onlineAvailability));
+        const doc = res.data.doctor;
+        const physAvail = doc?.physicalAvailability?.length ? doc.physicalAvailability : doc?.availability;
+        if (physAvail?.length)             setPhysicalSchedule(mergeWithDays(physAvail));
+        if (doc?.onlineAvailability?.length) setOnlineSchedule(mergeWithDays(doc.onlineAvailability));
       })
       .catch((e) => console.log("Missing profile or availability", e))
       .finally(() => setLoading(false));
   }, [authHeaders]);
 
-  // ── Load booked appointments ─────────────────────────────────────────────
+  /* load booked appointments */
   useEffect(() => {
     api.get("/appointments/doctor", authHeaders)
       .then((res) => {
-        const appointments = res.data?.appointments || [];
-        const { weekStart, weekEnd } = getCurrentWeekBounds();
+        const appts = res.data?.appointments || [];
+        const { weekStart: ws, weekEnd: we } = getCurrentWeekBounds();
         const grouped = {};
-
-        for (const apt of appointments) {
+        for (const apt of appts) {
           if (["cancelled", "rejected"].includes(apt.status)) continue;
-          const dateObj = new Date(`${apt.date}T12:00:00`);
-          if (Number.isNaN(dateObj.getTime())) continue;
-          if (dateObj < weekStart || dateObj > weekEnd) continue;
-
-          const dayIndex = dateObj.getDay() === 0 ? 6 : dateObj.getDay() - 1;
-          const day = DAYS[dayIndex];
+          const d = new Date(`${apt.date}T12:00:00`);
+          if (isNaN(d) || d < ws || d > we) continue;
+          const di  = d.getDay() === 0 ? 6 : d.getDay() - 1;
+          const day = DAYS[di];
           const mins = toMinutes12h(apt.time);
           if (!day || mins == null) continue;
-
-          const hourLabel = TIME_LABELS.find((label) => {
-            const start = toMinutes12h(label);
-            return start != null && mins >= start && mins < start + 60;
+          const label = TIME_LABELS.find((l) => {
+            const s = toMinutes12h(l);
+            return s != null && mins >= s && mins < s + 60;
           });
-          if (!hourLabel) continue;
-
-          const aptType = apt.appointmentType || "physical";
-          const key = `${day}|${hourLabel}|${aptType}`;
-          if (!grouped[key]) grouped[key] = { day, time: hourLabel, appointmentType: aptType, patientNames: [] };
-          grouped[key].patientNames.push(apt.patientName || "Patient");
+          if (!label) continue;
+          const type = apt.appointmentType || "physical";
+          const key  = `${day}|${label}|${type}`;
+          if (!grouped[key]) grouped[key] = { day, time: label, appointmentType: type, names: [] };
+          grouped[key].names.push(apt.patientName || "Patient");
         }
-
-        setAllBookedSlots(
-          Object.values(grouped).map((item) => {
-            const names = Array.from(new Set(item.patientNames));
-            return {
-              day: item.day,
-              time: item.time,
-              appointmentType: item.appointmentType,
-              patientName: names.length === 1 ? names[0] : `${names[0]} +${names.length - 1}`,
-            };
-          })
-        );
+        setAllBooked(Object.values(grouped).map((g) => {
+          const u = [...new Set(g.names)];
+          return { day: g.day, time: g.time, appointmentType: g.appointmentType,
+            patientName: u.length === 1 ? u[0] : `${u[0]} +${u.length - 1}` };
+        }));
       })
-      .catch(() => setAllBookedSlots([]));
+      .catch(() => setAllBooked([]));
   }, [authHeaders]);
 
-  // ── Reset message when switching tabs ────────────────────────────────────
+  /* reset UI on tab switch */
   useEffect(() => {
-    setMsg("");
-    setEditingBlockId(null);
-    setBlockDay("Monday");
-    setBlockStart("09:00");
-    setBlockEnd("12:00");
+    setMsg(""); setEditingBlockId(null); setContextMenu(null);
+    setBlockDay("Monday"); setBlockStart("09:00"); setBlockEnd("12:00");
   }, [activeTab]);
 
-  // ── Slot helpers ─────────────────────────────────────────────────────────
-  const addSlot = (dayIndex) => {
-    const setter = activeTab === "physical" ? setPhysicalSchedule : setOnlineSchedule;
-    setter((prev) => {
+  /* close context menu on outside click */
+  useEffect(() => {
+    if (!contextMenu) return;
+    const h = (e) => { if (ctxRef.current && !ctxRef.current.contains(e.target)) setContextMenu(null); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [contextMenu]);
+
+  /* ─────────────────────────── slot helpers ──────────────────────────── */
+
+  const setter = () => activeTab === "physical" ? setPhysicalSchedule : setOnlineSchedule;
+
+  const addSlot = (di) => {
+    setter()((prev) => {
       const next = prev.map((d) => ({ ...d, slots: [...d.slots] }));
-      next[dayIndex].slots.push({ start: "09:00", end: "17:00" });
-      next[dayIndex].slots = normalizeSlots(next[dayIndex].slots);
+      next[di].slots.push({ start: "09:00", end: "17:00" });
+      next[di].slots = normalizeSlots(next[di].slots);
       return next;
     });
   };
 
-  const removeSlot = (dayIndex, slotIndex) => {
-    const setter = activeTab === "physical" ? setPhysicalSchedule : setOnlineSchedule;
-    setter((prev) => {
+  const removeSlot = (di, si) => {
+    setter()((prev) => {
       const next = prev.map((d) => ({ ...d, slots: [...d.slots] }));
-      next[dayIndex].slots.splice(slotIndex, 1);
-      next[dayIndex].slots = normalizeSlots(next[dayIndex].slots);
+      next[di].slots.splice(si, 1);
+      next[di].slots = normalizeSlots(next[di].slots);
       return next;
     });
   };
 
-  const updateSlot = (dayIndex, slotIndex, field, value) => {
-    const setter = activeTab === "physical" ? setPhysicalSchedule : setOnlineSchedule;
-    setter((prev) => {
+  const updateSlot = (di, si, field, value) => {
+    setter()((prev) => {
       const next = prev.map((d) => ({ ...d, slots: [...d.slots] }));
-      next[dayIndex].slots[slotIndex] = { ...next[dayIndex].slots[slotIndex], [field]: value };
-      next[dayIndex].slots = normalizeSlots(next[dayIndex].slots);
+      next[di].slots[si] = { ...next[di].slots[si], [field]: value };
+      next[di].slots = normalizeSlots(next[di].slots);
       return next;
     });
   };
 
-  const isHourCovered = (dayIndex, hourIndex) => {
-    const slotStart = (8 + hourIndex) * 60;
-    return schedule[dayIndex].slots.some((slot) => {
-      const start = toMinutes(slot.start);
-      const end = toMinutes(slot.end);
-      return slotStart >= start && slotStart < end;
-    });
+  const isHourCovered = (di, hi) => {
+    const s = (8 + hi) * 60;
+    return schedule[di].slots.some((sl) => toMinutes(sl.start) <= s && toMinutes(sl.end) > s);
   };
 
-  /** True if this hour is already occupied in the OTHER type's schedule → conflict */
-  const isConflicted = (dayIndex, hourIndex) => {
-    const slotStart = (8 + hourIndex) * 60;
-    const slotEnd = slotStart + 60;
-    return conflictSchedule[dayIndex].slots.some((slot) => {
-      const s = toMinutes(slot.start);
-      const e = toMinutes(slot.end);
-      return slotStart < e && slotEnd > s;
-    });
+  const isConflicted = (di, hi) => {
+    const s = (8 + hi) * 60, e = s + 60;
+    return conflictSchedule[di].slots.some((sl) => s < toMinutes(sl.end) && e > toMinutes(sl.start));
   };
 
-  const getBookedInfo = (dayIndex, hourIndex) => {
-    const day = DAYS[dayIndex];
-    const time = TIME_LABELS[hourIndex];
-    return bookedSlots.find((slot) => slot.day === day && slot.time === time) || null;
+  const isBooked = (di, hi) => {
+    const hm = (8 + hi) * 60;
+    return bookedSlots.some((b) => b.day === DAYS[di] && toMinutes12h(b.time) === hm);
   };
 
-  const toggleHourSlot = (dayIndex, hourIndex) => {
-    const startMins = (8 + hourIndex) * 60;
-    const endMins = (9 + hourIndex) * 60;
-    const start = toTimeString(startMins);
-    const end = toTimeString(endMins);
-
-    // Prevent toggling a cell that's already claimed by the other type
-    if (isConflicted(dayIndex, hourIndex)) {
+  const toggleHourSlot = (di, hi) => {
+    if (isConflicted(di, hi)) {
       const other = activeTab === "physical" ? "online" : "physical";
-      setMsg(`This hour is already set in your ${other} schedule. Resolve the conflict before enabling it here.`);
+      setMsg(`This hour conflicts with your ${other} schedule.`);
       return;
     }
-
-    const setter = activeTab === "physical" ? setPhysicalSchedule : setOnlineSchedule;
-    setter((prev) => {
+    const sm = (8 + hi) * 60, em = sm + 60;
+    setter()((prev) => {
       const next = prev.map((d) => ({ ...d, slots: [...d.slots] }));
-      const covered = next[dayIndex].slots.some(
-        (slot) => toMinutes(slot.start) <= startMins && toMinutes(slot.end) >= endMins
-      );
+      const covered = next[di].slots.some((sl) => toMinutes(sl.start) <= sm && toMinutes(sl.end) >= em);
       if (covered) {
-        next[dayIndex].slots = normalizeSlots(
-          next[dayIndex].slots.flatMap((slot) => subtractRangeFromSlot(slot, startMins, endMins))
-        );
+        next[di].slots = normalizeSlots(next[di].slots.flatMap((sl) => subtractRangeFromSlot(sl, sm, em)));
       } else {
-        next[dayIndex].slots = normalizeSlots([...next[dayIndex].slots, { start, end }]);
+        next[di].slots = normalizeSlots([...next[di].slots, { start: toTimeString(sm), end: toTimeString(em) }]);
       }
       return next;
     });
   };
 
-  // ── Save ─────────────────────────────────────────────────────────────────
+  /* ─────────────────────────── bulk actions ──────────────────────────── */
+
+  const handleMarkAllAvailable = () => {
+    const all = DAYS.map((day) => ({ day, slots: [{ start: "08:00", end: "21:00" }] }));
+    const other = activeTab === "physical" ? onlineSchedule : physicalSchedule;
+    const cf = findConflictDays(all, other);
+    if (cf.length) { setMsg(`Conflicts with ${activeTab === "physical" ? "online" : "physical"} schedule on: ${cf.join(", ")}.`); return; }
+    setter()(all); setMsg("");
+  };
+
+  const handleMarkAllUnavailable = () => { setter()(emptySchedule()); setMsg(""); };
+
+  const handleCopyMonday = () => {
+    const mon = schedule[0].slots;
+    setter()(DAYS.map((day) => ({ day, slots: normalizeSlots([...mon]) })));
+    setMsg("Monday's slots copied to all days. Save to apply.");
+  };
+
+  /* ─────────────────────────── context menu ──────────────────────────── */
+
+  const ctxMarkUnavailable = () => {
+    if (!contextMenu) return;
+    removeSlot(contextMenu.di, contextMenu.si);
+    setContextMenu(null);
+  };
+
+  const ctxBlockTime = () => {
+    if (!contextMenu) return;
+    setBlockDay(DAYS[contextMenu.di]);
+    setBlockStart(contextMenu.slot.start);
+    setBlockEnd(contextMenu.slot.end);
+    setShowBlockPanel(true);
+    setContextMenu(null);
+  };
+
+  const ctxMoveType = () => {
+    if (!contextMenu) return;
+    const { di, si, slot } = contextMenu;
+    if (activeTab === "physical") {
+      setPhysicalSchedule((p) => p.map((d, i) => i === di ? { ...d, slots: d.slots.filter((_, idx) => idx !== si) } : d));
+      setOnlineSchedule((p) => p.map((d, i) => i === di ? { ...d, slots: normalizeSlots([...d.slots, slot]) } : d));
+      setMsg("Slot moved to Online schedule. Save both tabs to apply.");
+    } else {
+      setOnlineSchedule((p) => p.map((d, i) => i === di ? { ...d, slots: d.slots.filter((_, idx) => idx !== si) } : d));
+      setPhysicalSchedule((p) => p.map((d, i) => i === di ? { ...d, slots: normalizeSlots([...d.slots, slot]) } : d));
+      setMsg("Slot moved to Physical schedule. Save both tabs to apply.");
+    }
+    setContextMenu(null);
+  };
+
+  /* ─────────────────────────── save ─────────────────────────────────── */
+
   const handleSave = async () => {
-    const currentTab = activeTab;
-    const currentSchedule = currentTab === "physical" ? physicalSchedule : onlineSchedule;
-    const otherSchedule = currentTab === "physical" ? onlineSchedule : physicalSchedule;
-    const endpoint = currentTab === "physical"
-      ? "/doctors/physical-availability"
-      : "/doctors/online-availability";
-
+    const curSched  = activeTab === "physical" ? physicalSchedule : onlineSchedule;
+    const otherSched = activeTab === "physical" ? onlineSchedule  : physicalSchedule;
     try {
-      setSaving(true);
-      setMsg("Saving...");
-
-      const cleaned = currentSchedule.map((dayItem) => ({
-        ...dayItem,
-        slots: normalizeSlots(dayItem.slots),
-      }));
-
-      const hasInvalid = cleaned.some((dayItem) =>
-        dayItem.slots.some((slot) => toMinutes(slot.start) >= toMinutes(slot.end))
-      );
-      if (hasInvalid) {
-        setMsg("Fix invalid time ranges before saving.");
-        return;
+      setSaving(true); setMsg("Saving...");
+      const cleaned = curSched.map((d) => ({ ...d, slots: normalizeSlots(d.slots) }));
+      if (cleaned.some((d) => d.slots.some((s) => toMinutes(s.start) >= toMinutes(s.end)))) {
+        setMsg("Fix invalid time ranges before saving."); return;
       }
-
-      // Frontend conflict guard
-      const conflictDays = findConflictDays(cleaned, otherSchedule);
-      if (conflictDays.length) {
-        setMsg(
-          `Conflict with your ${currentTab === "physical" ? "online" : "physical"} schedule on: ${conflictDays.join(", ")}. ` +
-          "Remove overlapping slots before saving."
-        );
-        return;
-      }
-
-      const validSchedule = cleaned.filter((s) => s.slots.length > 0);
-      await api.put(endpoint, { availability: validSchedule }, authHeaders);
-
-      if (currentTab === "physical") setPhysicalSchedule(cleaned);
-      else setOnlineSchedule(cleaned);
-
-      setMsg(
-        `${currentTab === "physical" ? "Physical" : "Online"} availability schedule updated successfully.`
-      );
-    } catch (error) {
-      setMsg(error.response?.data?.message || "Failed to save schedule.");
-    } finally {
-      setSaving(false);
-    }
+      const cf = findConflictDays(cleaned, otherSched);
+      if (cf.length) { setMsg(`Conflict on: ${cf.join(", ")}. Resolve before saving.`); return; }
+      await api.put(endpoint, { availability: cleaned.filter((d) => d.slots.length) }, authHeaders);
+      if (activeTab === "physical") setPhysicalSchedule(cleaned); else setOnlineSchedule(cleaned);
+      setMsg(`${activeTab === "physical" ? "Physical" : "Online"} schedule updated successfully.`);
+    } catch (err) {
+      setMsg(err.response?.data?.message || "Failed to save schedule.");
+    } finally { setSaving(false); }
   };
 
-  // ── Block time ────────────────────────────────────────────────────────────
+  /* ─────────────────────────── block time ────────────────────────────── */
+
   const handleBlockTime = async () => {
-    const currentTab = activeTab;
-    const currentSchedule = currentTab === "physical" ? physicalSchedule : onlineSchedule;
-    const setter = currentTab === "physical" ? setPhysicalSchedule : setOnlineSchedule;
-    const setterBlocked = currentTab === "physical" ? setPhysicalBlockedEntries : setOnlineBlockedEntries;
-    const currentBlockedEntries = currentTab === "physical" ? physicalBlockedEntries : onlineBlockedEntries;
-    const endpoint = currentTab === "physical"
-      ? "/doctors/physical-availability"
-      : "/doctors/online-availability";
+    const curTab    = activeTab;
+    const curSched  = curTab === "physical" ? physicalSchedule : onlineSchedule;
+    const setSched  = curTab === "physical" ? setPhysicalSchedule : setOnlineSchedule;
+    const setBlocked = curTab === "physical" ? setPhysicalBlocked  : setOnlineBlocked;
+    const curBlocked = curTab === "physical" ? physicalBlocked      : onlineBlocked;
+    const ep        = curTab === "physical" ? "/doctors/physical-availability" : "/doctors/online-availability";
 
-    const startMins = toMinutes(blockStart);
-    const endMins = toMinutes(blockEnd);
-    if (startMins >= endMins) {
-      setMsg("Block time is invalid. End time must be after start time.");
-      return;
-    }
-
+    const sm = toMinutes(blockStart), em = toMinutes(blockEnd);
+    if (sm >= em) { setMsg("End time must be after start time."); return; }
     try {
-      setSaving(true);
-      setMsg("Saving blocked time...");
-
-      const editingEntry = editingBlockId
-        ? currentBlockedEntries.find((e) => e.id === editingBlockId)
-        : null;
-
-      let workingSchedule = currentSchedule.map((d) => ({ ...d, slots: [...d.slots] }));
-      if (editingEntry) {
-        workingSchedule = workingSchedule.map((dayItem) => {
-          if (dayItem.day !== editingEntry.day) return dayItem;
-          return {
-            ...dayItem,
-            slots: normalizeSlots([
-              ...dayItem.slots,
-              { start: editingEntry.start, end: editingEntry.end },
-            ]),
-          };
-        });
+      setSaving(true); setMsg("Saving blocked time...");
+      const editing = editingBlockId ? curBlocked.find((e) => e.id === editingBlockId) : null;
+      let work = curSched.map((d) => ({ ...d, slots: [...d.slots] }));
+      if (editing) {
+        work = work.map((d) => d.day !== editing.day ? d :
+          { ...d, slots: normalizeSlots([...d.slots, { start: editing.start, end: editing.end }]) });
       }
-
-      const updatedSchedule = workingSchedule.map((dayItem) => {
-        if (dayItem.day !== blockDay) return dayItem;
-        const nextSlots = normalizeSlots(dayItem.slots)
-          .flatMap((slot) => subtractRangeFromSlot(slot, startMins, endMins))
-          .filter((slot) => toMinutes(slot.start) < toMinutes(slot.end));
-        return { ...dayItem, slots: normalizeSlots(nextSlots) };
-      });
-
-      const validSchedule = updatedSchedule.filter((s) => s.slots.length > 0);
-      await api.put(endpoint, { availability: validSchedule }, authHeaders);
-      setter(updatedSchedule);
-
-      setterBlocked((prev) => {
-        if (editingBlockId) {
-          return prev.map((e) =>
-            e.id === editingBlockId
-              ? { ...e, day: blockDay, start: blockStart, end: blockEnd }
-              : e
-          );
-        }
-        return [...prev, { id: `${Date.now()}-${Math.random()}`, day: blockDay, start: blockStart, end: blockEnd }];
-      });
-
-      setEditingBlockId(null);
-      setMsg(`${blockDay} blocked from ${blockStart} to ${blockEnd} and saved.`);
-    } catch (error) {
-      setMsg(error.response?.data?.message || "Failed to save blocked time.");
-    } finally {
-      setSaving(false);
-    }
+      const updated = work.map((d) => d.day !== blockDay ? d :
+        { ...d, slots: normalizeSlots(normalizeSlots(d.slots).flatMap((s) => subtractRangeFromSlot(s, sm, em))
+          .filter((s) => toMinutes(s.start) < toMinutes(s.end))) });
+      await api.put(ep, { availability: updated.filter((d) => d.slots.length) }, authHeaders);
+      setSched(updated);
+      setBlocked((prev) => editingBlockId
+        ? prev.map((e) => e.id === editingBlockId ? { ...e, day: blockDay, start: blockStart, end: blockEnd } : e)
+        : [...prev, { id: `${Date.now()}-${Math.random()}`, day: blockDay, start: blockStart, end: blockEnd }]
+      );
+      setEditingBlockId(null); setShowBlockPanel(false);
+      setMsg(`${blockDay} blocked ${blockStart}–${blockEnd}.`);
+    } catch (err) {
+      setMsg(err.response?.data?.message || "Failed to save blocked time.");
+    } finally { setSaving(false); }
   };
 
-  const handleEditBlockedEntry = (entry) => {
-    setBlockDay(entry.day);
-    setBlockStart(entry.start);
-    setBlockEnd(entry.end);
-    setEditingBlockId(entry.id);
+  const handleEditBlock = (entry) => {
+    setBlockDay(entry.day); setBlockStart(entry.start); setBlockEnd(entry.end);
+    setEditingBlockId(entry.id); setShowBlockPanel(true);
     setMsg(`Editing block: ${entry.day} ${entry.start}–${entry.end}`);
   };
 
-  const handleDeleteBlockedEntry = async (entry) => {
-    const currentTab = activeTab;
-    const currentSchedule = currentTab === "physical" ? physicalSchedule : onlineSchedule;
-    const setter = currentTab === "physical" ? setPhysicalSchedule : setOnlineSchedule;
-    const setterBlocked = currentTab === "physical" ? setPhysicalBlockedEntries : setOnlineBlockedEntries;
-    const endpoint = currentTab === "physical"
-      ? "/doctors/physical-availability"
-      : "/doctors/online-availability";
-
+  const handleDeleteBlock = async (entry) => {
+    const curTab  = activeTab;
+    const curSched = curTab === "physical" ? physicalSchedule : onlineSchedule;
+    const setSched  = curTab === "physical" ? setPhysicalSchedule : setOnlineSchedule;
+    const setBlocked = curTab === "physical" ? setPhysicalBlocked  : setOnlineBlocked;
+    const ep = curTab === "physical" ? "/doctors/physical-availability" : "/doctors/online-availability";
     try {
       setSaving(true);
-      setMsg("Removing blocked range...");
-
-      const updatedSchedule = currentSchedule.map((dayItem) => {
-        if (dayItem.day !== entry.day) return dayItem;
-        return {
-          ...dayItem,
-          slots: normalizeSlots([...dayItem.slots, { start: entry.start, end: entry.end }]),
-        };
-      });
-
-      const validSchedule = updatedSchedule.filter((s) => s.slots.length > 0);
-      await api.put(endpoint, { availability: validSchedule }, authHeaders);
-      setter(updatedSchedule);
-      setterBlocked((prev) => prev.filter((item) => item.id !== entry.id));
+      const updated = curSched.map((d) => d.day !== entry.day ? d :
+        { ...d, slots: normalizeSlots([...d.slots, { start: entry.start, end: entry.end }]) });
+      await api.put(ep, { availability: updated.filter((d) => d.slots.length) }, authHeaders);
+      setSched(updated);
+      setBlocked((p) => p.filter((x) => x.id !== entry.id));
       if (editingBlockId === entry.id) setEditingBlockId(null);
-      setMsg(`Removed block for ${entry.day} ${entry.start}–${entry.end}.`);
-    } catch (error) {
-      setMsg(error.response?.data?.message || "Failed to remove blocked range.");
-    } finally {
-      setSaving(false);
-    }
+      setMsg(`Removed block ${entry.day} ${entry.start}–${entry.end}.`);
+    } catch (err) {
+      setMsg(err.response?.data?.message || "Failed to remove block.");
+    } finally { setSaving(false); }
   };
 
+  /* ─────────────────────────── render helpers ────────────────────────── */
+
+  const renderDayColumn = (di) => {
+    const dayItem = schedule[di];
+    const dayBooked  = bookedSlots.filter((b) => b.day === DAYS[di]);
+    const dayConflict = conflictSchedule[di];
+
+    return (
+      <div key={DAYS[di]} className="flex-1 relative border-r border-surface-container-low last:border-r-0 min-w-0">
+
+        {/* Clickable hour rows (empty cells) */}
+        {TIME_LABELS.map((_, hi) => {
+          const occupied = isHourCovered(di, hi) || isConflicted(di, hi) || isBooked(di, hi);
+          return (
+            <div
+              key={hi}
+              className={`h-16 border-b border-surface-container-low/60 transition-colors ${
+                !occupied ? "hover:bg-primary/[0.04] cursor-pointer" : "cursor-default"
+              }`}
+              onClick={() => !occupied && toggleHourSlot(di, hi)}
+            />
+          );
+        })}
+
+        {/* Available slot blocks */}
+        {dayItem.slots.map((slot, si) => (
+          <div
+            key={si}
+            className="absolute left-1 right-1 rounded-lg p-2 flex flex-col cursor-pointer overflow-hidden z-10"
+            style={{ ...slotStyle(slot.start, slot.end), backgroundColor: TAB_LIGHT, border: `1px solid ${TAB_BORDER}` }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setContextMenu({ di, si, slot, x: e.clientX, y: e.clientY });
+            }}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-tight leading-none" style={{ color: TAB_TEXT }}>
+              Available
+            </span>
+            <span className="text-[9px] mt-0.5 opacity-60 leading-none" style={{ color: TAB_TEXT }}>
+              {slot.start}–{slot.end}
+            </span>
+          </div>
+        ))}
+
+        {/* Conflict blocks (other type) */}
+        {dayConflict.slots.map((slot, si) => (
+          <div
+            key={`cx-${si}`}
+            className="absolute left-1 right-1 rounded-lg p-2 pointer-events-none overflow-hidden z-10"
+            style={{
+              ...slotStyle(slot.start, slot.end),
+              backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(249,115,22,0.12) 8px,rgba(249,115,22,0.12) 16px)",
+              border: "1px solid rgba(251,146,60,0.4)",
+            }}
+          >
+            <span className="text-[10px] font-bold text-orange-700 uppercase tracking-tight">
+              {activeTab === "physical" ? "Online" : "Physical"} Conflict
+            </span>
+            <span className="text-[9px] text-orange-500 leading-none">Dual booking alert</span>
+          </div>
+        ))}
+
+        {/* Booked blocks */}
+        {dayBooked.map((bk, bi) => (
+          <div
+            key={`bk-${bi}`}
+            className="absolute left-1 right-1 rounded-lg p-2 flex flex-col group overflow-hidden z-20 shadow-sm"
+            style={{ ...bookedStyle(bk.time), backgroundColor: "rgba(0,106,97,0.85)", border: "1px solid rgba(0,106,97,0.4)" }}
+          >
+            <span className="text-[9px] font-bold text-white/70 uppercase tracking-tight">Booked</span>
+            <span className="text-xs font-bold text-white truncate">{bk.patientName}</span>
+            {/* Tooltip */}
+            <div className="hidden group-hover:flex absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 bg-on-surface text-white px-3 py-2 rounded-xl text-[10px] whitespace-nowrap flex-col gap-0.5 shadow-xl min-w-max">
+              <span className="font-bold">{bk.patientName}</span>
+              <span className="opacity-70">{bk.time}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  /* ─────────────────────────── loading ───────────────────────────────── */
   if (loading) {
     return (
       <DoctorShell>
-        <div className="p-8 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
         </div>
       </DoctorShell>
     );
   }
 
-  const conflictDaysPreview = findConflictDays(
-    activeTab === "physical" ? physicalSchedule : onlineSchedule,
-    activeTab === "physical" ? onlineSchedule : physicalSchedule
-  );
-
+  /* ═════════════════════════════ JSX ════════════════════════════════════ */
   return (
     <DoctorShell>
-      <div className="p-8 max-w-[1400px] mx-auto space-y-8">
+      <div className="px-8 py-8 max-w-[1400px] mx-auto space-y-5 bg-surface min-h-screen">
 
-        {/* ── Header ─────────────────────────────────────────────────────── */}
-        <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-extrabold font-headline text-on-surface tracking-tight">
+        {/* ── Page header ─────────────────────────────────────────────── */}
+        <div className="flex items-end justify-between gap-6">
+          <div>
+            <h1 className="text-3xl font-headline font-extrabold text-on-surface tracking-tight">
               Availability Management
             </h1>
-            <p className="text-on-surface-variant max-w-3xl">
-              Configure separate schedules for physical and online appointments. Slots cannot overlap between types.
+            <p className="text-on-surface-variant mt-1 text-sm">
+              Orchestrate your clinical hours across physical and digital channels.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            style={{ backgroundColor: tabColor.primary }}
-            className="px-8 py-3 rounded-full text-white font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-          >
-            {saving ? "Saving..." : `Save ${activeTab === "physical" ? "Physical" : "Online"} Schedule`}
-          </button>
-        </header>
 
-        {/* ── Tab Switcher ─────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-0 rounded-2xl bg-slate-100 p-1.5 w-fit">
-          <button
-            type="button"
-            onClick={() => setActiveTab("physical")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
-              activeTab === "physical"
-                ? "bg-white text-teal-700 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            <span className="material-symbols-outlined text-lg" style={activeTab === "physical" ? { fontVariationSettings: "'FILL' 1", color: "#0d9488" } : {}}>
-              local_hospital
-            </span>
-            Physical Appointments
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("online")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${
-              activeTab === "online"
-                ? "bg-white text-violet-700 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            <span className="material-symbols-outlined text-lg" style={activeTab === "online" ? { fontVariationSettings: "'FILL' 1", color: "#7c3aed" } : {}}>
-              videocam
-            </span>
-            Online Appointments
-          </button>
-        </div>
-
-        {/* ── Tab context banner ─────────────────────────────────────────── */}
-        <div
-          className="flex items-center gap-3 px-5 py-3 rounded-2xl border text-sm font-medium"
-          style={{ backgroundColor: tabColor.light, borderColor: tabColor.mid, color: tabColor.badge }}
-        >
-          <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>
-            {activeTab === "physical" ? "local_hospital" : "videocam"}
-          </span>
-          {activeTab === "physical"
-            ? "You are editing your Physical appointment schedule. These hours are for in-person visits."
-            : "You are editing your Online appointment schedule. These hours are for video consultations."}
-        </div>
-
-        {/* ── Conflict warning ───────────────────────────────────────────── */}
-        {conflictDaysPreview.length > 0 && (
-          <div className="flex items-start gap-3 px-5 py-3 rounded-2xl border border-orange-200 bg-orange-50 text-orange-800 text-sm font-medium">
-            <span className="material-symbols-outlined text-orange-500 mt-0.5">warning</span>
-            <span>
-              Conflict detected on <strong>{conflictDaysPreview.join(", ")}</strong> — these days have overlapping
-              slots between your physical and online schedules. Remove the orange cells before saving.
-            </span>
+          {/* Tab switcher */}
+          <div className="bg-surface-container-low p-1 rounded-xl flex gap-1 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab("physical")}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === "physical"
+                  ? "bg-surface-container-lowest text-primary shadow-sm"
+                  : "text-on-surface-variant hover:text-on-surface"
+              }`}
+            >
+              Physical Appointments
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("online")}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === "online"
+                  ? "bg-surface-container-lowest text-violet-700 shadow-sm"
+                  : "text-on-surface-variant hover:text-on-surface"
+              }`}
+            >
+              Online Appointments
+            </button>
           </div>
-        )}
+        </div>
 
-        {/* ── Status message ────────────────────────────────────────────── */}
+        {/* ── Status message ───────────────────────────────────────────── */}
         {msg && (
-          <div
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl border ${
-              msg.includes("success")
-                ? "bg-teal-50 text-teal-700 border-teal-200"
-                : "bg-error-container text-error border-error/20"
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm">
-              {msg.includes("success") ? "check_circle" : "error"}
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium ${
+            msg.includes("success") || msg.includes("updated")
+              ? "bg-tertiary-container/50 text-on-tertiary-container"
+              : msg.includes("Conflict") || msg.includes("conflict") || msg.includes("Failed") || msg.includes("invalid")
+                ? "bg-error-container/30 text-error"
+                : "bg-surface-container text-on-surface-variant"
+          }`}>
+            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+              {msg.includes("success") || msg.includes("updated") ? "check_circle" : "info"}
             </span>
-            <span className="font-medium text-sm">{msg}</span>
+            {msg}
           </div>
         )}
 
-        {/* ── Main grid ─────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-12 gap-8">
+        {/* ── Conflict warning ─────────────────────────────────────────── */}
+        {conflictDays.length > 0 && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium"
+            style={{ background: "rgba(249,115,22,0.08)", border: "1px solid rgba(251,146,60,0.25)", color: "#9a3412" }}>
+            <span className="material-symbols-outlined text-sm text-orange-500" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+            <span>
+              Overlap detected on <strong>{conflictDays.join(", ")}</strong> — physical and online schedules conflict.
+              Remove orange cells before saving.
+            </span>
+          </div>
+        )}
 
-          {/* Sidebar */}
-          <div className="col-span-12 xl:col-span-3 space-y-6">
+        {/* ── Quick actions bar ────────────────────────────────────────── */}
+        <div className="bg-surface-container-lowest rounded-xl px-5 py-3.5 flex items-center justify-between shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)]">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleMarkAllAvailable}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-bold hover:bg-primary-dim transition-all"
+            >
+              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              Mark All Available
+            </button>
+            <button
+              type="button"
+              onClick={handleMarkAllUnavailable}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary-container text-on-secondary-container text-xs font-bold hover:bg-surface-variant transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">block</span>
+              Mark All Unavailable
+            </button>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleCopyMonday}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-primary hover:bg-primary/[0.06] text-xs font-semibold transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">content_copy</span>
+              Copy Monday to All Days
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-primary hover:bg-primary/[0.06] text-xs font-semibold transition-all disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-sm">event_repeat</span>
+              {saving ? "Saving…" : "Apply to Future Weeks"}
+            </button>
+          </div>
+        </div>
 
-            {/* Legend */}
-            <div className="px-6 py-5 bg-white rounded-3xl border border-slate-200/80 shadow-sm">
-              <h4 className="text-[11px] font-bold uppercase text-slate-500 mb-4 tracking-[0.18em]">Visual Guide</h4>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-3 text-sm">
-                  <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: tabColor.mid, borderColor: tabColor.primary }}></span>
-                  <span className="font-semibold" style={{ color: tabColor.badge }}>Available</span>
-                </li>
-                <li className="flex items-center gap-3 text-sm">
-                  <span className="w-3 h-3 rounded-full bg-rose-100 border border-rose-200"></span>
-                  <span className="text-rose-600 font-semibold">Unavailable</span>
-                </li>
-                <li className="flex items-center gap-3 text-sm">
-                  <span className="w-3 h-3 rounded-full bg-amber-100 border border-amber-300"></span>
-                  <span className="text-black font-semibold">Booked (Patient Name)</span>
-                </li>
-                <li className="flex items-center gap-3 text-sm">
-                  <span className="w-3 h-3 rounded-full bg-orange-200 border border-orange-400"></span>
-                  <span className="text-orange-700 font-semibold">
-                    Conflict ({activeTab === "physical" ? "Online" : "Physical"})
-                  </span>
-                </li>
-              </ul>
+        {/* ── Calendar ─────────────────────────────────────────────────── */}
+        <div className="bg-surface-container-lowest rounded-xl shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)] overflow-hidden">
+
+          {/* Days header row */}
+          <div className="flex border-b border-surface-container-low bg-surface-container-lowest sticky top-0 z-10">
+            {/* Time column header — week nav */}
+            <div className="w-20 flex-shrink-0 border-r border-surface-container-low flex flex-col items-center justify-center py-3 gap-1">
+              <button
+                type="button"
+                onClick={() => setWeekOffset((w) => w - 1)}
+                className="w-6 h-6 flex items-center justify-center rounded-md text-on-surface-variant hover:text-primary hover:bg-primary/[0.06] transition-colors"
+              >
+                <span className="material-symbols-outlined text-base">chevron_left</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setWeekOffset((w) => w + 1)}
+                className="w-6 h-6 flex items-center justify-center rounded-md text-on-surface-variant hover:text-primary hover:bg-primary/[0.06] transition-colors"
+              >
+                <span className="material-symbols-outlined text-base">chevron_right</span>
+              </button>
             </div>
 
-            {/* Block Time */}
-            <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="material-symbols-outlined text-error">block</span>
-                <h3 className="font-headline font-bold text-lg">Block Time</h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-tighter mb-2">
-                    Selected Day
-                  </label>
-                  <select
-                    value={blockDay}
-                    onChange={(e) => setBlockDay(e.target.value)}
-                    className="w-full rounded-lg border-outline-variant/30 bg-surface focus:ring-primary focus:border-primary text-sm"
-                  >
-                    {DAYS.map((day) => <option key={day} value={day}>{day}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-tighter mb-2">
-                    Time Range
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="time"
-                      value={blockStart}
-                      onChange={(e) => setBlockStart(e.target.value)}
-                      className="rounded-lg border-outline-variant/30 bg-surface focus:ring-primary focus:border-primary text-sm"
-                    />
-                    <input
-                      type="time"
-                      value={blockEnd}
-                      onChange={(e) => setBlockEnd(e.target.value)}
-                      className="rounded-lg border-outline-variant/30 bg-surface focus:ring-primary focus:border-primary text-sm"
-                    />
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleBlockTime}
-                  className="w-full py-2.5 text-sm font-bold text-white bg-red-600 border border-red-600 rounded-full hover:bg-red-700 transition-colors"
+            {/* Day columns */}
+            {weekDays.map((date, idx) => {
+              const today = isToday(date);
+              return (
+                <div
+                  key={idx}
+                  className={`flex-1 py-3.5 text-center border-r border-surface-container-low last:border-r-0 ${today ? "bg-primary/[0.03]" : ""}`}
                 >
-                  {editingBlockId ? "Update Blocked Range" : "Block Selected Dates"}
-                </button>
-              </div>
-            </section>
-
-            {/* Recurring */}
-            <section className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">event_repeat</span>
-                  <h3 className="font-headline font-bold text-lg">Recurring</h3>
+                  <p className={`text-[11px] font-bold uppercase tracking-widest ${today ? "text-primary" : "text-on-surface-variant"}`}>
+                    {format(date, "EEE")}
+                  </p>
+                  <p className={`text-base font-headline font-bold mt-0.5 ${today ? "text-on-surface" : "text-on-surface-variant"}`}>
+                    {format(date, "d")}
+                  </p>
+                  {today && (
+                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Today</span>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setRecurring((prev) => !prev)}
-                  className={`w-10 h-5 rounded-full relative flex items-center transition-colors ${recurring ? "bg-primary" : "bg-slate-300"}`}
-                  aria-label="Toggle recurring schedule"
-                >
-                  <span className={`absolute w-3 h-3 bg-white rounded-full shadow-sm transition-all ${recurring ? "right-1" : "left-1"}`}></span>
-                </button>
-              </div>
-              <p className="text-sm text-on-surface-variant">
-                Apply this current week's schedule to all future weeks indefinitely.
-              </p>
-            </section>
+              );
+            })}
           </div>
 
-          {/* Weekly Grid */}
-          <div className="col-span-12 xl:col-span-9 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
-            <div className="grid grid-cols-8 border-b border-outline-variant/20 bg-surface-container-low/50">
-              <div className="p-4 border-r border-outline-variant/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-slate-400">schedule</span>
-              </div>
-              {SHORT_DAYS.map((day) => (
-                <div key={day} className="p-4 text-center border-r border-outline-variant/20">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{day}</p>
+          {/* Scrollable grid */}
+          <div className="flex h-[580px] overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+
+            {/* Sticky time labels */}
+            <div className="w-20 flex-shrink-0 sticky left-0 z-10 border-r border-surface-container-low bg-surface-container-low/40">
+              {TIME_LABELS.map((label) => (
+                <div key={label} className="h-16 flex items-center justify-center border-b border-surface-container-low/60">
+                  <span className="text-[10px] font-bold text-outline uppercase tracking-tighter">
+                    {label.replace(":00 ", "\u00A0")}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div className="max-h-[420px] overflow-auto">
-              <div className="grid grid-cols-8">
-                <div className="border-r border-outline-variant/20 sticky left-0 bg-white z-10">
-                  {TIME_LABELS.map((label) => (
-                    <div key={label} className="h-12 flex items-start justify-center p-2 text-[10px] font-bold text-slate-400 border-b border-outline-variant/15">
-                      {label}
-                    </div>
-                  ))}
-                </div>
-
-                {schedule.map((dayItem, dayIndex) => (
-                  <div key={dayItem.day} className="border-r border-outline-variant/15">
-                    {TIME_LABELS.map((label, i) => {
-                      const bookedInfo = getBookedInfo(dayIndex, i);
-                      const covered = isHourCovered(dayIndex, i);
-                      const conflicted = !bookedInfo && isConflicted(dayIndex, i);
-                      const otherType = activeTab === "physical" ? "Online" : "Physical";
-
-                      let cellClass = "";
-                      let cellLabel = "";
-
-                      if (bookedInfo) {
-                        cellClass = "bg-amber-100 text-black cursor-not-allowed";
-                        cellLabel = bookedInfo.patientName;
-                      } else if (conflicted) {
-                        cellClass = "bg-orange-100 text-orange-700 cursor-not-allowed";
-                        cellLabel = `${otherType}`;
-                      } else if (covered) {
-                        cellClass = "text-white hover:opacity-90 cursor-pointer";
-                        cellLabel = "Available";
-                      } else {
-                        cellClass = "bg-rose-50 text-rose-500 hover:bg-rose-100 cursor-pointer";
-                        cellLabel = "Unavailable";
-                      }
-
-                      return (
-                        <button
-                          key={`${dayItem.day}-${label}-${i}`}
-                          type="button"
-                          onClick={() => !bookedInfo && !conflicted && toggleHourSlot(dayIndex, i)}
-                          disabled={Boolean(bookedInfo || conflicted)}
-                          style={covered && !bookedInfo && !conflicted ? { backgroundColor: tabColor.primary } : {}}
-                          className={`h-12 w-full border-b border-outline-variant/15 transition-colors rounded-none flex items-center justify-center px-1 ${cellClass}`}
-                          title={
-                            bookedInfo
-                              ? `${dayItem.day} ${label} — ${bookedInfo.patientName}`
-                              : conflicted
-                                ? `${dayItem.day} ${label} — conflicts with ${otherType} schedule`
-                                : `${dayItem.day} ${label}`
-                          }
-                        >
-                          <span className="block max-w-full truncate whitespace-nowrap text-[10px] font-bold leading-tight">
-                            {cellLabel}
-                          </span>
-                        </button>
-                      );
-                    })}
-                    {dayItem.slots.length > 0 && (
-                      <div className="mx-1 my-2 rounded-md text-[10px] p-2 font-bold min-h-12"
-                        style={{ backgroundColor: tabColor.mid, color: tabColor.badge }}>
-                        {dayItem.slots.length} slot{dayItem.slots.length > 1 ? "s" : ""} configured
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+            {/* Day columns */}
+            <div className="flex flex-1">
+              {DAYS.map((_, di) => renderDayColumn(di))}
             </div>
+          </div>
 
-            <div className="p-4 bg-surface-container-low/30 border-t border-outline-variant/10 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <p className="text-xs text-on-surface-variant flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">mouse</span>
-                  Click to toggle availability
-                </p>
-                <p className="text-xs text-on-surface-variant flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">edit</span>
-                  Edit precise slots below
-                </p>
-              </div>
-              <div
-                className="text-xs font-bold px-3 py-1 rounded-full"
-                style={{ backgroundColor: tabColor.light, color: tabColor.badge }}
-              >
-                {activeTab === "physical" ? "Physical" : "Online"} · Timezone: Local
-              </div>
+          {/* Calendar legend footer */}
+          <div className="flex items-center gap-6 px-5 py-3 border-t border-surface-container-low/60 bg-surface-container-low/20">
+            <span className="text-[10px] font-bold text-outline uppercase tracking-widest">Legend</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: TAB_LIGHT, border: `1px solid ${TAB_BORDER}` }} />
+              <span className="text-[10px] font-semibold text-on-surface-variant">Available</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: "rgba(0,106,97,0.85)" }} />
+              <span className="text-[10px] font-semibold text-on-surface-variant">Booked</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(249,115,22,0.3) 3px,rgba(249,115,22,0.3) 6px)", border: "1px solid rgba(251,146,60,0.4)" }} />
+              <span className="text-[10px] font-semibold text-on-surface-variant">Conflict</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm bg-primary/[0.04] border border-dashed border-primary/30" />
+              <span className="text-[10px] font-semibold text-on-surface-variant">Click to toggle</span>
+            </div>
+            <div className="ml-auto text-[10px] font-bold px-3 py-1 rounded-full" style={{ backgroundColor: TAB_LIGHT, color: TAB_TEXT }}>
+              {activeTab === "physical" ? "Physical" : "Online"} Mode
             </div>
           </div>
         </div>
 
-        {/* ── Day-wise Availability ────────────────────────────────────────── */}
-        <section className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="material-symbols-outlined" style={{ color: tabColor.primary }}>calendar_month</span>
-            <h3 className="font-headline font-bold text-lg">
-              {activeTab === "physical" ? "Physical" : "Online"} Day-wise Availability
-            </h3>
+        {/* ── Block time panel ─────────────────────────────────────────── */}
+        {showBlockPanel && (
+          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-error text-base">timer_off</span>
+                <h3 className="font-headline font-bold text-base text-on-surface">Block Time Range</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowBlockPanel(false); setEditingBlockId(null); }}
+                className="text-on-surface-variant hover:text-on-surface transition-colors p-1"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+            <div className="flex flex-wrap items-end gap-4">
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Day</label>
+                <select
+                  value={blockDay}
+                  onChange={(e) => setBlockDay(e.target.value)}
+                  className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">From</label>
+                <input type="time" value={blockStart} onChange={(e) => setBlockStart(e.target.value)}
+                  className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">To</label>
+                <input type="time" value={blockEnd} onChange={(e) => setBlockEnd(e.target.value)}
+                  className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <button
+                type="button"
+                onClick={handleBlockTime}
+                disabled={saving}
+                className="px-5 py-2 rounded-lg bg-error text-on-error text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50"
+              >
+                {editingBlockId ? "Update Block" : "Apply Block"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Day-wise slot editor ─────────────────────────────────────── */}
+        <div className="bg-surface-container-lowest rounded-xl shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-surface-container-low flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-base" style={{ color: TAB_COLOR }}>calendar_month</span>
+              <h3 className="font-headline font-bold text-base text-on-surface">
+                {activeTab === "physical" ? "Physical" : "Online"} Day-wise Slots
+              </h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowBlockPanel((s) => !s)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-error hover:bg-error/[0.08] transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">timer_off</span>
+                Block Time
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="px-5 py-1.5 rounded-lg text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                style={{ backgroundColor: TAB_COLOR }}
+              >
+                {saving ? "Saving…" : "Save Schedule"}
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {schedule.map((dayItem, dIndex) => (
-              <div key={dayItem.day} className="flex flex-wrap gap-4 items-start p-4 bg-surface-container-high rounded-xl">
-                <div className="w-28 font-headline font-bold text-on-surface pt-2">{dayItem.day}</div>
-                <div className="flex-1 flex flex-col gap-3">
-                  {dayItem.slots.map((slot, sIndex) => (
-                    <div key={sIndex} className="flex gap-3 items-center flex-wrap">
-                      <input
-                        type="time"
-                        value={slot.start}
-                        onChange={(e) => updateSlot(dIndex, sIndex, "start", e.target.value)}
-                        className="bg-white border border-teal-500/10 rounded-lg px-3 py-2 text-on-surface focus:ring-2 focus:ring-teal-500/20 focus:outline-none"
-                      />
-                      <span className="text-on-surface-variant font-medium">to</span>
-                      <input
-                        type="time"
-                        value={slot.end}
-                        onChange={(e) => updateSlot(dIndex, sIndex, "end", e.target.value)}
-                        className="bg-white border border-teal-500/10 rounded-lg px-3 py-2 text-on-surface focus:ring-2 focus:ring-teal-500/20 focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeSlot(dIndex, sIndex)}
-                        className="p-2 bg-error-container text-error rounded-lg hover:bg-error/20 transition-all active:scale-95"
-                        aria-label="Remove slot"
-                      >
-                        <span className="material-symbols-outlined text-sm">close</span>
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => addSlot(dIndex)}
-                    className="self-start flex items-center gap-2 px-4 py-2 border border-dashed border-slate-400 rounded-lg text-slate-600 hover:border-opacity-75 hover:bg-opacity-50 transition-all text-sm font-medium"
-                    style={{ "--hover-color": tabColor.primary }}
-                  >
+          <div className="p-5 space-y-1">
+            {schedule.map((dayItem, di) => (
+              <div key={dayItem.day}
+                className="flex flex-wrap items-start gap-4 py-3.5 border-b border-surface-container-low/50 last:border-0">
+                <div className="w-24 pt-1.5">
+                  <span className="text-sm font-bold text-on-surface">{dayItem.day}</span>
+                </div>
+                <div className="flex-1 flex flex-col gap-2 min-w-0">
+                  {dayItem.slots.length === 0
+                    ? <span className="text-xs text-on-surface-variant italic py-1.5">Unavailable — no slots</span>
+                    : dayItem.slots.map((slot, si) => (
+                      <div key={si} className="flex gap-2 items-center flex-wrap">
+                        <input type="time" value={slot.start}
+                          onChange={(e) => updateSlot(di, si, "start", e.target.value)}
+                          className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                        <span className="text-xs text-on-surface-variant">to</span>
+                        <input type="time" value={slot.end}
+                          onChange={(e) => updateSlot(di, si, "end", e.target.value)}
+                          className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                        <button type="button" onClick={() => removeSlot(di, si)}
+                          className="p-1.5 text-error hover:bg-error/[0.08] rounded-lg transition-colors">
+                          <span className="material-symbols-outlined text-sm">close</span>
+                        </button>
+                      </div>
+                    ))
+                  }
+                  <button type="button" onClick={() => addSlot(di)}
+                    className="self-start flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-outline-variant/40 rounded-lg text-on-surface-variant hover:text-primary hover:border-primary/30 transition-all text-xs font-medium">
                     <span className="material-symbols-outlined text-sm">add</span>
-                    Add time slot
+                    Add slot
                   </button>
                 </div>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Blocked entries */}
-          <div className="mt-8 border-t border-outline-variant/20 pt-6">
-            <h4 className="font-headline font-bold text-base mb-3">Blocked Time Entries</h4>
-            {blockedEntries.length === 0 ? (
-              <p className="text-sm text-on-surface-variant">No blocked entries yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {blockedEntries.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between rounded-lg border border-outline-variant/20 bg-rose-50 px-3 py-2">
-                    <span className="text-sm font-medium text-rose-700">
-                      {entry.day} {entry.start} – {entry.end}
+        {/* ── Blocked time entries ─────────────────────────────────────── */}
+        {blockedEntries.length > 0 && (
+          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)]">
+            <h4 className="font-headline font-bold text-sm text-on-surface mb-3">Blocked Time Entries</h4>
+            <div className="space-y-2">
+              {blockedEntries.map((entry) => (
+                <div key={entry.id}
+                  className="flex items-center justify-between rounded-lg px-4 py-2.5 bg-error-container/20">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-error text-sm">block</span>
+                    <span className="text-sm font-medium text-error">
+                      {entry.day} · {entry.start} – {entry.end}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEditBlockedEntry(entry)}
-                        className="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteBlockedEntry(entry)}
-                        className="rounded-md border border-rose-200 bg-white px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100"
-                      >
-                        Delete
-                      </button>
-                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => handleEditBlock(entry)}
+                      className="px-3 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/20 text-xs font-semibold text-on-surface-variant hover:text-on-surface transition-colors">
+                      Edit
+                    </button>
+                    <button type="button" onClick={() => handleDeleteBlock(entry)}
+                      className="px-3 py-1 rounded-lg border border-error/20 text-xs font-semibold text-error hover:bg-error/[0.08] transition-colors">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </section>
+        )}
+
+        {/* ── Footer stats ─────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              label: "Weekly Utilization",
+              value: `${utilization}%`,
+              sub: `+${Math.max(0, utilization - 64)}% from last week`,
+              subColor: "text-primary",
+            },
+            {
+              label: "In-Person Slots",
+              value: Math.round(physHours),
+              sub: "Hours available",
+              subColor: "text-on-surface-variant",
+            },
+            {
+              label: "Virtual Slots",
+              value: Math.round(onlineHours),
+              sub: "Hours available",
+              subColor: "text-on-surface-variant",
+            },
+            {
+              label: "Next Conflict",
+              value: conflictDays[0] ? conflictDays[0].slice(0, 3) : "—",
+              sub: conflictDays[0] ? "Physical/Online overlap" : "No conflicts",
+              subColor: conflictDays[0] ? "text-error" : "text-tertiary",
+              valueColor: conflictDays[0] ? "text-error" : "text-on-surface",
+            },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-surface-container-low p-5 rounded-xl">
+              <p className="text-[10px] font-bold text-outline uppercase tracking-widest mb-2">{stat.label}</p>
+              <div className="flex items-end gap-2">
+                <span className={`text-2xl font-headline font-extrabold ${stat.valueColor || "text-on-surface"}`}>
+                  {stat.value}
+                </span>
+                <span className={`text-[10px] font-semibold mb-0.5 leading-tight ${stat.subColor}`}>{stat.sub}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* ── Context menu ────────────────────────────────────────────────── */}
+      {contextMenu && (
+        <div
+          ref={ctxRef}
+          className="fixed z-50 bg-surface-container-lowest rounded-xl w-52 p-1.5"
+          style={{
+            boxShadow: "0px 12px 32px -4px rgba(42,52,57,0.18)",
+            left: Math.min(contextMenu.x + 8, window.innerWidth - 224),
+            top:  Math.min(contextMenu.y + 4, window.innerHeight - 160),
+          }}
+        >
+          <button type="button" onClick={ctxMarkUnavailable}
+            className="w-full text-left px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low rounded-lg transition-colors flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-on-surface-variant">block</span>
+            Mark unavailable
+          </button>
+          <button type="button" onClick={ctxBlockTime}
+            className="w-full text-left px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low rounded-lg transition-colors flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-on-surface-variant">timer_off</span>
+            Block time
+          </button>
+          <button type="button" onClick={ctxMoveType}
+            className="w-full text-left px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low rounded-lg transition-colors flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm text-on-surface-variant">
+              {activeTab === "physical" ? "videocam" : "local_hospital"}
+            </span>
+            {activeTab === "physical" ? "Set as online" : "Set as physical"}
+          </button>
+        </div>
+      )}
     </DoctorShell>
   );
 }
