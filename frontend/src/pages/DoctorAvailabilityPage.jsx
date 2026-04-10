@@ -806,19 +806,28 @@ export default function DoctorAvailabilityPage() {
         )}
 
         {/* ── Day-wise slot editor ─────────────────────────────────────── */}
-        <div className="bg-surface-container-lowest rounded-xl shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-surface-container-low flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-base" style={{ color: TAB_COLOR }}>calendar_month</span>
-              <h3 className="font-headline font-bold text-base text-on-surface">
-                {activeTab === "physical" ? "Physical" : "Online"} Day-wise Slots
-              </h3>
+        <div className="bg-surface-container-lowest rounded-2xl shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)] overflow-hidden">
+
+          {/* Section header */}
+          <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: TAB_LIGHT }}>
+                <span className="material-symbols-outlined text-[18px]" style={{ color: TAB_COLOR }}>calendar_month</span>
+              </div>
+              <div>
+                <h3 className="font-headline font-bold text-[15px] text-on-surface leading-tight">
+                  {activeTab === "physical" ? "Physical" : "Online"} Day-wise Slots
+                </h3>
+                <p className="text-[10px] text-on-surface-variant mt-0.5">
+                  Configure available hours for each day of the week
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowBlockPanel((s) => !s)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-error hover:bg-error/[0.08] transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-error hover:bg-error/[0.07] transition-all"
               >
                 <span className="material-symbols-outlined text-sm">timer_off</span>
                 Block Time
@@ -827,48 +836,164 @@ export default function DoctorAvailabilityPage() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="px-5 py-1.5 rounded-lg text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50 shadow-sm"
                 style={{ backgroundColor: TAB_COLOR }}
               >
+                <span className="material-symbols-outlined text-sm">{saving ? "hourglass_top" : "save"}</span>
                 {saving ? "Saving…" : "Save Schedule"}
               </button>
             </div>
           </div>
 
-          <div className="p-5 space-y-1">
-            {schedule.map((dayItem, di) => (
-              <div key={dayItem.day}
-                className="flex flex-wrap items-start gap-4 py-3.5 border-b border-surface-container-low/50 last:border-0">
-                <div className="w-24 pt-1.5">
-                  <span className="text-sm font-bold text-on-surface">{dayItem.day}</span>
-                </div>
-                <div className="flex-1 flex flex-col gap-2 min-w-0">
-                  {dayItem.slots.length === 0
-                    ? <span className="text-xs text-on-surface-variant italic py-1.5">Unavailable — no slots</span>
-                    : dayItem.slots.map((slot, si) => (
-                      <div key={si} className="flex gap-2 items-center flex-wrap">
-                        <input type="time" value={slot.start}
-                          onChange={(e) => updateSlot(di, si, "start", e.target.value)}
-                          className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                        <span className="text-xs text-on-surface-variant">to</span>
-                        <input type="time" value={slot.end}
-                          onChange={(e) => updateSlot(di, si, "end", e.target.value)}
-                          className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-1.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                        <button type="button" onClick={() => removeSlot(di, si)}
-                          className="p-1.5 text-error hover:bg-error/[0.08] rounded-lg transition-colors">
-                          <span className="material-symbols-outlined text-sm">close</span>
-                        </button>
+          {/* Day rows */}
+          <div>
+            {schedule.map((dayItem, di) => {
+              const hasSlots = dayItem.slots.length > 0;
+              const dayHours = dayItem.slots.reduce(
+                (acc, s) => acc + (toMinutes(s.end) - toMinutes(s.start)) / 60, 0
+              );
+              const SHORT_DAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][di];
+              const GRID_S = 8 * 60, GRID_T = 13 * 60;
+
+              return (
+                <div
+                  key={dayItem.day}
+                  className="flex items-start gap-4 px-6 py-4"
+                  style={{ background: di % 2 !== 0 ? "rgba(0,0,0,0.015)" : "transparent" }}
+                >
+                  {/* Day badge */}
+                  <div
+                    className="flex-shrink-0 w-[60px] h-[60px] rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all"
+                    style={{
+                      backgroundColor: hasSlots ? TAB_LIGHT : "rgba(0,0,0,0.04)",
+                    }}
+                  >
+                    <span
+                      className="text-[9px] font-extrabold uppercase tracking-widest leading-none"
+                      style={{ color: hasSlots ? TAB_TEXT : "#94a3b8" }}
+                    >
+                      {SHORT_DAY}
+                    </span>
+                    <span
+                      className="text-sm font-headline font-extrabold leading-none mt-1"
+                      style={{ color: hasSlots ? TAB_COLOR : "#cbd5e1" }}
+                    >
+                      {hasSlots ? `${Math.round(dayHours * 10) / 10}h` : "—"}
+                    </span>
+                  </div>
+
+                  {/* Slots + timeline */}
+                  <div className="flex-1 flex flex-col gap-2 min-w-0 pt-0.5">
+
+                    {/* Empty state */}
+                    {!hasSlots && (
+                      <div className="flex items-center gap-2 h-9">
+                        <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-container-low text-xs text-on-surface-variant">
+                          <span className="material-symbols-outlined text-sm text-on-surface-variant/50">do_not_disturb</span>
+                          Unavailable — no slots configured
+                        </div>
                       </div>
-                    ))
-                  }
-                  <button type="button" onClick={() => addSlot(di)}
-                    className="self-start flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-outline-variant/40 rounded-lg text-on-surface-variant hover:text-primary hover:border-primary/30 transition-all text-xs font-medium">
-                    <span className="material-symbols-outlined text-sm">add</span>
-                    Add slot
-                  </button>
+                    )}
+
+                    {/* Slot rows */}
+                    {dayItem.slots.map((slot, si) => {
+                      const durMins = toMinutes(slot.end) - toMinutes(slot.start);
+                      const durLabel = durMins > 0
+                        ? durMins >= 60
+                          ? `${Math.floor(durMins / 60)}h${durMins % 60 ? ` ${durMins % 60}m` : ""}`
+                          : `${durMins}m`
+                        : "—";
+
+                      return (
+                        <div
+                          key={si}
+                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                          style={{ backgroundColor: TAB_LIGHT, border: `1.5px solid ${TAB_BORDER}` }}
+                        >
+                          <span
+                            className="material-symbols-outlined text-[16px] flex-shrink-0"
+                            style={{ color: TAB_COLOR, fontVariationSettings: "'FILL' 1" }}
+                          >
+                            schedule
+                          </span>
+
+                          <input
+                            type="time"
+                            value={slot.start}
+                            onChange={(e) => updateSlot(di, si, "start", e.target.value)}
+                            className="rounded-lg px-2.5 py-1 text-sm font-bold text-on-surface border-0 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            style={{ backgroundColor: "rgba(255,255,255,0.75)", width: "108px" }}
+                          />
+
+                          <span className="material-symbols-outlined text-sm flex-shrink-0" style={{ color: TAB_COLOR }}>
+                            arrow_forward
+                          </span>
+
+                          <input
+                            type="time"
+                            value={slot.end}
+                            onChange={(e) => updateSlot(di, si, "end", e.target.value)}
+                            className="rounded-lg px-2.5 py-1 text-sm font-bold text-on-surface border-0 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            style={{ backgroundColor: "rgba(255,255,255,0.75)", width: "108px" }}
+                          />
+
+                          {/* Duration badge */}
+                          <span
+                            className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: "rgba(255,255,255,0.65)", color: TAB_TEXT }}
+                          >
+                            {durLabel}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => removeSlot(di, si)}
+                            className="ml-auto p-1.5 rounded-lg transition-all hover:bg-error/10 flex-shrink-0"
+                          >
+                            <span className="material-symbols-outlined text-sm text-error">close</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+
+                    {/* Mini timeline bar */}
+                    {hasSlots && (
+                      <div className="relative h-1 rounded-full bg-surface-container-low overflow-hidden">
+                        {dayItem.slots.map((slot, si) => {
+                          const left = Math.max(0, ((toMinutes(slot.start) - GRID_S) / GRID_T) * 100);
+                          const width = Math.min(
+                            100 - left,
+                            ((toMinutes(slot.end) - toMinutes(slot.start)) / GRID_T) * 100
+                          );
+                          return (
+                            <div
+                              key={si}
+                              className="absolute h-full rounded-full"
+                              style={{ left: `${left}%`, width: `${width}%`, backgroundColor: TAB_COLOR }}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Add slot button */}
+                    <button
+                      type="button"
+                      onClick={() => addSlot(di)}
+                      className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-80"
+                      style={{
+                        color: TAB_COLOR,
+                        border: `1.5px dashed ${TAB_BORDER}`,
+                        backgroundColor: "transparent",
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-sm">add</span>
+                      Add time slot
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
