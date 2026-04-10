@@ -40,6 +40,7 @@ import DoctorAppointmentsPage from "./pages/DoctorAppointmentsPage";
 import DoctorPrescriptionsPage from "./pages/DoctorPrescriptionsPage";
 import DoctorPatientsPage from "./pages/DoctorPatientsPage";
 import TelemedicinePage from "./pages/TelemedicinePage";
+import VideoCallPage from "./pages/VideoCallPage";
 
 export default function App() {
   return (
@@ -166,6 +167,7 @@ export default function App() {
       <Route path="/doctor/prescriptions" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorPrescriptionsPage /></ProtectedRoute>} />
       <Route path="/doctor/patients" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorPatientsPage /></ProtectedRoute>} />
       <Route path="/doctor/telemedicine" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><TelemedicinePage /></ProtectedRoute>} />
+      <Route path="/video-call" element={<ProtectedRoute allowedRoles={["patient", "doctor", "admin"]}><VideoCallPage /></ProtectedRoute>} />
 
       {/* Public Doctor Routes */}
       <Route path="/doctors/:id" element={<DoctorDetailsPage />} />
