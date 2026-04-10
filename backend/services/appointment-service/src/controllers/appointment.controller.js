@@ -108,7 +108,8 @@ exports.requestAppointment = async (req, res) => {
             // Optional fields (sent by payment-service after payment)
             patientName = "",
             sessionId = "",
-            notes = ""
+            notes = "",
+            appointmentType = "physical"
         } = req.body;
 
         if (!doctorId || !date) {
@@ -141,6 +142,7 @@ exports.requestAppointment = async (req, res) => {
             date,
             time,
             reason,
+            appointmentType: ["physical", "online"].includes(appointmentType) ? appointmentType : "physical",
             // Keep these non-empty when payment-service sends values.
             sessionId,
             notes,

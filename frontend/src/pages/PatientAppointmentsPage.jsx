@@ -183,6 +183,24 @@ export default function PatientAppointmentsPage() {
     navigate(`/telemedicine/${appointment._id}`);
   };
 
+  const handleJoinVideoCall = async (appointment) => {
+    try {
+      const res = await api.get(
+        `/telemedicine/by-appointment/${appointment._id}`,
+        authHeaders
+      );
+      const roomId = res.data?.session?.roomId;
+      if (!roomId) {
+        setMessage("The doctor hasn't started the video call yet. Please wait.");
+        return;
+      }
+      const peer = encodeURIComponent(appointment.doctorName || "Doctor");
+      window.open(`/video-call?channel=${roomId}&role=patient&peer=${peer}`, "_blank");
+    } catch {
+      setMessage("The doctor hasn't started the video call yet. Please try again shortly.");
+    }
+  };
+
   const getStatusStyle = (status) => {
     return statusColors[String(status || "").toLowerCase()] || statusColors.pending;
   };
@@ -336,6 +354,9 @@ export default function PatientAppointmentsPage() {
                 const statusStyle = getStatusStyle(appointment.status);
                 const isUpcoming = UPCOMING_STATUSES.includes(String(appointment.status || "").toLowerCase());
                 
+                const isOnline = String(appointment.appointmentType || "").toLowerCase() === "online";
+                const isAcceptedOrConfirmed = ["accepted", "confirmed"].includes(String(appointment.status || "").toLowerCase());
+
                 return (
                   <div key={appointment._id} className="aura-appointment-card">
                     <div className="aura-appointment-doctor">
@@ -343,6 +364,29 @@ export default function PatientAppointmentsPage() {
                       <div className="aura-appointment-doctor-info">
                         <h4>{appointment.doctorName || "Doctor"}</h4>
                         <p>{appointment.specialty}</p>
+                        {/* Appointment type pill */}
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            marginTop: "4px",
+                            padding: "2px 10px",
+                            borderRadius: "999px",
+                            fontSize: "10px",
+                            fontWeight: 800,
+                            letterSpacing: "0.05em",
+                            textTransform: "uppercase",
+                            ...(isOnline
+                              ? { background: "rgba(124,58,237,0.1)", color: "#7c3aed", border: "1px solid rgba(124,58,237,0.2)" }
+                              : { background: "rgba(0,106,97,0.08)", color: "#006a61", border: "1px solid rgba(0,106,97,0.15)" }),
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: "11px", fontVariationSettings: "'FILL' 1" }}>
+                            {isOnline ? "videocam" : "local_hospital"}
+                          </span>
+                          {isOnline ? "Online" : "In-Person"}
+                        </span>
                       </div>
                     </div>
 
@@ -365,7 +409,7 @@ export default function PatientAppointmentsPage() {
                     </div>
 
                     <div className="aura-appointment-status">
-                      <span 
+                      <span
                         className="aura-status-badge"
                         style={{ background: statusStyle.bg, color: statusStyle.color }}
                       >
@@ -374,8 +418,21 @@ export default function PatientAppointmentsPage() {
                     </div>
 
                     <div className="aura-appointment-actions">
-                      {isUpcoming && appointment.status === "confirmed" && (
-                        <button 
+                      {/* ── Online + accepted → Join Video Call via Agora ── */}
+                      {isUpcoming && isOnline && isAcceptedOrConfirmed && (
+                        <button
+                          className="aura-btn-join"
+                          onClick={() => handleJoinVideoCall(appointment)}
+                          style={{ background: "linear-gradient(135deg,#7c3aed,#5b21b6)", display: "flex", alignItems: "center", gap: "6px" }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: "17px", fontVariationSettings: "'FILL' 1" }}>videocam</span>
+                          Join Video Call
+                        </button>
+                      )}
+
+                      {/* ── Physical + confirmed → legacy join flow ── */}
+                      {isUpcoming && !isOnline && appointment.status === "confirmed" && (
+                        <button
                           className="aura-btn-join"
                           onClick={() => handleJoinCall(appointment)}
                         >
