@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(grep -n \"Math.random\\\\||| 342\\\\||| 12\\\\||| 8\\\\|\\\\[1500\\\\|Patient A\\\\|Patient B\\\\|Sarah Jenkins.*Cardiology\\\\|Dr. A. Thorne\\\\|Dr. L. Chen\\\\|Dr. K. Miller\\\\|Blood Test Results\\\\|Prescription Renewal - Lisinopril\\\\|Annual Physical Summary\\\\|Just now.*5 mins\\\\|12 mins ago\\\\|25 mins ago\\\\|4 + Math\\\\|reviewCount.*Math\\\\|idx % 4\\\\]\\\\|idx % 3\\\\]\" D:/Project/MediFlow/frontend/src/pages/*.jsx D:/Project/MediFlow/frontend/src/components/*.jsx)",
-      "Bash(npm install:*)"
-    ]
-  }
-}

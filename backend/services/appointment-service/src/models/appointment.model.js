@@ -10,6 +10,11 @@ const appointmentSchema = new mongoose.Schema(
         date: { type: String, required: true },
         time: { type: String, default: "" },
         reason: { type: String, default: "" },
+        appointmentType: {
+            type: String,
+            enum: ["physical", "online"],
+            default: "physical"
+        },
         status: {
             type: String,
             enum: ["pending", "accepted", "rejected", "completed", "cancelled"],

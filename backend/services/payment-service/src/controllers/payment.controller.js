@@ -63,6 +63,7 @@ exports.createPendingBooking = async (req, res) => {
       date,
       time,
       reason,
+      appointmentType = "physical",
       consultationFee,
       currency = "LKR",
     } = req.body;
@@ -93,12 +94,19 @@ exports.createPendingBooking = async (req, res) => {
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found." });
     }
-    const dayAvailability = (doctor.availability || []).find((d) => d.day === dayName);
+    // Select the correct availability schedule based on appointment type.
+    // Online → onlineAvailability only.
+    // Physical → physicalAvailability, falling back to legacy availability field.
+    const typeSchedule =
+      appointmentType === "online"
+        ? (doctor.onlineAvailability || [])
+        : (doctor.physicalAvailability?.length ? doctor.physicalAvailability : (doctor.availability || []));
+    const dayAvailability = typeSchedule.find((d) => d.day === dayName);
     const isWithinAvailability = (dayAvailability?.slots || []).some((slot) =>
       slotContainsMinutes(slot, requestedMins)
     );
     if (!isWithinAvailability) {
-      return res.status(400).json({ message: `Doctor is not available on ${dayName} at ${time}.` });
+      return res.status(400).json({ message: `Doctor is not available for ${appointmentType} appointments on ${dayName} at ${time}.` });
     }
 
     // Validate against existing appointments (already booked times)
@@ -162,6 +170,7 @@ exports.createPendingBooking = async (req, res) => {
       date,
       time,
       reason: reason || "",
+      appointmentType: ["physical", "online"].includes(appointmentType) ? appointmentType : "physical",
       currency,
       consultationFeeCents: consultationCents,
       serviceFeeCents: svc,
@@ -216,6 +225,7 @@ exports.getPendingBooking = async (req, res) => {
       date: doc.date,
       time: doc.time,
       reason: doc.reason,
+      appointmentType: doc.appointmentType || "physical",
       consultationFeeCents: doc.consultationFeeCents,
       serviceFeeCents: doc.serviceFeeCents,
       totalCents: doc.consultationFeeCents + doc.serviceFeeCents,
@@ -411,6 +421,7 @@ exports.completeBookingAfterPayment = async (req, res) => {
       time: doc.time,
       reason: doc.reason || `Consultation paid. Order ${doc.orderId}`,
       notes: doc.reason || `Consultation paid. Order ${doc.orderId}`,
+      appointmentType: doc.appointmentType || "physical",
     };
 
     try {

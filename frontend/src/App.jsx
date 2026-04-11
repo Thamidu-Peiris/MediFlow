@@ -30,6 +30,7 @@ import AICheckerPage from "./pages/AICheckerPage";
 import PatientDoctorsPage from "./pages/PatientDoctorsPage";
 import PatientDoctorBookingPage from "./pages/PatientDoctorBookingPage";
 import PatientPaymentPage from "./pages/PatientPaymentPage";
+import PatientTelemedicinePage from "./pages/PatientTelemedicinePage";
 
 // Doctor Portal Pages
 import DoctorDashboardPage from "./pages/DoctorDashboardPage";
@@ -39,6 +40,7 @@ import DoctorAppointmentsPage from "./pages/DoctorAppointmentsPage";
 import DoctorPrescriptionsPage from "./pages/DoctorPrescriptionsPage";
 import DoctorPatientsPage from "./pages/DoctorPatientsPage";
 import TelemedicinePage from "./pages/TelemedicinePage";
+import VideoCallPage from "./pages/VideoCallPage";
 
 export default function App() {
   return (
@@ -150,6 +152,7 @@ export default function App() {
       <Route path="/patient/doctors/booking" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientDoctorBookingPage /></ProtectedRoute>} />
       <Route path="/patient/payment" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientPaymentPage /></ProtectedRoute>} />
       <Route path="/patient/appointments" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientAppointmentsPage /></ProtectedRoute>} />
+      <Route path="/patient/telemedicine" element={<ProtectedRoute allowedRoles={["patient", "doctor", "admin"]}><PatientTelemedicinePage /></ProtectedRoute>} />
       <Route path="/patient/profile" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientProfilePage /></ProtectedRoute>} />
       <Route path="/patient/reports" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><MedicalReportsPage /></ProtectedRoute>} />
       <Route path="/patient/history" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><MedicalHistoryPage /></ProtectedRoute>} />
@@ -164,6 +167,7 @@ export default function App() {
       <Route path="/doctor/prescriptions" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorPrescriptionsPage /></ProtectedRoute>} />
       <Route path="/doctor/patients" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorPatientsPage /></ProtectedRoute>} />
       <Route path="/doctor/telemedicine" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><TelemedicinePage /></ProtectedRoute>} />
+      <Route path="/video-call" element={<ProtectedRoute allowedRoles={["patient", "doctor", "admin"]}><VideoCallPage /></ProtectedRoute>} />
 
       {/* Public Doctor Routes */}
       <Route path="/doctors/:id" element={<DoctorDetailsPage />} />

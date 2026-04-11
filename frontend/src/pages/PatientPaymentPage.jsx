@@ -206,6 +206,7 @@ export default function PatientPaymentPage() {
           date: state.date,
           time: state.time,
           reason: state.reason,
+          appointmentType: state.appointmentType || "physical",
           consultationFee: state.consultationFee,
         };
         if (!createPendingBookingFlight) {
@@ -408,7 +409,35 @@ export default function PatientPaymentPage() {
               </h1>
               <div className="relative overflow-hidden rounded-3xl bg-surface-container-lowest p-8 shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
                 <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-primary/5" />
-                <div className="relative mb-8 flex items-start gap-6">
+
+                {/* Appointment type banner */}
+                {detail?.appointmentType === "online" ? (
+                  <div className="relative mb-6 flex items-center gap-3 rounded-2xl px-4 py-3"
+                    style={{ background: "rgba(124,58,237,0.07)", border: "1.5px solid rgba(124,58,237,0.18)" }}>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: "rgba(124,58,237,0.15)" }}>
+                      <span className="material-symbols-outlined text-lg" style={{ color: "#7c3aed", fontVariationSettings: "'FILL' 1" }}>videocam</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-extrabold uppercase tracking-widest" style={{ color: "#7c3aed" }}>Online Consultation</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">A video call link will be shared after booking confirmation.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative mb-6 flex items-center gap-3 rounded-2xl px-4 py-3"
+                    style={{ background: "rgba(0,106,97,0.06)", border: "1.5px solid rgba(0,106,97,0.15)" }}>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: "rgba(0,106,97,0.12)" }}>
+                      <span className="material-symbols-outlined text-lg" style={{ color: "#006a61", fontVariationSettings: "'FILL' 1" }}>local_hospital</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-extrabold uppercase tracking-widest" style={{ color: "#006a61" }}>In-Person Visit</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Please arrive 10 minutes before your scheduled time.</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="relative flex items-start gap-6">
                   <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl shadow-lg">
                     <img
                       src={
@@ -434,18 +463,44 @@ export default function PatientPaymentPage() {
                     </div>
                   </div>
                 </div>
-                <div className="space-y-4 border-t border-outline-variant/10 pt-6">
+
+                {/* Fee breakdown */}
+                <div className="mt-8 space-y-3 rounded-2xl border border-outline-variant/10 bg-surface p-5">
+                  <p className="mb-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Fee Breakdown</p>
+
                   <div className="flex items-center justify-between">
-                    <span className="text-on-surface-variant">Consultation Fee</span>
-                    <span className="font-medium text-on-surface">LKR {formatLkr(detail?.consultationFeeCents || 0)}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/8">
+                        <span className="material-symbols-outlined text-sm text-primary">medical_information</span>
+                      </div>
+                      <span className="text-sm text-on-surface-variant">Consultation Fee</span>
+                    </div>
+                    <span className="font-semibold text-on-surface">LKR {formatLkr(detail?.consultationFeeCents || 0)}</span>
                   </div>
+
                   <div className="flex items-center justify-between">
-                    <span className="text-on-surface-variant">Service Fee</span>
-                    <span className="font-medium text-on-surface">LKR {formatLkr(detail?.serviceFeeCents || 0)}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: "rgba(234,179,8,0.1)" }}>
+                        <span className="material-symbols-outlined text-sm" style={{ color: "#a16207" }}>shield_with_heart</span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-on-surface-variant">Platform Fee</span>
+                        <span className="ml-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-700">
+                          Booking & Support
+                        </span>
+                      </div>
+                    </div>
+                    <span className="font-semibold text-on-surface">LKR {formatLkr(detail?.serviceFeeCents || 0)}</span>
                   </div>
-                  <div className="mt-2 flex items-center justify-between border-t-2 border-dashed border-outline-variant/20 pt-4">
-                    <span className="text-lg font-bold text-on-surface">Total</span>
-                    <span className="text-2xl font-extrabold text-primary">LKR {formatLkr(totalCents)}</span>
+
+                  <div className="border-t border-dashed border-outline-variant/20 pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-bold text-on-surface">Total Payable</span>
+                      <span className="text-2xl font-extrabold text-primary">LKR {formatLkr(totalCents)}</span>
+                    </div>
+                    <p className="mt-1 text-right text-[10px] text-slate-400">
+                      Inclusive of all taxes · Secure payment
+                    </p>
                   </div>
                 </div>
               </div>

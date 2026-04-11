@@ -11,6 +11,7 @@
   "dependencies": {
     "@stripe/react-stripe-js": "^6.1.0",
     "@stripe/stripe-js": "^9.0.1",
+    "agora-rtc-sdk-ng": "^4.24.3",
     "axios": "^1.11.0",
     "date-fns": "^4.1.0",
     "react": "^18.3.1",
