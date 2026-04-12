@@ -494,7 +494,7 @@ export default function AdminDashboardPage() {
           </section>
 
           <section className="bg-[#0C9100] p-6 sm:p-8 rounded-xl shadow-md border border-[#097300]">
-            <h3 className="text-sm font-black font-headline text-white uppercase tracking-widest mb-1">
+            <h3 className="text-base font-black font-headline text-white uppercase tracking-widest mb-1">
               Quick Actions
             </h3>
             <p className="text-xs text-white/85 font-medium mb-6">Shortcuts to admin tools</p>
