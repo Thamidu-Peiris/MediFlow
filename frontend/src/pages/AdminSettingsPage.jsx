@@ -1,9 +1,19 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import api from "../api/client";
 
 export default function AdminSettingsPage() {
-  const { user } = useAuth();
+  const { user, authHeaders } = useAuth();
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Form state
+  const [passwords, setPasswords] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
 
   const dateTimeLine = useMemo(() => {
     try {
@@ -14,10 +24,64 @@ export default function AdminSettingsPage() {
     }
   }, []);
 
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    setError("");
+
+    if (!passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword) {
+      setError("All password fields are required.");
+      return;
+    }
+
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      setError("New passwords do not match.");
+      return;
+    }
+
+    if (passwords.newPassword.length < 6) {
+      setError("New password must be at least 6 characters long.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await api.patch(
+        "/auth/change-password",
+        {
+          currentPassword: passwords.currentPassword,
+          newPassword: passwords.newPassword
+        },
+        authHeaders
+      );
+
+      setMessage(res.data.message || "Password updated successfully.");
+      setPasswords({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to update password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="font-body text-on-surface pb-10">
       {message ? (
-        <p className="mb-4 rounded-xl bg-red-50 text-red-800 px-4 py-3 text-sm font-medium border border-red-100">{message}</p>
+        <p className="mb-4 rounded-xl bg-emerald-50 text-emerald-800 px-4 py-3 text-sm font-medium border border-emerald-100 flex items-center gap-2">
+          <span className="material-symbols-outlined text-[20px]">check_circle</span>
+          {message}
+        </p>
+      ) : null}
+
+      {error ? (
+        <p className="mb-4 rounded-xl bg-red-50 text-red-800 px-4 py-3 text-sm font-medium border border-red-100 flex items-center gap-2">
+          <span className="material-symbols-outlined text-[20px]">error</span>
+          {error}
+        </p>
       ) : null}
 
       {/* Page header */}
@@ -74,17 +138,20 @@ export default function AdminSettingsPage() {
             </div>
 
             <div className="p-4 mb-6 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center gap-3 text-emerald-800 text-sm font-medium">
-              <span className="material-symbols-outlined text-[20px]">info</span>
-              Backend password change endpoint is not currently connected.
+              <span className="material-symbols-outlined text-[20px]">verified_user</span>
+              Update your account password regularly to stay secure.
             </div>
 
-            <div className="space-y-4">
+            <form onSubmit={handlePasswordChange} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2 px-1">Current Password</label>
                 <input 
                   type="password" 
                   placeholder="••••••••"
                   className="w-full bg-white border border-emerald-200/70 rounded-xl py-3 px-4 text-sm text-black placeholder:text-gray-400 shadow-sm ring-1 ring-emerald-100/80 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-400 focus:outline-none transition-all"
+                  value={passwords.currentPassword}
+                  onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
+                  required
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -94,6 +161,9 @@ export default function AdminSettingsPage() {
                     type="password" 
                     placeholder="••••••••"
                     className="w-full bg-white border border-emerald-200/70 rounded-xl py-3 px-4 text-sm text-black placeholder:text-gray-400 shadow-sm ring-1 ring-emerald-100/80 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-400 focus:outline-none transition-all"
+                    value={passwords.newPassword}
+                    onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
@@ -102,20 +172,25 @@ export default function AdminSettingsPage() {
                     type="password" 
                     placeholder="••••••••"
                     className="w-full bg-white border border-emerald-200/70 rounded-xl py-3 px-4 text-sm text-black placeholder:text-gray-400 shadow-sm ring-1 ring-emerald-100/80 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-400 focus:outline-none transition-all"
+                    value={passwords.confirmPassword}
+                    onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
+                    required
                   />
                 </div>
               </div>
               <div className="flex justify-end pt-2">
                 <button
-                  type="button"
-                  className="px-8 py-3 bg-[#0C9100] text-white font-bold rounded-xl shadow-md hover:bg-[#097300] hover:shadow-lg active:scale-[0.98] transition-all flex items-center gap-2"
-                  onClick={() => setMessage("Password change not implemented in the current backend/API.")}
+                  type="submit"
+                  disabled={loading}
+                  className={`px-8 py-3 bg-[#0C9100] text-white font-bold rounded-xl shadow-md hover:bg-[#097300] hover:shadow-lg active:scale-[0.98] transition-all flex items-center gap-2 ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
                 >
-                  <span className="material-symbols-outlined">save</span>
-                  Update Security
+                  <span className="material-symbols-outlined">
+                    {loading ? "sync" : "save"}
+                  </span>
+                  {loading ? "Updating..." : "Update Security"}
                 </button>
               </div>
-            </div>
+            </form>
           </section>
         </div>
       </div>
