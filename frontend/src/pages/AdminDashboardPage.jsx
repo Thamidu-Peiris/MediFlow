@@ -17,7 +17,6 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { normalizeReportsList } from "../utils/normalizePatientReports";
 
 function sameISODate(aDate, bDateISO) {
   if (!aDate) return false;
@@ -34,19 +33,12 @@ function formatLkr(v) {
   }
 }
 
-function riskColor(level) {
-  if (level === "high") return "#ef4444";
-  if (level === "medium") return "#f59e0b";
-  return "#0d9488";
-}
-
 export default function AdminDashboardPage() {
   const { authHeaders } = useAuth();
 
   const [metrics, setMetrics] = useState(null);
   const [users, setUsers] = useState([]);
   const [appointments, setAppointments] = useState([]);
-  const [reports, setReports] = useState([]);
 
   const [doctorDetailsByUserId, setDoctorDetailsByUserId] = useState({});
   const [message, setMessage] = useState("");
@@ -68,39 +60,6 @@ export default function AdminDashboardPage() {
       .slice(0, 10);
   }, [appointments, todayISO]);
 
-  const alerts = useMemo(() => {
-    const list = [];
-    const pendingCount = metrics?.pendingDoctorVerifications ?? 0;
-    if (pendingCount > 0) {
-      list.push({
-        title: "Pending doctor approvals",
-        detail: `${pendingCount} doctor(s) require review`,
-        level: pendingCount >= 5 ? "high" : "medium",
-      });
-    }
-
-    if ((metrics?.grossRevenueLkr ?? 0) === 0) {
-      list.push({
-        title: "Revenue is currently 0",
-        detail: "No successful payments recorded (or integration not complete).",
-        level: "medium",
-      });
-    }
-
-    // Optional UI-only alert (since system-wide failure spikes aren’t exposed yet).
-    list.push({
-      title: "System health",
-      detail: "All services responsive (simulated).",
-      level: "low",
-    });
-
-    return list;
-  }, [metrics]);
-
-  const activeIssuesCount = useMemo(() => {
-    return alerts.length;
-  }, [alerts]);
-
   const topCards = useMemo(() => {
     const totalUsers = metrics?.totalUsers ?? 0;
     const totalDoctors = metrics?.totalDoctors ?? 0;
@@ -113,9 +72,8 @@ export default function AdminDashboardPage() {
       { label: "Total Appointments", value: totalAppointments, icon: "event", tone: "teal" },
       { label: "Total Revenue", value: formatLkr(revenue), icon: "payments", tone: "indigo" },
       { label: "Pending Doctor Approvals", value: pendingApprovals, icon: "schedule", tone: "amber" },
-      { label: "Active Issues / Alerts", value: activeIssuesCount, icon: "warning", tone: pendingApprovals > 0 ? "red" : "amber" },
     ];
-  }, [metrics, appointmentsCount, activeIssuesCount]);
+  }, [metrics, appointmentsCount]);
 
   const loadDoctorDetails = async (pending) => {
     try {
@@ -195,18 +153,15 @@ export default function AdminDashboardPage() {
         api.get("/auth/admin/overview", authHeaders),
         api.get("/auth/admin/users", authHeaders),
         api.get("/appointments/my", authHeaders),
-        api.get("/patients/reports", authHeaders),
       ]);
 
       const overviewSettled = settled[0];
       const usersSettled = settled[1];
       const apptSettled = settled[2];
-      const reportsSettled = settled[3];
 
       const nextMetrics = overviewSettled.status === "fulfilled" ? overviewSettled.value.data.metrics || {} : null;
       const nextUsers = usersSettled.status === "fulfilled" ? usersSettled.value.data.users || [] : null;
       const nextAppointments = apptSettled.status === "fulfilled" ? apptSettled.value.data.appointments || [] : [];
-      const rawReports = reportsSettled.status === "fulfilled" ? reportsSettled.value.data.reports || [] : [];
 
       // Critical: overview + users
       if (!nextMetrics || !nextUsers) {
@@ -220,7 +175,6 @@ export default function AdminDashboardPage() {
       setMetrics(nextMetrics);
       setUsers(nextUsers);
       setAppointments(nextAppointments);
-      setReports(normalizeReportsList(rawReports));
 
       const pendingDoctors = (nextUsers || []).filter((u) => u.role === "doctor" && !u.isDoctorVerified);
       setActivity(buildActivity(nextUsers, nextAppointments));
@@ -305,18 +259,6 @@ export default function AdminDashboardPage() {
     return { appointmentTrends, revenueAnalytics, userGrowth, roleDist };
   }, [metrics, appointmentsCount]);
 
-  const heatmapCells = useMemo(() => {
-    // “Calendar heatmap” mock: last 42 days (6 weeks x 7 days)
-    const base = Math.max(5, appointmentsCount);
-    const cells = [];
-    for (let i = 0; i < 42; i++) {
-      const weight = Math.round((Math.sin(i / 5) + 1.2) * (base / 6) + (i % 7 === 0 ? base / 5 : base / 12));
-      const normalized = Math.min(100, Math.max(0, Math.round((weight / (base * 1.5)) * 100)));
-      cells.push(normalized);
-    }
-    return cells;
-  }, [appointmentsCount]);
-
   const globalSearchResults = useMemo(() => {
     const q = globalSearchQuery.trim().toLowerCase();
     if (!q) return { users: [], doctors: [], appointments: [] };
@@ -341,15 +283,6 @@ export default function AdminDashboardPage() {
       appointments: appts.slice(0, 5),
     };
   }, [globalSearchQuery, users, appointments]);
-
-  const recentPayments = useMemo(() => {
-    // No admin payment history API available yet.
-    return [];
-  }, []);
-
-  const recentReportsPreview = useMemo(() => {
-    return (reports || []).slice(0, 6);
-  }, [reports]);
 
   const todayISOHuman = useMemo(() => {
     try {
@@ -720,145 +653,6 @@ export default function AdminDashboardPage() {
               ) : (
                 <div style={{ color: "#94a3b8", fontWeight: 700 }}>No pending doctor requests right now.</div>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* RECENT PAYMENTS + ALERTS */}
-      <div className="ad-two-col">
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Recent Payments</h2>
-            <p>Latest transactions & statuses.</p>
-          </div>
-
-          <div className="pd-card">
-            <div className="pd-table-wrap">
-              <table className="pd-table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentPayments.map((p, idx) => (
-                    <tr key={`${p.user}-${idx}`}>
-                      <td style={{ fontWeight: 900 }}>{p.user}</td>
-                      <td style={{ fontWeight: 800 }}>{formatLkr(p.amount)}</td>
-                      <td>
-                        <span
-                          className="ad-status-pill"
-                          style={{
-                            background: p.status === "verified" ? "rgba(13,148,136,0.12)" : p.status === "pending" ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.12)",
-                            color: p.status === "verified" ? "#0d9488" : p.status === "pending" ? "#f59e0b" : "#ef4444",
-                          }}
-                        >
-                          {p.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {!recentPayments.length ? (
-                    <tr>
-                      <td colSpan={3} style={{ color: "#94a3b8" }}>
-                        No payment data available from current admin APIs.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Alerts / System Status</h2>
-            <p>Warnings, spikes, and system health.</p>
-          </div>
-
-          <div className="pd-card ad-alerts">
-            {alerts.map((al, idx) => (
-              <div key={`${al.title}-${idx}`} className="ad-alert-box" style={{ borderColor: riskColor(al.level) }}>
-                <div className="ad-alert-icon" style={{ color: riskColor(al.level) }}>
-                  <span className="material-symbols-outlined">warning</span>
-                </div>
-                <div className="ad-alert-body">
-                  <div className="ad-alert-title">{al.title}</div>
-                  <div className="ad-alert-detail">{al.detail}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* REPORTS OVERVIEW + HEATMAP */}
-      <div className="ad-two-col">
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Reports Overview</h2>
-            <p>Recent uploads (admin account scope).</p>
-          </div>
-
-          <div className="pd-card">
-            <div className="ad-report-list">
-              {recentReportsPreview.length ? (
-                recentReportsPreview.map((r) => (
-                  <div key={r._id} className="ad-report-row">
-                    <div className="ad-report-icon">
-                      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="1.7">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                      </svg>
-                    </div>
-                    <div className="ad-report-meta">
-                      <div className="ad-report-title">{r.fileName || r.title || "Report"}</div>
-                      <div className="ad-report-sub">
-                        {r.category || "Lab Results"} • {new Date(r.uploadedAt || r.createdAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div style={{ color: "#94a3b8", fontWeight: 700 }}>
-                  No reports available for this admin account via `/patients/reports`.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>User Activity Heatmap</h2>
-            <p>Activity density by day/time (UI demo, refreshes with stats).</p>
-          </div>
-
-          <div className="pd-card">
-            <div className="ad-heatmap-wrap">
-              <div className="ad-heatmap-grid">
-                {heatmapCells.map((v, idx) => {
-                  const intensity = Math.min(1, v / 100);
-                  const bg = `rgba(13,148,136,${0.08 + intensity * 0.35})`;
-                  const border = `rgba(13,148,136,${0.15 + intensity * 0.35})`;
-                  return (
-                    <div
-                      key={idx}
-                      className="ad-heatmap-cell"
-                      title={`Intensity: ${v}`}
-                      style={{ background: bg, borderColor: border }}
-                    />
-                  );
-                })}
-              </div>
-              <div className="ad-heatmap-legend">
-                <span>Low</span>
-                <span>High</span>
-              </div>
             </div>
           </div>
         </div>
