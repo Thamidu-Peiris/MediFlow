@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
@@ -4494,6 +4496,8 @@ button, .btn-primary {
   transition: color 0.2s;
 }
 .ap-eye-btn:hover { color: #2563eb; }
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
 .ap-forgot {
   text-align: right;
   margin-top: -6px;
@@ -5505,38 +5509,54 @@ button, .btn-primary {
   box-shadow: 0 6px 16px rgba(13, 148, 136, 0.45);
 }
 
+.aura-brand-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #043927;
+  margin: 0;
+  font-family: "Outfit", "Inter", sans-serif;
+}
+
+.aura-brand-subtitle {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin: 2px 0 0 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 /* Sidebar Navigation */
 .aura-sidebar-nav {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 0 8px;
+  gap: 6px;
+  padding: 0;
 }
 
 .aura-nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding: 12px 16px;
-  border-radius: 12px;
-  color: #64748b;
   text-decoration: none;
-  font-weight: 600;
+  color: #475569;
   font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
   transition: all 0.2s ease;
 }
 
 .aura-nav-item:hover {
-  background: #f0fdfa;
-  color: #0d9488;
+  background: #f8fafc;
+  color: #043927;
 }
 
 .aura-nav-item.active {
-  background: #ecfdf5; /* emerald-50 style */
-  color: #0d9488; /* teal-700 style */
-  font-weight: 900;
-  box-shadow: none;
+  background: #d9f99d; /* Specific lime green from image */
+  color: #043927;
+  font-weight: 700;
 }
 
 .aura-nav-icon {
@@ -5544,35 +5564,24 @@ button, .btn-primary {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  color: #64748b;
 }
 
-/* Make sidebar icons feel bolder */
-.aura-nav-icon svg {
-  stroke-width: 2.5;
+.aura-nav-item.active .aura-nav-icon {
+  color: #043927;
 }
 
-/* Stronger stroke on selected item */
-.aura-nav-item.active .aura-nav-icon svg {
-  stroke-width: 4 !important;
-}
-
-/* Premium material icons: bold + filled on selected */
 .aura-nav-icon .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 22px;
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
 
 .aura-nav-item.active .aura-nav-icon .material-symbols-outlined {
-  font-variation-settings: "FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24;
+  font-variation-settings: "FILL" 1, "wght" 600, "GRAD" 0, "opsz" 24;
 }
 
 .aura-nav-label {
   white-space: nowrap;
-}
-
-/* Ensure label is visually bold in selected state */
-.aura-nav-item.active .aura-nav-label {
-  font-weight: 900;
 }
 
 /* Sidebar Footer */
@@ -5586,22 +5595,29 @@ button, .btn-primary {
 .aura-logout-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 20px;
   border: none;
-  background: transparent;
-  color: #64748b;
-  font-weight: 600;
-  font-size: 14px;
+  background: #CF0000; /* specific red requested */
+  color: #ffffff; /* white text */
+  font-weight: 700;
+  font-size: 15px;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(207, 0, 0, 0.2);
 }
 
 .aura-logout-btn:hover {
-  background: #fef2f2;
-  color: #ef4444;
+  background: #B00000; /* slightly darker red on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(176, 0, 0, 0.3);
+}
+
+.aura-logout-btn:active {
+  transform: scale(0.98);
 }
 
 /* Main Content Area */
@@ -5641,16 +5657,64 @@ button, .btn-primary {
 }
 
 .aura-logo {
-  font-size: 20px;
-  font-weight: 800;
-  color: #0d9488;
-  letter-spacing: -0.02em;
+  font-size: 24px;
+  font-weight: 600; /* reduced from 800 */
+  color: #043927; /* dark green */
+  letter-spacing: -0.01em;
+  font-family: "Outfit", "Inter", sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .aura-topbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
+}
+
+.aura-topbar-icon-btn {
+  background: none;
+  border: none;
+  color: #1a2b3c;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: opacity 0.2s;
+  text-decoration: none;
+}
+
+.aura-topbar-icon-btn:hover {
+  opacity: 0.7;
+}
+
+.aura-topbar-icon-btn .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.aura-topbar-profile-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a2b3c;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.aura-topbar-profile-btn:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.aura-topbar-profile-btn .material-symbols-outlined {
+  font-size: 24px;
 }
 
 .aura-profile-wrap {
@@ -5726,11 +5790,11 @@ button, .btn-primary {
 }
 
 .aura-profile-logout {
-  color: #ef4444;
+  color: #CF0000;
 }
 
 .aura-profile-logout .material-symbols-outlined {
-  color: #ef4444;
+  color: #CF0000;
 }
 
 @media (max-width: 768px) {
@@ -5781,6 +5845,491 @@ button, .btn-primary {
   flex: 1;
   padding: 24px 32px;
   background: #f8fafc;
+}
+
+/* Admin dashboard: editorial-style main canvas (sidebar unchanged) */
+.aura-content--admin-dashboard {
+  background: #cbf79d;
+}
+
+.aura-shell--admin-dashboard .aura-topbar-admin {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .aura-profile-btn:hover {
+  transform: none;
+}
+
+.aura-shell--admin-dashboard .aura-profile-menu {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .pd-layout-admin {
+  min-width: 0;
+}
+
+.aura-shell--admin-dashboard .ad-dash-summary {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat {
+  box-shadow: none;
+  min-width: 0;
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat:hover {
+  transform: none;
+}
+
+.aura-shell--admin-dashboard .ad-hero-split {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+}
+
+.aura-shell--admin-dashboard .ad-analytics-wrap {
+  max-width: none;
+}
+
+.aura-shell--admin-dashboard .ad-charts-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.aura-shell--admin-dashboard .ad-chart-card {
+  min-width: 0;
+}
+
+.aura-shell--admin-dashboard .ad-two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.aura-shell--admin-dashboard .ad-global-search {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .ad-global-search-input:focus {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .pd-card {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .ad-quick-actions-list .ad-quick-action:hover {
+  transform: none;
+}
+
+@media (max-width: 1200px) {
+  .aura-shell--admin-dashboard .ad-dash-summary {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  }
+
+  .aura-shell--admin-dashboard .ad-hero-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .aura-shell--admin-dashboard .ad-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .aura-shell--admin-dashboard .ad-analytics-wrap .ad-charts-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-rows: minmax(220px, auto);
+  }
+}
+
+/* Admin dashboard — legacy ad-* helpers (optional) */
+.aura-shell--admin-dashboard .ad-dashboard {
+  gap: 20px;
+}
+
+.aura-shell--admin-dashboard .ad-dash-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 4px 4px 8px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.aura-shell--admin-dashboard .ad-dash-eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.aura-shell--admin-dashboard .ad-dash-page-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.65rem, 2.5vw, 2rem);
+  font-weight: 950;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+  line-height: 1.15;
+}
+
+.aura-shell--admin-dashboard .ad-dash-page-lead {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.45;
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.aura-shell--admin-dashboard .ad-dash-page-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.aura-shell--admin-dashboard .ad-dash-meta-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.4);
+}
+
+.aura-shell--admin-dashboard .ad-dash-meta-value {
+  font-size: 14px;
+  font-weight: 850;
+  color: #0f172a;
+}
+
+.aura-shell--admin-dashboard .ad-section--tight {
+  margin-top: 0;
+}
+
+.aura-shell--admin-dashboard .ad-global-search--premium {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.aura-shell--admin-dashboard .ad-global-search--premium .ad-global-search-input {
+  border-radius: 14px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: #fff;
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafb 100%);
+  padding: 18px 18px;
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat:hover {
+  border-color: rgba(13, 148, 136, 0.35);
+  background: #fff;
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat-icon {
+  border-radius: 16px;
+}
+
+/* Row 1: Analytics title (col 1). Row 2: charts (col 1) + Quick Actions (col 2) — QA top = Appointment Trends top */
+.aura-shell--admin-dashboard .ad-hero-split--premium.ad-hero-premium-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(272px, 300px);
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.aura-shell--admin-dashboard .ad-hero-analytics-head {
+  grid-column: 1;
+  grid-row: 1;
+  margin-top: 0;
+}
+
+.aura-shell--admin-dashboard .ad-hero-analytics-head .ad-section-head--premium {
+  margin-bottom: 0;
+}
+
+.aura-shell--admin-dashboard .ad-hero-body-charts {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.aura-shell--admin-dashboard .ad-hero-premium-layout .ad-quick-panel {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: stretch;
+  margin-top: 0;
+}
+
+.aura-shell--admin-dashboard .ad-analytics-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.aura-shell--admin-dashboard .ad-analytics-wrap .ad-charts-grid {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(200px, 1fr));
+  gap: 14px;
+  align-content: stretch;
+}
+
+.aura-shell--admin-dashboard .ad-section-head--premium {
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.aura-shell--admin-dashboard .ad-section-head--premium h2 {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+
+.aura-shell--admin-dashboard .ad-section-head-note {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.aura-shell--admin-dashboard .ad-chart-card--premium {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #fafdfb 100%);
+  border-top: 3px solid rgba(13, 148, 136, 0.45);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.aura-shell--admin-dashboard .ad-chart-card--premium .ad-chart-title {
+  flex-shrink: 0;
+}
+
+.aura-shell--admin-dashboard .ad-chart-plot {
+  flex: 1 1 auto;
+  min-height: 180px;
+  min-width: 0;
+  width: 100%;
+}
+
+.aura-shell--admin-dashboard .ad-chart-plot--pie {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aura-shell--admin-dashboard .ad-chart-pie-frame {
+  width: min(100%, 220px);
+  height: min(100%, 220px);
+  min-height: 180px;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel-inner {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 18px 16px 16px;
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel-head {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel-head h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel-head p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  color: rgba(15, 23, 42, 0.48);
+}
+
+.aura-shell--admin-dashboard .ad-quick-actions-list--panel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  background: rgba(255, 255, 255, 0.95);
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel:hover {
+  border-color: rgba(13, 148, 136, 0.4);
+  background: rgba(240, 253, 250, 0.65);
+}
+
+.aura-shell--admin-dashboard .ad-quick-action-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 148, 136, 0.12);
+  flex-shrink: 0;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel .ad-quick-icon {
+  font-size: 20px;
+  color: #0d9488;
+  font-variation-settings: "FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24;
+}
+
+.aura-shell--admin-dashboard .ad-quick-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel .ad-quick-title {
+  font-size: 13px;
+  font-weight: 950;
+  color: #0f172a;
+  text-align: left;
+}
+
+.aura-shell--admin-dashboard .ad-quick-desc {
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(15, 23, 42, 0.45);
+  line-height: 1.3;
+}
+
+.aura-shell--admin-dashboard .ad-quick-chevron {
+  font-size: 20px;
+  color: rgba(15, 23, 42, 0.28);
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+  flex-shrink: 0;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel:hover .ad-quick-chevron {
+  color: #0d9488;
+  transform: translateX(2px);
+}
+
+@media (max-width: 1200px) {
+  .aura-shell--admin-dashboard .ad-hero-split--premium.ad-hero-premium-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .aura-shell--admin-dashboard .ad-hero-analytics-head {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .aura-shell--admin-dashboard .ad-hero-body-charts {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .aura-shell--admin-dashboard .ad-hero-premium-layout .ad-quick-panel {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .aura-shell--admin-dashboard .ad-quick-panel {
+    flex: none;
+  }
+
+  .aura-shell--admin-dashboard .ad-quick-panel-inner {
+    flex: none;
+    min-height: 0;
+  }
+
+  .aura-shell--admin-dashboard .ad-analytics-wrap .ad-charts-grid {
+    grid-template-rows: repeat(2, minmax(200px, 1fr));
+  }
+
+  .aura-shell--admin-dashboard .ad-quick-actions-list--panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    flex: none;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .aura-shell--admin-dashboard .ad-quick-actions-list--panel {
+    grid-template-columns: 1fr;
+  }
+
+  .aura-shell--admin-dashboard .ad-dash-page-meta {
+    align-items: flex-start;
+    width: 100%;
+  }
+}
+
+.aura-shell--admin-dashboard .ad-activity {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #fafdfb 100%);
+}
+
+.aura-shell--admin-dashboard .ad-two-col .pd-card:not(.ad-chart-card) {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #fafcfb 100%);
 }
 
 /* Summary Cards */

@@ -13,11 +13,7 @@ import {
   YAxis,
   Tooltip,
   Legend,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
-import { normalizeReportsList } from "../utils/normalizePatientReports";
 
 function sameISODate(aDate, bDateISO) {
   if (!aDate) return false;
@@ -34,19 +30,12 @@ function formatLkr(v) {
   }
 }
 
-function riskColor(level) {
-  if (level === "high") return "#ef4444";
-  if (level === "medium") return "#f59e0b";
-  return "#0d9488";
-}
-
 export default function AdminDashboardPage() {
   const { authHeaders } = useAuth();
 
   const [metrics, setMetrics] = useState(null);
   const [users, setUsers] = useState([]);
   const [appointments, setAppointments] = useState([]);
-  const [reports, setReports] = useState([]);
 
   const [doctorDetailsByUserId, setDoctorDetailsByUserId] = useState({});
   const [message, setMessage] = useState("");
@@ -68,58 +57,11 @@ export default function AdminDashboardPage() {
       .slice(0, 10);
   }, [appointments, todayISO]);
 
-  const alerts = useMemo(() => {
-    const list = [];
-    const pendingCount = metrics?.pendingDoctorVerifications ?? 0;
-    if (pendingCount > 0) {
-      list.push({
-        title: "Pending doctor approvals",
-        detail: `${pendingCount} doctor(s) require review`,
-        level: pendingCount >= 5 ? "high" : "medium",
-      });
-    }
-
-    if ((metrics?.grossRevenueLkr ?? 0) === 0) {
-      list.push({
-        title: "Revenue is currently 0",
-        detail: "No successful payments recorded (or integration not complete).",
-        level: "medium",
-      });
-    }
-
-    // Optional UI-only alert (since system-wide failure spikes aren’t exposed yet).
-    list.push({
-      title: "System health",
-      detail: "All services responsive (simulated).",
-      level: "low",
-    });
-
-    return list;
-  }, [metrics]);
-
-  const activeIssuesCount = useMemo(() => {
-    return alerts.length;
-  }, [alerts]);
-
-  const topCards = useMemo(() => {
-    const totalUsers = metrics?.totalUsers ?? 0;
-    const totalDoctors = metrics?.totalDoctors ?? 0;
-    const totalAppointments = appointmentsCount;
-    const revenue = metrics?.grossRevenueLkr ?? 0;
-    const pendingApprovals = metrics?.pendingDoctorVerifications ?? 0;
-    return [
-      { label: "Total Users", value: totalUsers, icon: "groups", tone: "teal" },
-      { label: "Total Doctors", value: totalDoctors, icon: "verified_user", tone: "indigo" },
-      { label: "Total Appointments", value: totalAppointments, icon: "event", tone: "teal" },
-      { label: "Total Revenue", value: formatLkr(revenue), icon: "payments", tone: "indigo" },
-      { label: "Pending Doctor Approvals", value: pendingApprovals, icon: "schedule", tone: "amber" },
-      { label: "Active Issues / Alerts", value: activeIssuesCount, icon: "warning", tone: pendingApprovals > 0 ? "red" : "amber" },
-    ];
-  }, [metrics, appointmentsCount, activeIssuesCount]);
+  const pendingCount = metrics?.pendingDoctorVerifications ?? 0;
+  const revenueLkr = metrics?.grossRevenueLkr ?? 0;
 
   const loadDoctorDetails = async (pending) => {
     try {
-      // Admin can list all doctors (verified + pending) with JWT.
       const res = await api.get("/doctors/all", authHeaders);
       const doctors = res.data.doctors || [];
       const byUserId = {};
@@ -132,21 +74,20 @@ export default function AdminDashboardPage() {
       });
       setDoctorDetailsByUserId(next);
     } catch {
-      // Specialty is optional; don't break dashboard.
       setDoctorDetailsByUserId({});
     }
   };
 
   function activityTimeAgo(dateStr) {
-    if (!dateStr) return 'recently';
+    if (!dateStr) return "recently";
     const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
-    if (diff < 60) return 'just now';
+    if (diff < 60) return "just now";
     const mins = Math.floor(diff / 60);
-    if (diff < 3600) return mins + ' min' + (mins > 1 ? 's' : '') + ' ago';
+    if (diff < 3600) return mins + " min" + (mins > 1 ? "s" : "") + " ago";
     const hrs = Math.floor(diff / 3600);
-    if (diff < 86400) return hrs + ' hour' + (hrs > 1 ? 's' : '') + ' ago';
+    if (diff < 86400) return hrs + " hour" + (hrs > 1 ? "s" : "") + " ago";
     const days = Math.floor(diff / 86400);
-    return days + ' day' + (days > 1 ? 's' : '') + ' ago';
+    return days + " day" + (days > 1 ? "s" : "") + " ago";
   }
 
   const buildActivity = (allUsers, allAppointments) => {
@@ -156,15 +97,15 @@ export default function AdminDashboardPage() {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 4);
     recentUsers.forEach((u) => {
-      const isDoc = u.role === 'doctor';
-      const icon = isDoc ? (u.isDoctorVerified ? 'verified' : 'schedule') : 'person_add';
+      const isDoc = u.role === "doctor";
+      const icon = isDoc ? (u.isDoctorVerified ? "verified" : "schedule") : "person_add";
       let title;
       if (isDoc) {
         title = u.isDoctorVerified
-          ? 'Doctor ' + u.name + ' approved'
-          : 'Doctor ' + u.name + ' pending review';
+          ? "Doctor " + u.name + " approved"
+          : "Doctor " + u.name + " pending review";
       } else {
-        title = 'Patient ' + u.name + ' registered';
+        title = "Patient " + u.name + " registered";
       }
       events.push({ icon, title, when: activityTimeAgo(u.createdAt), _ts: new Date(u.createdAt).getTime() });
     });
@@ -173,12 +114,12 @@ export default function AdminDashboardPage() {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 3);
     recentApts.forEach((a) => {
-      const done = a.status === 'completed';
-      const icon = done ? 'task_alt' : 'event';
-      const patName = a.patientName || 'Patient';
+      const done = a.status === "completed";
+      const icon = done ? "task_alt" : "event";
+      const patName = a.patientName || "Patient";
       const title = done
-        ? 'Appointment completed - ' + patName
-        : 'Appointment booked - ' + patName;
+        ? "Appointment completed - " + patName
+        : "Appointment booked - " + patName;
       events.push({ icon, title, when: activityTimeAgo(a.createdAt), _ts: new Date(a.createdAt).getTime() });
     });
 
@@ -195,20 +136,16 @@ export default function AdminDashboardPage() {
         api.get("/auth/admin/overview", authHeaders),
         api.get("/auth/admin/users", authHeaders),
         api.get("/appointments/my", authHeaders),
-        api.get("/patients/reports", authHeaders),
       ]);
 
       const overviewSettled = settled[0];
       const usersSettled = settled[1];
       const apptSettled = settled[2];
-      const reportsSettled = settled[3];
 
       const nextMetrics = overviewSettled.status === "fulfilled" ? overviewSettled.value.data.metrics || {} : null;
       const nextUsers = usersSettled.status === "fulfilled" ? usersSettled.value.data.users || [] : null;
       const nextAppointments = apptSettled.status === "fulfilled" ? apptSettled.value.data.appointments || [] : [];
-      const rawReports = reportsSettled.status === "fulfilled" ? reportsSettled.value.data.reports || [] : [];
 
-      // Critical: overview + users
       if (!nextMetrics || !nextUsers) {
         const errMsg = !nextMetrics
           ? overviewSettled.reason?.response?.data?.message || overviewSettled.reason?.message || "Overview failed"
@@ -220,12 +157,11 @@ export default function AdminDashboardPage() {
       setMetrics(nextMetrics);
       setUsers(nextUsers);
       setAppointments(nextAppointments);
-      setReports(normalizeReportsList(rawReports));
 
-      const pendingDoctors = (nextUsers || []).filter((u) => u.role === "doctor" && !u.isDoctorVerified);
+      const pending = (nextUsers || []).filter((u) => u.role === "doctor" && !u.isDoctorVerified);
       setActivity(buildActivity(nextUsers, nextAppointments));
 
-      await loadDoctorDetails(pendingDoctors);
+      await loadDoctorDetails(pending);
     } catch (err) {
       setMessage(err?.response?.data?.message || err?.message || "Failed to load admin dashboard");
     }
@@ -253,10 +189,16 @@ export default function AdminDashboardPage() {
   const approveRejectDoctor = async (id, verified) => {
     try {
       await api.patch(`/auth/admin/doctors/${id}/verify`, { verified }, authHeaders);
-      setActivity((prev) => [
-        { icon: verified ? "verified_user" : "cancel", title: verified ? "Doctor approved" : "Doctor rejected", when: "just now" },
-        ...prev,
-      ].slice(0, 7));
+      setActivity((prev) =>
+        [
+          {
+            icon: verified ? "verified_user" : "cancel",
+            title: verified ? "Doctor approved" : "Doctor rejected",
+            when: "just now",
+          },
+          ...prev,
+        ].slice(0, 7)
+      );
       await loadData();
     } catch (err) {
       setMessage(err?.response?.data?.message || "Failed to update doctor verification");
@@ -265,7 +207,6 @@ export default function AdminDashboardPage() {
 
   const charts = useMemo(() => {
     const totalPatients = metrics?.totalPatients ?? 0;
-    const totalDoctors = metrics?.totalDoctors ?? 0;
     const revenue = metrics?.grossRevenueLkr ?? 0;
     const appointmentBase = Math.max(1, Math.round(appointmentsCount / 2));
 
@@ -288,38 +229,12 @@ export default function AdminDashboardPage() {
       { month: "Jun", income: Math.round(revenue * 0.1) },
     ];
 
-    const userGrowth = [
-      { week: "Wk 1", newUsers: Math.round(totalPatients * 0.12) },
-      { week: "Wk 2", newUsers: Math.round(totalPatients * 0.18) },
-      { week: "Wk 3", newUsers: Math.round(totalPatients * 0.26) },
-      { week: "Wk 4", newUsers: Math.round(totalPatients * 0.31) },
-      { week: "Wk 5", newUsers: Math.round(totalPatients * 0.4) },
-      { week: "Wk 6", newUsers: Math.round(totalPatients * 0.48) },
-    ];
-
-    const roleDist = [
-      { name: "Patients", value: totalPatients, fill: "#0d9488" },
-      { name: "Doctors", value: totalDoctors, fill: "#6366f1" },
-    ];
-
-    return { appointmentTrends, revenueAnalytics, userGrowth, roleDist };
+    return { appointmentTrends, revenueAnalytics };
   }, [metrics, appointmentsCount]);
-
-  const heatmapCells = useMemo(() => {
-    // “Calendar heatmap” mock: last 42 days (6 weeks x 7 days)
-    const base = Math.max(5, appointmentsCount);
-    const cells = [];
-    for (let i = 0; i < 42; i++) {
-      const weight = Math.round((Math.sin(i / 5) + 1.2) * (base / 6) + (i % 7 === 0 ? base / 5 : base / 12));
-      const normalized = Math.min(100, Math.max(0, Math.round((weight / (base * 1.5)) * 100)));
-      cells.push(normalized);
-    }
-    return cells;
-  }, [appointmentsCount]);
 
   const globalSearchResults = useMemo(() => {
     const q = globalSearchQuery.trim().toLowerCase();
-    if (!q) return { users: [], doctors: [], appointments: [] };
+    if (!q) return { users: [], appointments: [] };
 
     const u = (users || []).filter((x) => {
       const name = String(x.name || "").toLowerCase();
@@ -328,7 +243,6 @@ export default function AdminDashboardPage() {
       return name.includes(q) || email.includes(q) || role.includes(q);
     });
 
-    // Appointments are not system-wide searchable yet; we can only filter what admin sees.
     const appts = (appointments || []).filter((a) => {
       const patientName = String(a.patientName || "").toLowerCase();
       const doctorName = String(a.doctorName || "").toLowerCase();
@@ -337,479 +251,390 @@ export default function AdminDashboardPage() {
 
     return {
       users: u.slice(0, 7),
-      doctors: u.filter((x) => x.role === "doctor").slice(0, 5),
       appointments: appts.slice(0, 5),
     };
   }, [globalSearchQuery, users, appointments]);
 
-  const recentPayments = useMemo(() => {
-    // No admin payment history API available yet.
-    return [];
-  }, []);
-
-  const recentReportsPreview = useMemo(() => {
-    return (reports || []).slice(0, 6);
-  }, [reports]);
-
-  const todayISOHuman = useMemo(() => {
+  const dateTimeLine = useMemo(() => {
     try {
-      return new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+      const d = new Date();
+      const dateStr = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" });
+      const timeStr = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+      return `${dateStr} • ${timeStr}`;
     } catch {
-      return "Today";
+      return "";
     }
   }, []);
 
-  return (
-    <section className="pd-layout-admin">
-      {message ? <p className="page muted">{message}</p> : null}
+  const totalUsers = metrics?.totalUsers ?? 0;
+  const totalDoctors = metrics?.totalDoctors ?? 0;
+  const todayAptCount = todaysAppointments.length;
 
-      {/* GLOBAL SEARCH BAR (TOP, PREMIUM) */}
-      <div className="ad-section">
-        <div className="ad-global-search">
+  return (
+    <div className="font-body text-on-surface pb-10">
+      {message ? (
+        <p className="mb-4 rounded-xl bg-red-50 text-red-800 px-4 py-3 text-sm font-medium border border-red-100">{message}</p>
+      ) : null}
+
+      {/* Page header — editorial */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-8">
+        <div>
+          <h2 className="text-3xl font-extrabold font-headline tracking-tighter text-on-surface">Dashboard</h2>
+          <p className="text-on-surface-variant font-medium mt-1">{dateTimeLine}</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            to="/admin/payments"
+            className="group px-4 py-2 bg-white text-black font-semibold rounded-xl shadow-sm border border-emerald-200/70 flex items-center gap-2 transition-all hover:bg-emerald-100 hover:border-emerald-400 hover:text-emerald-950 active:scale-[0.98]"
+          >
+            <span className="material-symbols-outlined text-[20px] text-emerald-700 group-hover:text-emerald-800">
+              payments
+            </span>
+            Payments
+          </Link>
+          <Link
+            to="/admin/appointments"
+            className="px-4 py-2 hero-chip-gradient text-white font-semibold rounded-xl shadow-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+            Appointment
+          </Link>
+        </div>
+      </div>
+
+      {/* Search — emerald styling to match metric cards */}
+      <div className="mb-8 max-w-md">
+        <div className="relative w-full">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-emerald-700 text-[20px] pointer-events-none">
+            search
+          </span>
           <input
-            className="ad-global-search-input"
-            placeholder="Search users, doctors, appointments..."
+            type="search"
+            className="w-full bg-white border border-emerald-200/70 rounded-xl py-2.5 pl-10 pr-4 text-sm text-black placeholder:text-black shadow-sm ring-1 ring-emerald-100/80 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-400 focus:outline-none transition-all"
+            placeholder="users, doctors, appointments..."
             value={globalSearchQuery}
             onChange={(e) => setGlobalSearchQuery(e.target.value)}
+            aria-label="Search"
           />
+        </div>
+        {globalSearchQuery.trim() ? (
+          <div className="mt-3 rounded-xl border border-emerald-200/60 bg-white p-4 shadow-sm ring-1 ring-emerald-100/60 space-y-3 text-sm">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2">Users</p>
+              {globalSearchResults.users.length ? (
+                globalSearchResults.users.map((u) => (
+                  <div key={u._id} className="py-2 border-b border-outline-variant/30 last:border-0">
+                    <div className="font-semibold text-on-surface">{u.name}</div>
+                    <div className="text-xs text-on-surface-variant">{u.email}</div>
+                    <div className="text-xs text-emerald-700 font-semibold mt-0.5">{u.role}</div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-on-surface-variant">No user matches.</p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2">Appointments</p>
+              {globalSearchResults.appointments.length ? (
+                globalSearchResults.appointments.map((a) => (
+                  <div key={a._id} className="py-2 border-b border-outline-variant/30 last:border-0">
+                    <div className="font-semibold text-on-surface">
+                      {a.patientName} → {a.doctorName}
+                    </div>
+                    <div className="text-xs text-on-surface-variant">
+                      {String(a.date || "").slice(0, 10)} • {a.time || "-"}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-on-surface-variant">No appointment matches.</p>
+              )}
+            </div>
+          </div>
+        ) : null}
+      </div>
 
-          <div className="ad-global-search-results">
-            {!globalSearchQuery.trim() ? (
-              <div style={{ color: "#94a3b8", fontWeight: 700 }}>Type to search.</div>
-            ) : (
-              <>
-                <div className="ad-search-group">
-                  <div className="ad-search-group-title">Users</div>
-                  {globalSearchResults.users.length ? (
-                    globalSearchResults.users.map((u) => (
-                      <div key={u._id} className="ad-search-item">
-                        <div className="ad-search-item-title">{u.name}</div>
-                        <div className="ad-search-item-sub">{u.email}</div>
-                        <div className="ad-search-item-role">{u.role}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ color: "#94a3b8", fontWeight: 700 }}>No user matches.</div>
-                  )}
-                </div>
+      {/* Bento metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-2 border-emerald-700 transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">group</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Users</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{totalUsers}</div>
+          <div className="mt-2 text-xs text-emerald-700 flex items-center gap-1 font-semibold">
+            <span className="material-symbols-outlined text-sm">trending_up</span>
+            Active accounts
+          </div>
+        </div>
 
-                <div className="ad-search-group">
-                  <div className="ad-search-group-title">Appointments</div>
-                  {globalSearchResults.appointments.length ? (
-                    globalSearchResults.appointments.map((a) => (
-                      <div key={a._id} className="ad-search-item">
-                        <div className="ad-search-item-title">
-                          {a.patientName} → {a.doctorName}
-                        </div>
-                        <div className="ad-search-item-sub">
-                          {String(a.date || "").slice(0, 10)} • {a.time || "-"}
-                        </div>
-                        <div className="ad-search-item-role">{a.status}</div>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ color: "#94a3b8", fontWeight: 700 }}>No appointment matches.</div>
-                  )}
-                </div>
-              </>
-            )}
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">medical_services</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Doctors</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{totalDoctors}</div>
+          <div className="mt-2 text-xs text-on-surface-variant">Active specialists</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">event_note</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Appointments</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{appointmentsCount}</div>
+          <div className="mt-2 text-xs text-on-surface-variant">
+            {todayAptCount === 0 ? "None scheduled today" : `${todayAptCount} today`}
+          </div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm col-span-1 md:col-span-2 relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 w-32 h-32 bg-emerald-400/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="flex items-center gap-3 mb-4 relative">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">payments</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Revenue</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface relative">{formatLkr(revenueLkr)}</div>
+          <div className="mt-2 text-xs text-error font-semibold flex items-center gap-1 relative">
+            <span className="material-symbols-outlined text-sm">trending_flat</span>
+            {revenueLkr === 0 ? "0% growth" : "Recorded revenue"}
           </div>
         </div>
       </div>
 
-      {/* TOP SUMMARY CARDS */}
-      <div className="ad-dash-summary">
-        {topCards.map((c) => (
-          <article key={c.label} className="ad-dash-stat">
-            <div className={`ad-dash-stat-icon ad-${c.tone}`}>
-              <span className="material-symbols-outlined"> {c.icon} </span>
-            </div>
-            <div className="ad-dash-stat-body">
-              <div className="ad-dash-stat-label">{c.label}</div>
-              <div className="ad-dash-stat-value">{c.value}</div>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <div className="ad-hero-split">
-        {/* LEFT: Analytics (2x2) */}
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Analytics</h2>
-          </div>
-
-          <div className="ad-analytics-wrap">
-            <div className="ad-charts-grid">
-            <article className="pd-card ad-chart-card">
-              <h3 className="ad-chart-title">
-                <span className="ad-chart-title-icon material-symbols-outlined">event</span>
-                Appointment Trends
-              </h3>
-              <div style={{ height: 200 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={charts.appointmentTrends}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="bookings"
-                      name="Bookings"
-                      stroke="#0d9488"
-                      strokeWidth={3}
-                      dot={{ stroke: "#0d9488", strokeWidth: 2, r: 3 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Analytics */}
+        <div className="lg:col-span-8 space-y-8">
+          <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl shadow-sm">
+            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+              <h3 className="text-xl font-bold font-headline text-on-surface">Appointment Trends</h3>
+              <div className="flex gap-2">
+                <span className="flex items-center gap-1 text-xs font-medium px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full">
+                  Weekly
+                </span>
+                <span className="flex items-center gap-1 text-xs font-medium px-3 py-1 bg-black text-white rounded-full">Monthly</span>
               </div>
-            </article>
+            </div>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={charts.appointmentTrends} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e3e5" />
+                  <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="bookings" name="Bookings" stroke="#000000" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
 
-            <article className="pd-card ad-chart-card">
-              <h3 className="ad-chart-title">
-                <span className="ad-chart-title-icon material-symbols-outlined">payments</span>
-                Revenue Analytics
-              </h3>
-              <div style={{ height: 200 }}>
+          <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl shadow-sm">
+            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+              <h3 className="text-xl font-bold font-headline text-on-surface">Revenue Analytics</h3>
+              <Link
+                to="/admin/reports"
+                className="px-3 py-1 bg-[#0C9100] text-white text-xs font-bold rounded-lg flex items-center gap-1 hover:bg-[#097300] transition-colors shadow-sm"
+              >
+                Download Report <span className="material-symbols-outlined text-sm">download</span>
+              </Link>
+            </div>
+            {revenueLkr === 0 ? (
+              <div className="flex items-center justify-center h-48 border-2 border-dashed border-outline-variant/40 rounded-xl bg-surface">
+                <div className="text-center px-4">
+                  <span className="material-symbols-outlined text-4xl text-outline-variant mb-2">bar_chart_4_bars</span>
+                  <p className="text-on-surface-variant text-sm font-medium">Insufficient data for revenue modeling</p>
+                </div>
+              </div>
+            ) : (
+              <div className="h-56 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={charts.revenueAnalytics}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
+                  <BarChart data={charts.revenueAnalytics} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e3e5" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
-                    <Legend />
-                    <Bar dataKey="income" name="Income (LKR)" fill="#0d9488" radius={[10, 10, 2, 2]} />
+                    <Bar dataKey="income" name="Income (LKR)" fill="#111c2d" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </article>
-
-            <article className="pd-card ad-chart-card">
-              <h3 className="ad-chart-title">
-                <span className="ad-chart-title-icon material-symbols-outlined">people</span>
-                User Growth
-              </h3>
-              <div style={{ height: 200 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={charts.userGrowth}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="week" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="newUsers" name="New users" stroke="#6366f1" strokeWidth={3} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </article>
-
-            <article className="pd-card ad-chart-card">
-              <h3 className="ad-chart-title">
-                <span className="ad-chart-title-icon material-symbols-outlined">admin_panel_settings</span>
-                Role Distribution
-              </h3>
-              <div style={{ height: 200 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Tooltip />
-                    <Pie
-                      data={charts.roleDist}
-                      dataKey="value"
-                      outerRadius={110}
-                      innerRadius={60}
-                      stroke="none"
-                    >
-                      {charts.roleDist.map((r) => (
-                        <Cell key={r.name} fill={r.fill} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </article>
-          </div>
-          </div>
+            )}
+          </section>
         </div>
 
-        {/* RIGHT: Quick Actions (vertical list) */}
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Quick Actions</h2>
-          </div>
-
-          <div className="ad-quick-actions-list">
-            <Link to="/admin/doctors-verification" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">verified_user</span>
-              <span className="ad-quick-title">Approve Doctors</span>
-            </Link>
-            <Link to="/admin/users" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">groups</span>
-              <span className="ad-quick-title">Manage Users</span>
-            </Link>
-            <Link to="/admin/appointments" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">event</span>
-              <span className="ad-quick-title">View Appointments</span>
-            </Link>
-            <Link to="/admin/payments" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">payments</span>
-              <span className="ad-quick-title">Check Payments</span>
-            </Link>
-            <Link to="/admin/notifications" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">notifications</span>
-              <span className="ad-quick-title">Send Notification</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* RECENT ACTIVITY FEED */}
-      <div className="ad-section">
-        <div className="ad-section-head">
-          <h2>Recent Activity</h2>
-          <p>Live updates from critical admin workflows.</p>
-        </div>
-
-        <div className="ad-activity">
-          {activity.map((a, idx) => (
-            <div key={`${a.title}-${idx}`} className="ad-activity-item">
-              <div className="ad-activity-icon">
-                <span className="material-symbols-outlined"> {a.icon} </span>
-              </div>
-              <div className="ad-activity-body">
-                <div className="ad-activity-title">{a.title}</div>
-                <div className="ad-activity-when">{a.when}</div>
-              </div>
-              <div className="ad-activity-dot" />
+        {/* Sidebar column */}
+        <div className="lg:col-span-4 space-y-6">
+          <section className="bg-white p-6 rounded-xl border border-red-200/70 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 1" }}>
+                warning
+              </span>
+              <h3 className="text-lg font-bold font-headline text-red-900">Critical Review</h3>
             </div>
-          ))}
+            <div className="flex items-center justify-between">
+              <span className="text-red-800 font-medium">Pending Doctor Approvals</span>
+              <span className="text-2xl font-black font-headline text-error">
+                {String(Math.min(99, pendingCount)).padStart(2, "0")}
+              </span>
+            </div>
+            <Link
+              to="/admin/doctors-verification"
+              className="block w-full mt-6 py-3 bg-error text-on-error rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:scale-[0.98] transition-all text-center"
+            >
+              Review Applications
+            </Link>
+          </section>
+
+          <section 
+            className="p-6 sm:p-8 rounded-[32px] shadow-sm relative overflow-hidden transition-all"
+            style={{ backgroundColor: '#9ae649' }}
+          >
+            <h3 className="text-2xl font-bold font-headline text-[#043927] mb-8">
+              Quick Actions
+            </h3>
+            
+            <div className="space-y-4 relative">
+              {[
+                { to: "/admin/doctors-verification", icon: "verified_user", label: "Approve Doctors" },
+                { to: "/admin/users", icon: "manage_accounts", label: "Manage Users" },
+                { to: "/admin/appointments", icon: "calendar_month", label: "Appointments" },
+                { to: "/admin/payments", icon: "payments", label: "Payments" },
+              ].map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="group flex items-center justify-between p-3 rounded-2xl bg-white/80 hover:bg-white transition-all duration-200"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-[#3d5a5c] flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-white text-[22px]">
+                        {item.icon}
+                      </span>
+                    </div>
+                    <span className="text-base font-bold text-[#043927] truncate">{item.label}</span>
+                  </div>
+                  <span className="material-symbols-outlined text-[#043927]/30 group-hover:text-[#043927] shrink-0 transition-all mr-2">
+                    chevron_right
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
 
-      {/* TODAY’S APPOINTMENTS + PENDING DOCTOR REQUESTS */}
-      <div className="ad-two-col">
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Today’s Appointments</h2>
-            <p>{todayISOHuman}</p>
+      {/* Secondary sections — data tables */}
+      <div className="mt-10 space-y-8">
+        <section>
+          <h3 className="text-lg font-bold font-headline text-on-surface mb-4">Recent Activity</h3>
+          <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 divide-y divide-outline-variant/20">
+            {activity.length ? (
+              activity.map((a, idx) => (
+                <div key={`${a.title}-${idx}`} className="flex items-center gap-4 p-4 hover:bg-emerald-50/30 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 shrink-0">
+                    <span className="material-symbols-outlined text-[20px]">{a.icon}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-on-surface">{a.title}</p>
+                    <p className="text-xs text-on-surface-variant">{a.when}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="p-6 text-sm text-on-surface-variant">No recent activity.</p>
+            )}
           </div>
+        </section>
 
-          <div className="pd-card">
-            <div className="pd-table-wrap">
-              <table className="pd-table">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <section>
+            <h3 className="text-lg font-bold font-headline text-on-surface mb-4">Today&apos;s Appointments</h3>
+            <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr>
-                    <th>Patient</th>
-                    <th>Doctor</th>
-                    <th>Time</th>
+                  <tr className="border-b border-emerald-100 bg-emerald-50/50">
+                    <th className="text-left p-3 font-bold text-emerald-900">Patient</th>
+                    <th className="text-left p-3 font-bold text-emerald-900">Doctor</th>
+                    <th className="text-left p-3 font-bold text-emerald-900">Time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {todaysAppointments.length ? (
                     todaysAppointments.map((a) => (
-                      <tr key={a._id}>
-                        <td style={{ fontWeight: 900 }}>{a.patientName || "-"}</td>
-                        <td>{a.doctorName || "-"}</td>
-                        <td style={{ fontWeight: 800 }}>{a.time || "-"}</td>
+                      <tr key={a._id} className="border-b border-outline-variant/20 last:border-0">
+                        <td className="p-3 font-semibold">{a.patientName || "-"}</td>
+                        <td className="p-3 text-on-surface-variant">{a.doctorName || "-"}</td>
+                        <td className="p-3 font-medium">{a.time || "-"}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={3} style={{ color: "#94a3b8" }}>
-                        No appointments found for today (based on what admin account can fetch).
+                      <td colSpan={3} className="p-4 text-on-surface-variant">
+                        No appointments found for today.
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
+          </section>
 
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Pending Doctor Requests</h2>
-            <p>Approve or reject doctor registrations.</p>
-          </div>
-
-          <div className="pd-card">
-            <div className="ad-pending-list">
+          <section>
+            <h3 className="text-lg font-bold font-headline text-on-surface mb-4">Pending Doctor Requests</h3>
+            <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 p-4 space-y-3">
               {pendingDoctors.length ? (
                 pendingDoctors.slice(0, 6).map((doc) => {
                   const details = doctorDetailsByUserId[doc._id] || {};
                   return (
-                    <div key={doc._id} className="ad-pending-row">
-                      <div className="ad-pending-left">
-                        <div className="ad-avatar">
-                          <span>{String((details.fullName || doc.name || "D").charAt(0)).toUpperCase()}</span>
+                    <div
+                      key={doc._id}
+                      className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-white border border-emerald-100 hover:border-emerald-200 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold shrink-0">
+                          {String((details.fullName || doc.name || "D").charAt(0)).toUpperCase()}
                         </div>
-                        <div className="ad-pending-meta">
-                          <div className="ad-pending-name">{details.fullName || doc.name}</div>
-                          <div className="ad-pending-spec">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-on-surface truncate">{details.fullName || doc.name}</div>
+                          <div className="text-xs text-on-surface-variant truncate">
                             {details.specialization ? `Specialty: ${details.specialization}` : "Specialty unavailable"}
                           </div>
                         </div>
                       </div>
-
-                      <div className="ad-pending-actions">
-                        <button type="button" className="ad-btn ad-btn-approve" onClick={() => approveRejectDoctor(doc._id, true)}>
-                          ✅ Approve
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold hover:bg-emerald-200"
+                          onClick={() => approveRejectDoctor(doc._id, true)}
+                        >
+                          Approve
                         </button>
-                        <button type="button" className="ad-btn ad-btn-reject" onClick={() => approveRejectDoctor(doc._id, false)}>
-                          ❌ Reject
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 rounded-lg bg-red-100 text-red-800 text-xs font-bold hover:bg-red-200"
+                          onClick={() => approveRejectDoctor(doc._id, false)}
+                        >
+                          Reject
                         </button>
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <div style={{ color: "#94a3b8", fontWeight: 700 }}>No pending doctor requests right now.</div>
+                <p className="text-sm text-on-surface-variant py-2">No pending doctor requests.</p>
               )}
             </div>
-          </div>
+          </section>
         </div>
       </div>
-
-      {/* RECENT PAYMENTS + ALERTS */}
-      <div className="ad-two-col">
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Recent Payments</h2>
-            <p>Latest transactions & statuses.</p>
-          </div>
-
-          <div className="pd-card">
-            <div className="pd-table-wrap">
-              <table className="pd-table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentPayments.map((p, idx) => (
-                    <tr key={`${p.user}-${idx}`}>
-                      <td style={{ fontWeight: 900 }}>{p.user}</td>
-                      <td style={{ fontWeight: 800 }}>{formatLkr(p.amount)}</td>
-                      <td>
-                        <span
-                          className="ad-status-pill"
-                          style={{
-                            background: p.status === "verified" ? "rgba(13,148,136,0.12)" : p.status === "pending" ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.12)",
-                            color: p.status === "verified" ? "#0d9488" : p.status === "pending" ? "#f59e0b" : "#ef4444",
-                          }}
-                        >
-                          {p.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {!recentPayments.length ? (
-                    <tr>
-                      <td colSpan={3} style={{ color: "#94a3b8" }}>
-                        No payment data available from current admin APIs.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Alerts / System Status</h2>
-            <p>Warnings, spikes, and system health.</p>
-          </div>
-
-          <div className="pd-card ad-alerts">
-            {alerts.map((al, idx) => (
-              <div key={`${al.title}-${idx}`} className="ad-alert-box" style={{ borderColor: riskColor(al.level) }}>
-                <div className="ad-alert-icon" style={{ color: riskColor(al.level) }}>
-                  <span className="material-symbols-outlined">warning</span>
-                </div>
-                <div className="ad-alert-body">
-                  <div className="ad-alert-title">{al.title}</div>
-                  <div className="ad-alert-detail">{al.detail}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* REPORTS OVERVIEW + HEATMAP */}
-      <div className="ad-two-col">
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Reports Overview</h2>
-            <p>Recent uploads (admin account scope).</p>
-          </div>
-
-          <div className="pd-card">
-            <div className="ad-report-list">
-              {recentReportsPreview.length ? (
-                recentReportsPreview.map((r) => (
-                  <div key={r._id} className="ad-report-row">
-                    <div className="ad-report-icon">
-                      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="1.7">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                      </svg>
-                    </div>
-                    <div className="ad-report-meta">
-                      <div className="ad-report-title">{r.fileName || r.title || "Report"}</div>
-                      <div className="ad-report-sub">
-                        {r.category || "Lab Results"} • {new Date(r.uploadedAt || r.createdAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div style={{ color: "#94a3b8", fontWeight: 700 }}>
-                  No reports available for this admin account via `/patients/reports`.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>User Activity Heatmap</h2>
-            <p>Activity density by day/time (UI demo, refreshes with stats).</p>
-          </div>
-
-          <div className="pd-card">
-            <div className="ad-heatmap-wrap">
-              <div className="ad-heatmap-grid">
-                {heatmapCells.map((v, idx) => {
-                  const intensity = Math.min(1, v / 100);
-                  const bg = `rgba(13,148,136,${0.08 + intensity * 0.35})`;
-                  const border = `rgba(13,148,136,${0.15 + intensity * 0.35})`;
-                  return (
-                    <div
-                      key={idx}
-                      className="ad-heatmap-cell"
-                      title={`Intensity: ${v}`}
-                      style={{ background: bg, borderColor: border }}
-                    />
-                  );
-                })}
-              </div>
-              <div className="ad-heatmap-legend">
-                <span>Low</span>
-                <span>High</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </section>
+    </div>
   );
 }
