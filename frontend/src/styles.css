@@ -5783,9 +5783,9 @@ button, .btn-primary {
   background: #f8fafc;
 }
 
-/* Admin dashboard only: page background, flat UI, grids that fit the viewport */
+/* Admin dashboard: editorial-style main canvas (sidebar unchanged) */
 .aura-content--admin-dashboard {
-  background: #cefaa0;
+  background: #f7f9fb;
 }
 
 .aura-shell--admin-dashboard .aura-topbar-admin {
@@ -5880,11 +5880,7 @@ button, .btn-primary {
   }
 }
 
-/* Admin dashboard — premium surface (no box-shadows) */
-.aura-content--admin-dashboard {
-  background: linear-gradient(165deg, #cefaa0 0%, #c4ef95 42%, #d4f5a8 100%);
-}
-
+/* Admin dashboard — legacy ad-* helpers (optional) */
 .aura-shell--admin-dashboard .ad-dashboard {
   gap: 20px;
 }
