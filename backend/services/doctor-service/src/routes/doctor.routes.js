@@ -26,6 +26,19 @@ const upload = multer({
     }
 });
 
+function handleProfileImageUpload(req, res, next) {
+    upload.single("image")(req, res, (err) => {
+        if (!err) return next();
+        if (err instanceof multer.MulterError) {
+            if (err.code === "LIMIT_FILE_SIZE") {
+                return res.status(400).json({ message: "Image must be under 2MB" });
+            }
+            return res.status(400).json({ message: err.message || "Upload failed" });
+        }
+        return res.status(400).json({ message: err.message || "Upload failed" });
+    });
+}
+
 // Public
 router.get("/public", getPublicDoctors);
 router.get("/public/:id", getDoctorById);
@@ -39,7 +52,7 @@ router.put("/update-profile", verifyAuth, requireDoctorRole, upsertProfile);
 router.put("/availability", verifyAuth, requireDoctorRole, setAvailability);
 router.put("/physical-availability", verifyAuth, requireDoctorRole, setPhysicalAvailability);
 router.put("/online-availability", verifyAuth, requireDoctorRole, setOnlineAvailability);
-router.post("/upload-image", verifyAuth, requireDoctorRole, upload.single("image"), uploadProfileImage);
+router.post("/upload-image", verifyAuth, requireDoctorRole, handleProfileImageUpload, uploadProfileImage);
 
 router.get("/prescriptions", verifyAuth, requireDoctorRole, listIssuedPrescriptions);
 router.post("/prescriptions", verifyAuth, requireDoctorRole, issuePrescription);

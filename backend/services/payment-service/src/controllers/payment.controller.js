@@ -144,16 +144,20 @@ exports.createPendingBooking = async (req, res) => {
       }
     }
 
-    const duplicatePending = await PendingBooking.findOne({
-      patientSub: req.user.sub,
+    // Abandoned checkouts (pending_payment, no appointment) must not block the slot. Expire
+    // any active pending holds for this doctor/date/time so the same or another patient can book.
+    const stalePendings = await PendingBooking.find({
       doctorUserId,
       date,
-      time,
       status: "pending_payment",
+      appointmentCreated: false,
       expiresAt: { $gt: new Date() },
-    }).select("_id");
-    if (duplicatePending) {
-      return res.status(409).json({ message: "A pending checkout already exists for this slot." });
+    }).select("_id time");
+    const staleIds = stalePendings
+      .filter((d) => normalizeTimeLabel(d.time) === wantT)
+      .map((d) => d._id);
+    if (staleIds.length) {
+      await PendingBooking.updateMany({ _id: { $in: staleIds } }, { $set: { status: "expired" } });
     }
 
     const consultationCents = lkrToCents(consultationFee || 0);
@@ -210,11 +214,17 @@ exports.getPendingBooking = async (req, res) => {
     if (!doc || doc.patientSub !== req.user.sub) {
       return res.status(404).json({ message: "Pending booking not found" });
     }
-    if (doc.status !== "pending_payment") {
-      return res.status(400).json({ message: "Booking is no longer pending payment", status: doc.status });
+    if (doc.status === "failed") {
+      return res.status(400).json({ message: "Payment failed for this booking", status: doc.status });
     }
-    if (doc.expiresAt < new Date()) {
+    if (doc.status === "expired") {
+      return res.status(400).json({ message: "This checkout session has expired", status: doc.status });
+    }
+    if (doc.status === "pending_payment" && doc.expiresAt < new Date()) {
       return res.status(400).json({ message: "This checkout session has expired" });
+    }
+    if (doc.status !== "pending_payment" && doc.status !== "paid") {
+      return res.status(400).json({ message: "Booking is no longer available", status: doc.status });
     }
     return res.json({
       pendingId: doc._id.toString(),
@@ -232,6 +242,8 @@ exports.getPendingBooking = async (req, res) => {
       currency: doc.currency,
       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY || "",
       helakuruPayHereConfigured: payhereService.isPayHereConfigured(),
+      status: doc.status,
+      appointmentCreated: Boolean(doc.appointmentCreated)
     });
   } catch (e) {
     return res.status(500).json({ message: "Failed to load booking" });
@@ -367,7 +379,7 @@ exports.createHelaPayCheckout = async (req, res) => {
 exports.completeBookingAfterPayment = async (req, res) => {
   try {
     const { pendingId, paymentIntentId } = req.body;
-    const doc = await PendingBooking.findById(pendingId);
+    let doc = await PendingBooking.findById(pendingId);
     if (!doc || doc.patientSub !== req.user.sub) {
       return res.status(404).json({ message: "Pending booking not found" });
     }
@@ -399,10 +411,32 @@ exports.completeBookingAfterPayment = async (req, res) => {
       await doc.save();
     }
 
+    // Helakuru / PayHere: status becomes "paid" only after notify_url webhook. The browser
+    // often hits return_url first — poll MongoDB so finalize succeeds once PayHere posts notify.
+    if (!paymentVerified && !paymentIntentId) {
+      const deadline = Date.now() + 90000;
+      while (Date.now() < deadline) {
+        const fresh = await PendingBooking.findById(pendingId);
+        if (fresh?.status === "paid") {
+          paymentVerified = true;
+          doc = fresh;
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
+
     if (!paymentVerified) {
       return res.status(400).json({
-        message: "Payment not verified yet. Complete card payment or Helakuru (PayHere) first.",
+        message:
+          "Payment not verified yet. Complete card payment (Stripe) or wait for Helakuru (PayHere) confirmation. PayHere marks this booking paid only after your server receives notify_url — on localhost use “Simulate Helakuru success (dev)” or set API_PUBLIC_URL to a public HTTPS URL (e.g. ngrok) so PayHere can reach /api/payments/webhooks/payhere.",
+        code: "PAYMENT_PENDING_WEBHOOK"
       });
+    }
+
+    doc = await PendingBooking.findById(pendingId);
+    if (!doc || doc.status !== "paid") {
+      return res.status(409).json({ message: "Payment state changed; refresh and try again." });
     }
 
     const authHeader = req.headers.authorization;
@@ -524,8 +558,9 @@ exports.refundBySession = async (req, res) => {
   }
 };
 
-// Public: return occupied times from paid/pending PendingBookings for a doctor/date.
-// Used by frontend to filter already-booked slots in the booking modal.
+// Public: return occupied times from **paid** PendingBookings without an appointment yet.
+// pending_payment does not block the calendar — abandoned checkouts would lock slots otherwise;
+// createPendingBooking expires overlapping pending_payment rows when a new checkout starts.
 exports.getDoctorOccupiedFromPending = async (req, res) => {
   try {
     const { doctorUserId, date } = req.query;
@@ -536,12 +571,8 @@ exports.getDoctorOccupiedFromPending = async (req, res) => {
     const docs = await PendingBooking.find({
       doctorUserId,
       date,
-      status: { $in: ["pending_payment", "paid"] },
-      expiresAt: { $gt: new Date() },
-      // Exclude bookings that already have a real appointment created — those
-      // slots are already counted by the appointment service and should not be
-      // double-blocked (which would prevent the patient from rescheduling).
-      appointmentCreated: { $ne: true },
+      status: "paid",
+      appointmentCreated: false,
     }).select("time");
 
     const occupiedTimes = Array.from(
