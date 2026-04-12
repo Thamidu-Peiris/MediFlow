@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
@@ -4494,6 +4496,8 @@ button, .btn-primary {
   transition: color 0.2s;
 }
 .ap-eye-btn:hover { color: #2563eb; }
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
 .ap-forgot {
   text-align: right;
   margin-top: -6px;
@@ -5653,10 +5657,14 @@ button, .btn-primary {
 }
 
 .aura-logo {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
-  color: #0d9488;
-  letter-spacing: -0.02em;
+  color: #043927; /* dark green */
+  letter-spacing: -0.03em;
+  font-family: "Outfit", "Inter", sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .aura-topbar-right {
