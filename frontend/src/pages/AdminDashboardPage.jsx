@@ -493,20 +493,15 @@ export default function AdminDashboardPage() {
             </Link>
           </section>
 
-          <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl shadow-sm border border-emerald-100/50 relative overflow-hidden transition-all">
-            <div className="absolute -right-4 -top-4 w-32 h-32 bg-emerald-400/25 rounded-full blur-3xl pointer-events-none" />
-            <div className="flex items-center gap-3 mb-6 relative">
-              <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
-                <span className="material-symbols-outlined text-emerald-800">rocket_launch</span>
-              </div>
-              <div>
-                <h3 className="text-base font-black font-headline text-on-surface uppercase tracking-widest">
-                  Quick Actions
-                </h3>
-                <p className="text-[10px] text-emerald-700 font-bold uppercase tracking-tight">Admin Shortcuts</p>
-              </div>
-            </div>
-            <div className="space-y-3 relative">
+          <section 
+            className="p-6 sm:p-8 rounded-[32px] shadow-sm relative overflow-hidden transition-all"
+            style={{ backgroundColor: '#9ae649' }}
+          >
+            <h3 className="text-2xl font-bold font-headline text-[#043927] mb-8">
+              Quick Actions
+            </h3>
+            
+            <div className="space-y-4 relative">
               {[
                 { to: "/admin/doctors-verification", icon: "verified_user", label: "Approve Doctors" },
                 { to: "/admin/users", icon: "manage_accounts", label: "Manage Users" },
@@ -516,15 +511,17 @@ export default function AdminDashboardPage() {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="group flex items-center justify-between p-4 rounded-xl bg-[#0C9100] border border-emerald-700/30 transition-all duration-200 hover:translate-x-0.5 hover:bg-[#097300] hover:shadow-lg active:scale-[0.99]"
+                  className="group flex items-center justify-between p-3 rounded-2xl bg-white/80 hover:bg-white transition-all duration-200"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="material-symbols-outlined text-white shrink-0 text-[22px]">
-                      {item.icon}
-                    </span>
-                    <span className="text-sm font-semibold text-white truncate">{item.label}</span>
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-[#3d5a5c] flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-white text-[22px]">
+                        {item.icon}
+                      </span>
+                    </div>
+                    <span className="text-base font-bold text-[#043927] truncate">{item.label}</span>
                   </div>
-                  <span className="material-symbols-outlined text-white/70 group-hover:text-white shrink-0 transition-transform group-hover:translate-x-1">
+                  <span className="material-symbols-outlined text-[#043927]/30 group-hover:text-[#043927] shrink-0 transition-all mr-2">
                     chevron_right
                   </span>
                 </Link>
