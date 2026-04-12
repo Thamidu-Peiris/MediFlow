@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || "http://localhost:8006";
+const DOCTOR_SERVICE_URL = process.env.DOCTOR_SERVICE_URL || "http://localhost:8003";
 
 // Minimal reference model to fetch patient names from the same MongoDB cluster.
 // patient-service stores documents in the `patients` collection with fields:
@@ -55,16 +56,23 @@ function toMinutes12h(timeLabel = "") {
 exports.listDoctorOccupiedTimes = async (req, res) => {
     try {
         const { doctorId } = req.params;
-        const { date } = req.query;
+        const { date, excludeId } = req.query;
         if (!doctorId || !date) {
             return res.status(400).json({ message: "doctorId and date are required" });
         }
 
-        const appointments = await Appointment.find({
+        const filter = {
             doctorId,
             date,
             status: { $nin: ["cancelled", "rejected"] }
-        }).select("time status");
+        };
+        // When rescheduling, exclude the appointment being rescheduled so its
+        // own time slot appears as available again.
+        if (excludeId) {
+            filter._id = { $ne: excludeId };
+        }
+
+        const appointments = await Appointment.find(filter).select("time status");
 
         const appointmentTimes = appointments
             .map((a) => String(a.time || "").trim())
@@ -158,7 +166,7 @@ exports.requestAppointment = async (req, res) => {
 
 exports.listMyAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find({ patientId: req.user.sub }).sort({ createdAt: -1 });
+        const appointments = await Appointment.find({ patientId: req.user.sub }).sort({ createdAt: -1 }).lean();
         // Backfill empty fields created by earlier flows (also overwrite placeholder "Patient")
         const toBackfill = appointments.filter(
             (a) => !a.patientName || a.patientName === "Patient" || !a.sessionId || !a.notes
@@ -178,6 +186,25 @@ exports.listMyAppointments = async (req, res) => {
                 })
             );
         }
+
+        // Enrich appointments that have no stored consultationFee from doctor service
+        const needsEnrichment = appointments.filter((a) => !a.consultationFee);
+        if (needsEnrichment.length) {
+            try {
+                const doctorsRes = await axios.get(`${DOCTOR_SERVICE_URL}/public`, { timeout: 3000 });
+                const doctors = Array.isArray(doctorsRes.data?.doctors) ? doctorsRes.data.doctors : [];
+                const feeById = {};
+                for (const d of doctors) {
+                    if (d.userId) feeById[String(d.userId)] = d.consultationFee ?? 0;
+                }
+                for (const a of needsEnrichment) {
+                    a.consultationFee = feeById[String(a.doctorId)] ?? 0;
+                }
+            } catch {
+                // doctor service unavailable — proceed without fees
+            }
+        }
+
         return res.status(200).json({ appointments });
     } catch (error) {
         return res.status(500).json({ message: "Failed to fetch appointments" });
@@ -196,7 +223,30 @@ exports.cancelAppointment = async (req, res) => {
             return res.status(404).json({ message: "Appointment not found or cannot be cancelled" });
         }
 
-        return res.status(200).json({ appointment });
+        // Attempt refund via payment service if the appointment was linked to a payment.
+        // The patient's auth token is forwarded so the payment service can verify ownership.
+        let refund = null;
+        if (appointment.sessionId) {
+            try {
+                const refundRes = await axios.post(
+                    `${PAYMENT_SERVICE_URL}/refund-by-session`,
+                    { sessionId: appointment.sessionId },
+                    {
+                        headers: {
+                            Authorization: req.headers.authorization,
+                            "Content-Type": "application/json",
+                        },
+                        timeout: 10000,
+                    }
+                );
+                refund = refundRes.data;
+            } catch {
+                // Refund call failed — appointment is still cancelled; client shows fallback message.
+                refund = { refunded: false, reason: "refund_service_unavailable" };
+            }
+        }
+
+        return res.status(200).json({ appointment, refund });
     } catch (error) {
         return res.status(500).json({ message: "Failed to cancel appointment" });
     }
