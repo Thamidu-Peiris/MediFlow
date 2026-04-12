@@ -417,7 +417,7 @@ export default function AdminDashboardPage() {
             <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
               <h3 className="text-xl font-bold font-headline text-on-surface">Appointment Trends</h3>
               <div className="flex gap-2">
-                <span className="flex items-center gap-1 text-xs font-medium px-3 py-1 bg-surface-container rounded-full text-on-surface-variant">
+                <span className="flex items-center gap-1 text-xs font-medium px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full">
                   Weekly
                 </span>
                 <span className="flex items-center gap-1 text-xs font-medium px-3 py-1 bg-black text-white rounded-full">Monthly</span>
@@ -442,7 +442,7 @@ export default function AdminDashboardPage() {
               <h3 className="text-xl font-bold font-headline text-on-surface">Revenue Analytics</h3>
               <Link
                 to="/admin/reports"
-                className="text-[#008cc7] text-xs font-bold flex items-center gap-1 hover:underline"
+                className="px-3 py-1 bg-[#0C9100] text-white text-xs font-bold rounded-lg flex items-center gap-1 hover:bg-[#097300] transition-colors shadow-sm"
               >
                 Download Report <span className="material-symbols-outlined text-sm">download</span>
               </Link>
@@ -541,8 +541,8 @@ export default function AdminDashboardPage() {
           <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 divide-y divide-outline-variant/20">
             {activity.length ? (
               activity.map((a, idx) => (
-                <div key={`${a.title}-${idx}`} className="flex items-center gap-4 p-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#d5e3fd] flex items-center justify-center text-[#57657b] shrink-0">
+                <div key={`${a.title}-${idx}`} className="flex items-center gap-4 p-4 hover:bg-emerald-50/30 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 shrink-0">
                     <span className="material-symbols-outlined text-[20px]">{a.icon}</span>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -563,10 +563,10 @@ export default function AdminDashboardPage() {
             <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-outline-variant/30 bg-surface-container/50">
-                    <th className="text-left p-3 font-bold text-on-surface-variant">Patient</th>
-                    <th className="text-left p-3 font-bold text-on-surface-variant">Doctor</th>
-                    <th className="text-left p-3 font-bold text-on-surface-variant">Time</th>
+                  <tr className="border-b border-emerald-100 bg-emerald-50/50">
+                    <th className="text-left p-3 font-bold text-emerald-900">Patient</th>
+                    <th className="text-left p-3 font-bold text-emerald-900">Doctor</th>
+                    <th className="text-left p-3 font-bold text-emerald-900">Time</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -599,10 +599,10 @@ export default function AdminDashboardPage() {
                   return (
                     <div
                       key={doc._id}
-                      className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-surface border border-outline-variant/30"
+                      className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-white border border-emerald-100 hover:border-emerald-200 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-[#d5e3fd] flex items-center justify-center text-[#57657b] font-bold shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold shrink-0">
                           {String((details.fullName || doc.name || "D").charAt(0)).toUpperCase()}
                         </div>
                         <div className="min-w-0">
