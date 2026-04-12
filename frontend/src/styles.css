@@ -5591,22 +5591,29 @@ button, .btn-primary {
 .aura-logout-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 20px;
   border: none;
-  background: transparent;
-  color: #64748b;
-  font-weight: 600;
-  font-size: 14px;
+  background: #CF0000; /* specific red requested */
+  color: #ffffff; /* white text */
+  font-weight: 700;
+  font-size: 15px;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(207, 0, 0, 0.2);
 }
 
 .aura-logout-btn:hover {
-  background: #fef2f2;
-  color: #ef4444;
+  background: #B00000; /* slightly darker red on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(176, 0, 0, 0.3);
+}
+
+.aura-logout-btn:active {
+  transform: scale(0.98);
 }
 
 /* Main Content Area */
@@ -5775,11 +5782,11 @@ button, .btn-primary {
 }
 
 .aura-profile-logout {
-  color: #ef4444;
+  color: #CF0000;
 }
 
 .aura-profile-logout .material-symbols-outlined {
-  color: #ef4444;
+  color: #CF0000;
 }
 
 @media (max-width: 768px) {

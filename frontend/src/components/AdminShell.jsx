@@ -76,7 +76,7 @@ export default function AdminShell({ children }) {
       <aside className="aura-sidebar">
         <div className="aura-sidebar-header">
           <div className="aura-brand">
-            <h1 className="aura-brand-title">Clinical Sanctuary</h1>
+            <h1 className="aura-brand-title">MediFlow</h1>
             <p className="aura-brand-subtitle">ENTERPRISE SUITE</p>
           </div>
         </div>
