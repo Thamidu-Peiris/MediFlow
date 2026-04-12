@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../api/client";
 import PatientShell from "../components/PatientShell";
 import { useAuth } from "../context/AuthContext";
+import { firePaymentSuccessConfetti } from "../utils/paymentConfetti";
 
 const tabs = [
   { id: "upcoming", label: "Upcoming", icon: "calendar" },
@@ -72,6 +73,7 @@ const slotContainsTime = (slot, timeLabel) => {
 export default function PatientAppointmentsPage() {
   const { authHeaders } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("upcoming");
@@ -80,6 +82,7 @@ export default function PatientAppointmentsPage() {
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [paymentSuccessBanner, setPaymentSuccessBanner] = useState("");
 
   // Reschedule form state
   const [newDate, setNewDate] = useState("");
@@ -96,6 +99,18 @@ export default function PatientAppointmentsPage() {
   useEffect(() => {
     fetchAppointments();
   }, [authHeaders]);
+
+  useEffect(() => {
+    if (!location.state?.paymentJustSucceeded) return;
+    firePaymentSuccessConfetti();
+    setPaymentSuccessBanner(
+      "Payment successful! Your appointment has been booked — see it under Upcoming."
+    );
+    setActiveTab("upcoming");
+    const dismissTimer = window.setTimeout(() => setPaymentSuccessBanner(""), 10000);
+    navigate(".", { replace: true, state: {} });
+    return () => window.clearTimeout(dismissTimer);
+  }, [location.state, navigate]);
 
   const fetchAppointments = async () => {
     try {
@@ -310,6 +325,39 @@ export default function PatientAppointmentsPage() {
           <h1 className="aura-title">My Appointments</h1>
           <p className="aura-subtitle">Manage your bookings and consultations</p>
         </header>
+
+        {paymentSuccessBanner && (
+          <div
+            className="aura-alert success"
+            style={{
+              marginBottom: "1rem",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: "12px",
+            }}
+            role="status"
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 22, fontVariationSettings: "'FILL' 1" }}
+                aria-hidden
+              >
+                verified
+              </span>
+              <span>{paymentSuccessBanner}</span>
+            </span>
+            <button
+              type="button"
+              className="aura-btn-secondary"
+              style={{ flexShrink: 0, padding: "6px 12px", fontSize: "13px" }}
+              onClick={() => setPaymentSuccessBanner("")}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="aura-tabs">

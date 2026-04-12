@@ -1,6 +1,18 @@
 const axios = require("axios");
-const cloudinary = require("../config/cloudinary");
+const cloudinaryCfg = require("../config/cloudinary");
 const Doctor = require("../models/doctor.model");
+
+function cloudinaryHttpStatus(error) {
+  const code = Number(error?.http_code);
+  if (code === 401 || code === 403) return 502;
+  if (code >= 400 && code < 500) return 502;
+  return 500;
+}
+
+function cloudinaryErrorDetail(error) {
+  const msg = error?.message && error.message !== "undefined" ? error.message : "";
+  return msg.length > 280 ? `${msg.slice(0, 280)}…` : msg || "Unknown error";
+}
 
 // ── Profile ──────────────────────────────────────────────────────────────────
 
@@ -313,30 +325,45 @@ exports.uploadProfileImage = async (req, res) => {
             return res.status(400).json({ message: "No image file provided" });
         }
 
-        const result = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream(
-                {
-                    folder: "mediflow/doctors",
-                    public_id: "doctor_" + req.user.sub,
-                    overwrite: true,
-                    transformation: [{ width: 400, height: 400, crop: "fill", gravity: "face" }]
-                },
-                (error, result) => {
-                    if (error) return reject(error);
-                    resolve(result);
-                }
-            );
-            stream.end(req.file.buffer);
+        if (!cloudinaryCfg.isConfigured()) {
+            return res.status(503).json({
+                message:
+                    "Cloudinary is not configured. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET to doctor-service .env."
+            });
+        }
+
+        const safeId = String(req.user.sub || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+        const result = await cloudinaryCfg.uploadBuffer(req.file.buffer, {
+            folder: "mediflow/doctors",
+            public_id: safeId || "doctor",
+            overwrite: true,
+            resource_type: "image"
         });
+
+        const insertName = (req.user.name && String(req.user.name).trim()) || "Doctor";
+        const insertEmail = (req.user.email && String(req.user.email).toLowerCase().trim()) || "";
 
         await Doctor.findOneAndUpdate(
             { userId: req.user.sub },
-            { $set: { image: result.secure_url } }
+            {
+                $set: { image: result.secure_url },
+                $setOnInsert: {
+                    fullName: insertName,
+                    email: insertEmail
+                }
+            },
+            { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
         );
 
+        res.setHeader("X-MediFlow-Upload-Engine", "cloudinary");
         return res.status(200).json({ imageUrl: result.secure_url });
     } catch (error) {
-        console.error("Cloudinary upload error:", error);
-        return res.status(500).json({ message: "Failed to upload image" });
+        console.error("uploadProfileImage:", error?.http_code || "", error?.message || error);
+        if (error?.http_code != null) {
+            return res.status(cloudinaryHttpStatus(error)).json({
+                message: `Cloudinary upload failed: ${cloudinaryErrorDetail(error)}. Check CLOUDINARY_* in doctor-service .env.`
+            });
+        }
+        return res.status(500).json({ message: error?.message || "Failed to upload image" });
     }
 };

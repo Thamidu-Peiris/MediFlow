@@ -50,10 +50,12 @@ export default function DoctorProfilePage() {
     };
 
     const handleImageChange = async (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files?.[0];
+        const inputEl = e.target;
         if (!file) return;
         if (file.size > 2 * 1024 * 1024) {
             setMsg("Image must be under 2MB");
+            inputEl.value = "";
             return;
         }
         // Show local preview immediately
@@ -67,14 +69,17 @@ export default function DoctorProfilePage() {
             setMsg("Uploading image...");
             const formPayload = new FormData();
             formPayload.append("image", file);
-            // Pass only the Authorization header — let Axios set Content-Type with boundary automatically for FormData
-            const res = await api.post("/doctors/upload-image", formPayload, authHeaders);
+            const res = await api.post("/doctors/upload-image", formPayload, {
+                ...authHeaders,
+                timeout: 60000
+            });
             setImagePreview(res.data.imageUrl);
             setMsg("Image uploaded successfully!");
         } catch (err) {
             setMsg(err.response?.data?.message || "Failed to upload image");
         } finally {
             setSaving(false);
+            inputEl.value = "";
         }
     };
 

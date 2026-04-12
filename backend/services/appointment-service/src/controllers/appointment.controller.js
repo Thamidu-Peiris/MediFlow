@@ -78,7 +78,7 @@ exports.listDoctorOccupiedTimes = async (req, res) => {
             .map((a) => String(a.time || "").trim())
             .filter(Boolean);
 
-        // Also fetch occupied times from payment service (paid/pending_payment pending bookings)
+        // Also fetch occupied times from payment service (paid, appointment not created yet)
         let pendingTimes = [];
         try {
             const pRes = await axios.get(
