@@ -69,7 +69,7 @@ export default function AdminShell({ children }) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  const isAdminDashboard = location.pathname === "/admin/dashboard";
+  const isAdminDashboard = location.pathname === "/admin/dashboard" || location.pathname === "/admin/analytics";
 
   return (
     <div className={`aura-shell${isAdminDashboard ? " aura-shell--admin-dashboard" : ""}`}>
