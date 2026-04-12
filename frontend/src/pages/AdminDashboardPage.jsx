@@ -443,16 +443,18 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="ad-hero-split ad-hero-split--premium">
-        {/* LEFT: Analytics (2x2) */}
-        <div className="ad-section ad-analytics-column">
+      <div className="ad-hero-split ad-hero-split--premium ad-hero-premium-layout">
+        {/* Row 1 col 1 only — Quick Actions sits in row 2 so it lines up with chart cards */}
+        <div className="ad-section ad-hero-analytics-head">
           <div className="ad-section-head ad-section-head--premium">
             <div>
               <h2>Analytics</h2>
               <p className="ad-section-head-note">Key metrics at a glance</p>
             </div>
           </div>
+        </div>
 
+        <div className="ad-hero-body-charts">
           <div className="ad-analytics-wrap">
             <div className="ad-charts-grid">
             <article className="pd-card ad-chart-card ad-chart-card--premium">
@@ -460,14 +462,14 @@ export default function AdminDashboardPage() {
                 <span className="ad-chart-title-icon material-symbols-outlined">event</span>
                 Appointment Trends
               </h3>
-              <div style={{ height: 200 }}>
+              <div className="ad-chart-plot">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={charts.appointmentTrends}>
+                  <LineChart data={charts.appointmentTrends} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="day" />
                     <YAxis />
                     <Tooltip />
-                    <Legend />
+                    <Legend wrapperStyle={{ paddingTop: 6 }} />
                     <Line
                       type="monotone"
                       dataKey="bookings"
@@ -486,14 +488,14 @@ export default function AdminDashboardPage() {
                 <span className="ad-chart-title-icon material-symbols-outlined">payments</span>
                 Revenue Analytics
               </h3>
-              <div style={{ height: 200 }}>
+              <div className="ad-chart-plot">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={charts.revenueAnalytics}>
+                  <BarChart data={charts.revenueAnalytics} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Legend />
+                    <Legend wrapperStyle={{ paddingTop: 6 }} />
                     <Bar dataKey="income" name="Income (LKR)" fill="#0d9488" radius={[10, 10, 2, 2]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -505,14 +507,14 @@ export default function AdminDashboardPage() {
                 <span className="ad-chart-title-icon material-symbols-outlined">people</span>
                 User Growth
               </h3>
-              <div style={{ height: 200 }}>
+              <div className="ad-chart-plot">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={charts.userGrowth}>
+                  <LineChart data={charts.userGrowth} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="week" />
                     <YAxis />
                     <Tooltip />
-                    <Legend />
+                    <Legend wrapperStyle={{ paddingTop: 6 }} />
                     <Line type="monotone" dataKey="newUsers" name="New users" stroke="#6366f1" strokeWidth={3} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -524,30 +526,36 @@ export default function AdminDashboardPage() {
                 <span className="ad-chart-title-icon material-symbols-outlined">admin_panel_settings</span>
                 Role Distribution
               </h3>
-              <div style={{ height: 200 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Tooltip />
-                    <Pie
-                      data={charts.roleDist}
-                      dataKey="value"
-                      outerRadius={110}
-                      innerRadius={60}
-                      stroke="none"
-                    >
-                      {charts.roleDist.map((r) => (
-                        <Cell key={r.name} fill={r.fill} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
+              <div className="ad-chart-plot ad-chart-plot--pie">
+                <div className="ad-chart-pie-frame">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                      <Tooltip />
+                      <Legend verticalAlign="bottom" height={32} wrapperStyle={{ paddingTop: 2 }} />
+                      <Pie
+                        data={charts.roleDist}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="45%"
+                        outerRadius={68}
+                        innerRadius={40}
+                        stroke="none"
+                      >
+                        {charts.roleDist.map((r) => (
+                          <Cell key={r.name} fill={r.fill} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </article>
           </div>
           </div>
         </div>
 
-        {/* RIGHT: Quick Actions — fixed rail, sticky panel */}
+        {/* Row 2 col 2 — top aligns with Appointment Trends / first chart row */}
         <aside className="ad-quick-panel" aria-label="Quick actions">
           <div className="ad-quick-panel-inner">
             <div className="ad-quick-panel-head">
