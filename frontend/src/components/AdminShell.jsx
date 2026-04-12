@@ -4,43 +4,43 @@ import { useAuth } from "../context/AuthContext";
 
 const navItems = [
   { to: "/admin/dashboard", label: "Dashboard", icon: "dashboard" },
+  { to: "/admin/analytics", label: "Analytics", icon: "insights" },
   { to: "/admin/users", label: "Users", icon: "group" },
-  { to: "/admin/doctors-verification", label: "Doctors Verification", icon: "verified_user" },
+  { to: "/admin/doctors-verification", label: "Doctors", icon: "verified_user" },
+  { to: "/admin/reports", label: "Reports", icon: "description" },
   { to: "/admin/appointments", label: "Appointments", icon: "event" },
   { to: "/admin/payments", label: "Payments", icon: "payments" },
-  { to: "/admin/reports", label: "Reports", icon: "description" },
   { to: "/admin/notifications", label: "Notifications", icon: "notifications" },
-  { to: "/admin/analytics", label: "Analytics", icon: "insights" },
   { to: "/admin/settings", label: "Settings", icon: "settings" },
 ];
 
 const sidebarIcons = {
   dashboard: (
-    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>dashboard</span>
+    <span className="material-symbols-outlined">grid_view</span>
   ),
   group: (
-    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>group</span>
+    <span className="material-symbols-outlined">group</span>
   ),
   verified_user: (
-    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>verified_user</span>
+    <span className="material-symbols-outlined">medical_services</span>
   ),
   event: (
-    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>event</span>
+    <span className="material-symbols-outlined">event</span>
   ),
   payments: (
-    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>payments</span>
+    <span className="material-symbols-outlined">payments</span>
   ),
   description: (
-    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>description</span>
+    <span className="material-symbols-outlined">description</span>
   ),
   notifications: (
-    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>notifications</span>
+    <span className="material-symbols-outlined">notifications</span>
   ),
   insights: (
-    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>insights</span>
+    <span className="material-symbols-outlined">analytics</span>
   ),
   settings: (
-    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>settings</span>
+    <span className="material-symbols-outlined">settings</span>
   ),
 };
 
@@ -75,29 +75,10 @@ export default function AdminShell({ children }) {
     <div className={`aura-shell${isAdminDashboard ? " aura-shell--admin-dashboard" : ""}`}>
       <aside className="aura-sidebar">
         <div className="aura-sidebar-header">
-          <div className="aura-user-profile">
-            <div className="aura-user-avatar">
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "linear-gradient(135deg,#d1fae5,#a7f3d0)",
-                  color: "#0d9488",
-                  fontWeight: 900,
-                }}
-              >
-                {String(displayName).trim().slice(0, 1).toUpperCase()}
-              </div>
-            </div>
-            <div className="aura-user-info">
-              <p className="aura-welcome-text">Welcome back</p>
-              <p className="aura-user-name">{displayName}</p>
-            </div>
+          <div className="aura-brand">
+            <h1 className="aura-brand-title">Clinical Sanctuary</h1>
+            <p className="aura-brand-subtitle">ENTERPRISE SUITE</p>
           </div>
-
         </div>
 
         <nav className="aura-sidebar-nav">
