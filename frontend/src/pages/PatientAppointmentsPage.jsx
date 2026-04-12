@@ -131,16 +131,25 @@ export default function PatientAppointmentsPage() {
     if (!selectedAppointment) return;
     setActionLoading(true);
     try {
-      await api.patch(`/appointments/${selectedAppointment._id}/cancel`, {}, authHeaders);
-      setMessage("Appointment cancelled successfully");
-      setAppointments(prev => prev.map(app => 
+      const res = await api.patch(`/appointments/${selectedAppointment._id}/cancel`, {}, authHeaders);
+      const refund = res.data?.refund;
+
+      let msg = "Appointment cancelled successfully.";
+      if (refund?.refunded && refund.method === "stripe") {
+        msg = `Appointment cancelled. A full refund of ${refund.currency} ${Number(refund.amount).toLocaleString()} has been issued to your payment method.`;
+      } else if (refund?.method === "payhere" && refund.reason === "manual_required") {
+        msg = `Appointment cancelled. Your PayHere/Helakuru payment of ${refund.currency} ${Number(refund.amount).toLocaleString()} will be refunded manually — please contact support.`;
+      }
+
+      setMessage(msg);
+      setAppointments(prev => prev.map(app =>
         app._id === selectedAppointment._id ? { ...app, status: "cancelled" } : app
       ));
       setTimeout(() => {
         setShowCancelModal(false);
         setSelectedAppointment(null);
         setMessage("");
-      }, 1500);
+      }, 4000);
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to cancel appointment");
     } finally {
@@ -218,7 +227,9 @@ export default function PatientAppointmentsPage() {
     Promise.all([
       api.get("/doctors/public"),
       api.get(`/appointments/public/doctor/${encodeURIComponent(selectedAppointment.doctorId)}/occupied`, {
-        params: { date: newDate },
+        // excludeId tells the backend to omit the appointment being rescheduled
+        // so the patient's own slot is never blocked during reschedule.
+        params: { date: newDate, excludeId: selectedAppointment._id },
       }).catch(() => ({ data: { occupiedTimes: [] } })),
       api.get("/payments/doctor-occupied", {
         params: { doctorUserId: selectedAppointment.doctorId, date: newDate },
@@ -528,79 +539,160 @@ export default function PatientAppointmentsPage() {
 
         {/* Reschedule Modal */}
         {showRescheduleModal && selectedAppointment && (
-          <div className="aura-modal-overlay" onClick={() => setShowRescheduleModal(false)}>
-            <div className="aura-modal" onClick={e => e.stopPropagation()}>
-              <button className="aura-modal-close" onClick={() => setShowRescheduleModal(false)}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
+          <div className="aura-modal-overlay" onClick={() => { setShowRescheduleModal(false); setMessage(""); }}>
+            <div className="rs-modal" onClick={e => e.stopPropagation()}>
 
-              <div className="aura-modal-header">
-                <h3>Reschedule Appointment</h3>
-                <p>with {selectedAppointment.doctorName}</p>
+              {/* ── Header ── */}
+              <div className="rs-modal-header">
+                <div className="rs-modal-header-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="rs-modal-title">Reschedule Appointment</h3>
+                  <p className="rs-modal-sub">Pick a new date &amp; time for your visit</p>
+                </div>
+                <button className="rs-modal-close" onClick={() => { setShowRescheduleModal(false); setMessage(""); }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
               </div>
 
+              {/* ── Alert ── */}
               {message && (
-                <div className={`aura-alert ${message.includes("success") ? "success" : "error"}`}>
+                <div className={`aura-alert ${message.toLowerCase().includes("success") ? "success" : "error"}`} style={{ margin: "0 0 20px 0" }}>
                   {message}
                 </div>
               )}
 
-              <form onSubmit={handleReschedule} className="aura-booking-form">
-                <div className="aura-form-row">
-                  <div className="aura-form-group">
-                    <label>New Date *</label>
-                    <input 
-                      type="date" 
-                      required 
-                      value={newDate}
-                      onChange={e => setNewDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
+              {/* ── Current appointment card ── */}
+              <div className="rs-current-card">
+                <span className="rs-current-label">Currently booked</span>
+                <div className="rs-current-row">
+                  <img src={selectedAppointment.doctorImage} alt={selectedAppointment.doctorName} className="rs-doctor-avatar" />
+                  <div className="rs-current-info">
+                    <p className="rs-doctor-name">{selectedAppointment.doctorName || "Doctor"}</p>
+                    <p className="rs-doctor-spec">{selectedAppointment.specialty || selectedAppointment.specialization}</p>
                   </div>
-
-                  <div className="aura-form-group">
-                    <label>New Time *</label>
-                    <select 
-                      required
-                      value={newTime}
-                      onChange={e => setNewTime(e.target.value)}
-                      disabled={!newDate || rescheduleSlotsLoading || rescheduleAvailableTimes.length === 0}
-                    >
-                      <option value="">
-                        {rescheduleSlotsLoading ? "Loading available times..." : "Select time"}
-                      </option>
-                      {rescheduleAvailableTimes.map(slot => (
-                        <option key={slot} value={slot}>{slot}</option>
-                      ))}
-                    </select>
-                    {!rescheduleSlotsLoading && newDate && (
-                      <small style={{ color: "#6b7280", marginTop: 6, display: "block" }}>
-                        {rescheduleAvailableTimes.length > 0
-                          ? `${rescheduleAvailableTimes.length} available slot(s) on selected date`
-                          : "No available slots on selected date"}
-                      </small>
-                    )}
+                  <div className="rs-current-datetime">
+                    <span className="rs-current-date-val">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      {formatDate(selectedAppointment.date)}
+                    </span>
+                    <span className="rs-current-time-val">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      {selectedAppointment.time || "—"}
+                    </span>
                   </div>
                 </div>
+              </div>
 
-                <div className="aura-modal-actions">
-                  <button type="button" className="aura-btn-secondary" onClick={() => setShowRescheduleModal(false)}>
-                    Cancel
+              {/* ── Divider ── */}
+              <div className="rs-divider">
+                <span className="rs-divider-line"/>
+                <span className="rs-divider-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                  Change to
+                </span>
+                <span className="rs-divider-line"/>
+              </div>
+
+              <form onSubmit={handleReschedule}>
+
+                {/* ── Date picker ── */}
+                <div className="rs-section">
+                  <label className="rs-section-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Select New Date
+                  </label>
+                  <input
+                    className="rs-date-input"
+                    type="date"
+                    required
+                    value={newDate}
+                    onChange={e => setNewDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                  />
+                </div>
+
+                {/* ── Time slots ── */}
+                <div className="rs-section">
+                  <label className="rs-section-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Select New Time
+                    {!rescheduleSlotsLoading && newDate && rescheduleAvailableTimes.length > 0 && (
+                      <span className="rs-slots-badge">{rescheduleAvailableTimes.length} available</span>
+                    )}
+                  </label>
+
+                  {!newDate ? (
+                    <div className="rs-slots-hint">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      Choose a date first to see available times
+                    </div>
+                  ) : rescheduleSlotsLoading ? (
+                    <div className="rs-slots-loading">
+                      <div className="rs-slots-loading-inner">
+                        {[1,2,3,4,5,6].map(i => <div key={i} className="rs-slot-skeleton"/>)}
+                      </div>
+                    </div>
+                  ) : rescheduleAvailableTimes.length === 0 ? (
+                    <div className="rs-slots-empty">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      No available slots on this date
+                    </div>
+                  ) : (
+                    <div className="rs-time-grid">
+                      {rescheduleAvailableTimes.map(slot => (
+                        <button
+                          key={slot}
+                          type="button"
+                          className={`rs-time-chip ${newTime === slot ? "selected" : ""}`}
+                          onClick={() => setNewTime(slot)}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Confirmation preview ── */}
+                {newDate && newTime && (
+                  <div className="rs-preview-card">
+                    <div className="rs-preview-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div className="rs-preview-text">
+                      <span className="rs-preview-heading">New appointment scheduled for</span>
+                      <span className="rs-preview-value">{formatDate(newDate)} &nbsp;·&nbsp; {newTime}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Actions ── */}
+                <div className="rs-actions">
+                  <button type="button" className="rs-btn-cancel" onClick={() => { setShowRescheduleModal(false); setMessage(""); }}>
+                    Keep Current
                   </button>
-                  <button 
+                  <button
                     type="submit"
-                    className="aura-btn-confirm"
-                    disabled={actionLoading}
+                    className="rs-btn-confirm"
+                    disabled={actionLoading || !newDate || !newTime}
                   >
                     {actionLoading ? (
                       <>
-                        <div className="aura-spinner-small"></div>
-                        Rescheduling...
+                        <div className="aura-spinner-small" style={{ borderTopColor: "white" }}/>
+                        Rescheduling…
                       </>
                     ) : (
-                      "Confirm Reschedule"
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Confirm Reschedule
+                      </>
                     )}
                   </button>
                 </div>
