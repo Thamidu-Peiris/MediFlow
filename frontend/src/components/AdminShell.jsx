@@ -116,7 +116,7 @@ export default function AdminShell({ children }) {
       <main className="aura-main">
         <header className="aura-topbar aura-topbar-admin">
           <div className="aura-topbar-left">
-            <span className="aura-logo">MediFlow Admin</span>
+            <span className="aura-logo">Admin Panel</span>
           </div>
           <div className="aura-topbar-right">
             <button className="aura-topbar-icon-btn">

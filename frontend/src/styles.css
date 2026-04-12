@@ -5657,10 +5657,10 @@ button, .btn-primary {
 }
 
 .aura-logo {
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 600; /* reduced from 800 */
   color: #043927; /* dark green */
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
   font-family: "Outfit", "Inter", sans-serif;
   display: flex;
   align-items: center;
