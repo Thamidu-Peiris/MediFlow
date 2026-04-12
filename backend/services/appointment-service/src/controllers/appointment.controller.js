@@ -56,16 +56,23 @@ function toMinutes12h(timeLabel = "") {
 exports.listDoctorOccupiedTimes = async (req, res) => {
     try {
         const { doctorId } = req.params;
-        const { date } = req.query;
+        const { date, excludeId } = req.query;
         if (!doctorId || !date) {
             return res.status(400).json({ message: "doctorId and date are required" });
         }
 
-        const appointments = await Appointment.find({
+        const filter = {
             doctorId,
             date,
             status: { $nin: ["cancelled", "rejected"] }
-        }).select("time status");
+        };
+        // When rescheduling, exclude the appointment being rescheduled so its
+        // own time slot appears as available again.
+        if (excludeId) {
+            filter._id = { $ne: excludeId };
+        }
+
+        const appointments = await Appointment.find(filter).select("time status");
 
         const appointmentTimes = appointments
             .map((a) => String(a.time || "").trim())

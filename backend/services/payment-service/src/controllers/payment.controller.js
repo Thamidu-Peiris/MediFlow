@@ -470,6 +470,10 @@ exports.getDoctorOccupiedFromPending = async (req, res) => {
       date,
       status: { $in: ["pending_payment", "paid"] },
       expiresAt: { $gt: new Date() },
+      // Exclude bookings that already have a real appointment created — those
+      // slots are already counted by the appointment service and should not be
+      // double-blocked (which would prevent the patient from rescheduling).
+      appointmentCreated: { $ne: true },
     }).select("time");
 
     const occupiedTimes = Array.from(
