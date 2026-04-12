@@ -284,18 +284,18 @@ export default function AdminDashboardPage() {
         </div>
         <div className="flex flex-wrap gap-3">
           <Link
-            to="/admin/appointments"
+            to="/admin/payments"
             className="px-4 py-2 bg-surface-container-lowest text-on-surface font-semibold rounded-xl shadow-sm hover:bg-surface-container transition-all flex items-center gap-2 border border-outline-variant/20"
           >
-            <span className="material-symbols-outlined text-[20px]">calendar_today</span>
-            Schedule
+            <span className="material-symbols-outlined text-[20px]">payments</span>
+            Payments
           </Link>
           <Link
             to="/admin/appointments"
             className="px-4 py-2 hero-chip-gradient text-white font-semibold rounded-xl shadow-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[20px]">add</span>
-            Quick Appointment
+            <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+            Appointment
           </Link>
         </div>
       </div>
