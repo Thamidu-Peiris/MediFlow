@@ -72,7 +72,8 @@ export default function AdminShell({ children }) {
   const isAdminDashboard =
     location.pathname === "/admin/dashboard" ||
     location.pathname === "/admin/analytics" ||
-    location.pathname === "/admin/users";
+    location.pathname === "/admin/users" ||
+    location.pathname === "/admin/doctors-verification";
 
   return (
     <div className={`aura-shell${isAdminDashboard ? " aura-shell--admin-dashboard" : ""}`}>
