@@ -161,6 +161,35 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
+exports.changePassword = async (req, res) => {
+  console.log("Change password request received for user:", req.user?.sub);
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.sub;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current and new passwords are required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid current password" });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to change password" });
+  }
+};
+
 exports.bootstrapAdmin = async (req, res) => {
   try {
     const { name, email, password, bootstrapKey } = req.body;

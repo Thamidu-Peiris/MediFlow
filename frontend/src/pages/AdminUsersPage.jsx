@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -7,6 +7,12 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // New state for search, filter, and pagination
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   const loadUsers = async () => {
     setLoading(true);
@@ -24,69 +30,243 @@ export default function AdminUsersPage() {
   useEffect(() => {
     loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authHeaders]);
+
+  const dateTimeLine = useMemo(() => {
+    try {
+      const d = new Date();
+      return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" }) + " • " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    } catch {
+      return "";
+    }
   }, []);
+
+  const stats = useMemo(() => {
+    const total = users.length;
+    const doctors = users.filter(u => u.role === 'doctor').length;
+    const patients = users.filter(u => u.role === 'patient').length;
+    return { total, doctors, patients };
+  }, [users]);
+
+  // Filtered and Paginated logic
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchesSearch =
+        u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRole = roleFilter === "all" || u.role === roleFilter;
+      return matchesSearch && matchesRole;
+    });
+  }, [users, searchQuery, roleFilter]);
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredUsers.slice(start, start + itemsPerPage);
+  }, [filteredUsers, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter]);
 
   const notSupported = () => setMessage("This action is not implemented in the current backend/API.");
 
   return (
-    <section className="pd-layout-admin">
-      <div className="pd-card">
-        <h3>User Management</h3>
-        <p style={{ color: "#94a3b8", marginBottom: 14 }}>
-          View/edit/delete/block UI scaffolding. Backend currently supports listing users + doctor verification.
-        </p>
+    <div className="font-body text-on-surface pb-10">
+      {message ? (
+        <p className="mb-4 rounded-xl bg-red-50 text-red-800 px-4 py-3 text-sm font-medium border border-red-100">{message}</p>
+      ) : null}
 
-        {loading ? <p className="page muted">Loading...</p> : null}
-        {message ? <p className="page muted">{message}</p> : null}
-
-        <div className="pd-table-wrap">
-          <table className="pd-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Doctor Verified</th>
-                <th style={{ width: 280 }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((item) => (
-                <tr key={item._id}>
-                  <td>{item.name}</td>
-                  <td>{item.email}</td>
-                  <td style={{ fontWeight: 800 }}>{item.role}</td>
-                  <td>{item.role === "doctor" ? (item.isDoctorVerified ? "Yes" : "No") : "-"}</td>
-                  <td>
-                    <div className="pd-actions">
-                      <button type="button" onClick={notSupported}>
-                        View
-                      </button>
-                      <button type="button" onClick={notSupported}>
-                        Edit
-                      </button>
-                      <button type="button" onClick={notSupported}>
-                        Delete
-                      </button>
-                      <button type="button" onClick={notSupported}>
-                        Block / Unblock
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {!loading && users.length === 0 ? (
-                <tr>
-                  <td colSpan={5} style={{ color: "#94a3b8" }}>
-                    No users found.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+      {/* Page header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-8">
+        <div>
+          <h2 className="text-3xl font-extrabold font-headline tracking-tighter text-on-surface">User Management</h2>
+          <p className="text-on-surface-variant font-medium mt-1">{dateTimeLine}</p>
         </div>
       </div>
-    </section>
+
+      {/* Bento metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-2 border-emerald-700 transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">group</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Registered</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{stats.total}</div>
+          <div className="mt-2 text-xs text-emerald-700 flex items-center gap-1 font-semibold">
+            All registered accounts
+          </div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">medical_services</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Doctors</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{stats.doctors}</div>
+          <div className="mt-2 text-xs text-on-surface-variant">Professional specialists</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">person</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Patients</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{stats.patients}</div>
+          <div className="mt-2 text-xs text-on-surface-variant">Registered patients</div>
+        </div>
+      </div>
+
+      {/* Search and Filter Controls */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-emerald-700 text-[20px] pointer-events-none">
+            search
+          </span>
+          <input
+            type="search"
+            className="w-full bg-white border border-emerald-200/70 rounded-xl py-2.5 pl-10 pr-4 text-sm text-black placeholder:text-gray-400 shadow-sm ring-1 ring-emerald-100/80 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-400 focus:outline-none transition-all"
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2">
+          <select
+            className="bg-white border border-emerald-200/70 rounded-xl px-4 py-2 text-sm font-semibold text-emerald-950 focus:ring-2 focus:ring-emerald-600 focus:outline-none shadow-sm cursor-pointer appearance-none min-w-[140px]"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+          >
+            <option value="all">All Roles</option>
+            <option value="doctor">Doctors</option>
+            <option value="patient">Patients</option>
+            <option value="admin">Admins</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-emerald-100 bg-emerald-50/50">
+              <th className="text-left p-4 font-bold text-emerald-900 uppercase tracking-wider text-[11px]">Name</th>
+              <th className="text-left p-4 font-bold text-emerald-900 uppercase tracking-wider text-[11px]">Email</th>
+              <th className="text-left p-4 font-bold text-emerald-900 uppercase tracking-wider text-[11px]">Role</th>
+              <th className="text-left p-4 font-bold text-emerald-900 uppercase tracking-wider text-[11px]">Doctor Verified</th>
+              <th className="text-right p-4 font-bold text-emerald-900 uppercase tracking-wider text-[11px]">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-outline-variant/10">
+            {paginatedUsers.map((item) => (
+              <tr key={item._id} className="hover:bg-emerald-50/30 transition-colors">
+                <td className="p-4 font-semibold text-on-surface">{item.name}</td>
+                <td className="p-4 text-on-surface-variant font-medium">{item.email}</td>
+                <td className="p-4">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                    item.role === 'doctor' ? 'bg-emerald-100 text-emerald-800' : 
+                    item.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {item.role.toUpperCase()}
+                  </span>
+                </td>
+                <td className="p-4">
+                  {item.role === "doctor" ? (
+                    item.isDoctorVerified ? (
+                      <span className="flex items-center gap-1 text-emerald-600 font-bold">
+                        <span className="material-symbols-outlined text-[18px]">verified</span> Yes
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-red-500 font-bold">
+                        <span className="material-symbols-outlined text-[18px]">pending</span> Pending
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-on-surface-variant/50 font-bold">-</span>
+                  )}
+                </td>
+                <td className="p-4 text-right">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      className="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all active:scale-95"
+                      onClick={notSupported}
+                      title="View Details"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">visibility</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all active:scale-95"
+                      onClick={notSupported}
+                      title="Edit User"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all active:scale-95"
+                      onClick={notSupported}
+                      title="Delete User"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!loading && paginatedUsers.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-on-surface-variant font-medium">
+                  <span className="material-symbols-outlined text-4xl block mb-2 opacity-20">group_off</span>
+                  No users found matching your criteria.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-4 bg-emerald-50/30 border-t border-emerald-100">
+            <p className="text-xs text-emerald-900 font-bold">
+              Showing <span className="text-emerald-700">{Math.min(filteredUsers.length, (currentPage - 1) * itemsPerPage + 1)}</span> to <span className="text-emerald-700">{Math.min(filteredUsers.length, currentPage * itemsPerPage)}</span> of <span className="text-emerald-700">{filteredUsers.length}</span> users
+            </p>
+            <div className="flex gap-2">
+              <button
+                className={`p-2 rounded-lg border border-emerald-200 transition-all ${
+                  currentPage === 1 
+                    ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+                    : 'bg-white text-emerald-700 hover:bg-emerald-100 active:scale-95 shadow-sm'
+                }`}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+              </button>
+              <button
+                className={`p-2 rounded-lg border border-emerald-200 transition-all ${
+                  currentPage === totalPages 
+                    ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+                    : 'bg-white text-emerald-700 hover:bg-emerald-100 active:scale-95 shadow-sm'
+                }`}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -35,6 +35,15 @@ export default function AdminAnalyticsPage() {
 
   useEffect(() => {
     load();
+  }, [authHeaders]);
+
+  const dateTimeLine = useMemo(() => {
+    try {
+      const d = new Date();
+      return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" }) + " • " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    } catch {
+      return "";
+    }
   }, []);
 
   const charts = useMemo(() => {
@@ -76,68 +85,132 @@ export default function AdminAnalyticsPage() {
     return { appointmentsPerDay, revenueData, userGrowth };
   }, [metrics]);
 
+  const totalUsers = metrics?.totalUsers ?? 0;
+  const totalDoctors = metrics?.totalDoctors ?? 0;
+  const totalPatients = metrics?.totalPatients ?? 0;
+  const grossRevenue = metrics?.grossRevenueLkr ?? 0;
+
   return (
-    <section className="pd-layout-admin">
-      <div className="pd-card">
-        <h3>System Analytics</h3>
-        <p style={{ color: "#94a3b8", marginBottom: 14 }}>
-          Charts use available backend metrics and demo trends.
-        </p>
+    <div className="font-body text-on-surface pb-10">
+      {message ? (
+        <p className="mb-4 rounded-xl bg-red-50 text-red-800 px-4 py-3 text-sm font-medium border border-red-100">{message}</p>
+      ) : null}
 
-        {loading ? <p className="page muted">Loading...</p> : null}
-        {message ? <p className="page muted">{message}</p> : null}
-
-        <div className="pd-grid pd-grid-2">
-          <article className="pd-card" style={{ margin: 0 }}>
-            <h4 style={{ margin: "0 0 10px 0" }}>Appointments per day</h4>
-            <div style={{ height: 260 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={charts.appointmentsPerDay}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" name="Appointments" fill="#0d9488" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
-
-          <article className="pd-card" style={{ margin: 0 }}>
-            <h4 style={{ margin: "0 0 10px 0" }}>Revenue chart</h4>
-            <div style={{ height: 260 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={charts.revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="revenue" name="Revenue (LKR)" stroke="#0d9488" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
-
-          <article className="pd-card" style={{ margin: 0, gridColumn: "span 2" }}>
-            <h4 style={{ margin: "0 0 10px 0" }}>User growth</h4>
-            <div style={{ height: 260 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={charts.userGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="patients" name="Patients" stroke="#6366f1" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
+      {/* Page header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-8">
+        <div>
+          <h2 className="text-3xl font-extrabold font-headline tracking-tighter text-on-surface">Analytics</h2>
+          <p className="text-on-surface-variant font-medium mt-1">{dateTimeLine}</p>
         </div>
       </div>
-    </section>
+
+      {/* Bento metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-2 border-emerald-700 transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">group</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Users</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{totalUsers}</div>
+          <div className="mt-2 text-xs text-emerald-700 flex items-center gap-1 font-semibold">
+            <span className="material-symbols-outlined text-sm">trending_up</span>
+            Active accounts
+          </div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">medical_services</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Doctors</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{totalDoctors}</div>
+          <div className="mt-2 text-xs text-on-surface-variant">Active specialists</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm transition-all">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">person</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Patients</span>
+          </div>
+          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{totalPatients}</div>
+          <div className="mt-2 text-xs text-on-surface-variant">Registered users</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 w-32 h-32 bg-emerald-400/25 rounded-full blur-3xl pointer-events-none" />
+          <div className="flex items-center gap-3 mb-4 relative">
+            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800">payments</span>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Gross Revenue</span>
+          </div>
+          <div className="text-3xl font-black font-headline tracking-tight text-on-surface relative">
+            LKR {grossRevenue.toLocaleString()}
+          </div>
+          <div className="mt-2 text-xs text-on-surface-variant font-semibold relative">Financial Overview</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-12 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl shadow-sm">
+              <h3 className="text-xl font-bold font-headline text-on-surface mb-6">Appointments Per Day</h3>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={charts.appointmentsPerDay} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e3e5" />
+                    <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="count" name="Appointments" fill="#043927" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+
+            <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl shadow-sm">
+              <h3 className="text-xl font-bold font-headline text-on-surface mb-6">Revenue Growth</h3>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={charts.revenueData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e3e5" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="revenue" name="Revenue (LKR)" stroke="#043927" strokeWidth={3} dot={{ r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          </div>
+
+          <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl shadow-sm">
+            <h3 className="text-xl font-bold font-headline text-on-surface mb-6">User Acquisition</h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={charts.userGrowth} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e3e5" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="patients" name="Patients" stroke="#3d5a5c" strokeWidth={3} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
   );
 }
 

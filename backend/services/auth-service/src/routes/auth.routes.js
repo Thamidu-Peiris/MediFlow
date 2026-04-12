@@ -9,7 +9,8 @@ const {
   bootstrapAdmin,
   adminOverview,
   listUsers,
-  verifyDoctor
+  verifyDoctor,
+  changePassword
 } = require("../controllers/auth.controller");
 const { verifyAuth, requireAdmin } = require("../middleware/auth.middleware");
 
@@ -20,6 +21,7 @@ router.post("/login", login);
 router.post("/logout", logout);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+router.patch("/change-password", verifyAuth, changePassword);
 router.post("/admin/bootstrap", bootstrapAdmin);
 router.get("/me", verifyAuth, me);
 router.get("/admin/overview", verifyAuth, requireAdmin, adminOverview);
