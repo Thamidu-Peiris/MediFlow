@@ -138,16 +138,21 @@ export default function AdminShell({ children }) {
             <span className="aura-logo">MediFlow Admin</span>
           </div>
           <div className="aura-topbar-right">
+            <button className="aura-topbar-icon-btn">
+              <span className="material-symbols-outlined">notifications</span>
+            </button>
+            <Link to="/admin/settings" className="aura-topbar-icon-btn">
+              <span className="material-symbols-outlined">settings</span>
+            </Link>
             <div className="aura-profile-wrap" ref={profileWrapRef}>
               <button
                 type="button"
-                className="aura-profile-btn"
+                className="aura-topbar-profile-btn"
                 onClick={() => setProfileOpen((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={profileOpen}
               >
-                <span className="material-symbols-outlined">account_circle</span>
-                <span className="aura-profile-name">{displayName.split(" ")[0]}</span>
+                <span className="material-symbols-outlined">person</span>
               </button>
 
               {profileOpen ? (
