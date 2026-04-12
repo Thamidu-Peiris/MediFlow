@@ -493,9 +493,12 @@ export default function AdminDashboardPage() {
             </Link>
           </section>
 
-          <section className="bg-surface-container-high p-6 sm:p-8 rounded-xl shadow-sm border border-outline-variant/20">
-            <h3 className="text-sm font-black font-headline text-on-surface uppercase tracking-widest mb-6">Quick Actions</h3>
-            <div className="space-y-4">
+          <section className="bg-[#0C9100] p-6 sm:p-8 rounded-xl shadow-md border border-[#097300]">
+            <h3 className="text-sm font-black font-headline text-white uppercase tracking-widest mb-1">
+              Quick Actions
+            </h3>
+            <p className="text-xs text-white/85 font-medium mb-6">Shortcuts to admin tools</p>
+            <div className="space-y-3">
               {[
                 { to: "/admin/doctors-verification", icon: "verified_user", label: "Approve Doctors" },
                 { to: "/admin/users", icon: "manage_accounts", label: "Manage Users" },
@@ -505,13 +508,17 @@ export default function AdminDashboardPage() {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="group flex items-center justify-between p-4 bg-surface-container-lowest rounded-xl border border-transparent transition-all duration-200 hover:translate-x-1 hover:bg-emerald-50 hover:border-emerald-200/70"
+                  className="group flex items-center justify-between p-4 rounded-xl bg-white/95 border border-white/30 transition-all duration-200 hover:translate-x-0.5 hover:bg-white hover:shadow-md"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="material-symbols-outlined text-emerald-700 group-hover:text-emerald-800 shrink-0">{item.icon}</span>
-                    <span className="text-sm font-semibold text-on-surface truncate">{item.label}</span>
+                    <span className="material-symbols-outlined text-[#0C9100] group-hover:text-[#097300] shrink-0 text-[22px]">
+                      {item.icon}
+                    </span>
+                    <span className="text-sm font-semibold text-neutral-900 truncate">{item.label}</span>
                   </div>
-                  <span className="material-symbols-outlined text-outline-variant shrink-0">chevron_right</span>
+                  <span className="material-symbols-outlined text-[#0C9100]/60 group-hover:text-[#0C9100] shrink-0">
+                    chevron_right
+                  </span>
                 </Link>
               ))}
             </div>
