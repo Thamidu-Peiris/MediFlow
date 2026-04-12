@@ -360,12 +360,23 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <section className="pd-layout-admin">
+    <section className="pd-layout-admin ad-dashboard">
       {message ? <p className="page muted">{message}</p> : null}
 
+      <header className="ad-dash-page-head">
+        <div className="ad-dash-page-head-main">
+          <h1 className="ad-dash-page-title">Dashboard</h1>
+          <p className="ad-dash-page-lead">Overview of users, revenue, and operational health.</p>
+        </div>
+        <div className="ad-dash-page-meta">
+          <span className="ad-dash-meta-label">Today</span>
+          <span className="ad-dash-meta-value">{todayISOHuman}</span>
+        </div>
+      </header>
+
       {/* GLOBAL SEARCH BAR (TOP, PREMIUM) */}
-      <div className="ad-section">
-        <div className="ad-global-search">
+      <div className="ad-section ad-section--tight">
+        <div className="ad-global-search ad-global-search--premium">
           <input
             className="ad-global-search-input"
             placeholder="Search users, doctors, appointments..."
@@ -432,16 +443,19 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="ad-hero-split">
+      <div className="ad-hero-split ad-hero-split--premium">
         {/* LEFT: Analytics (2x2) */}
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Analytics</h2>
+        <div className="ad-section ad-analytics-column">
+          <div className="ad-section-head ad-section-head--premium">
+            <div>
+              <h2>Analytics</h2>
+              <p className="ad-section-head-note">Key metrics at a glance</p>
+            </div>
           </div>
 
           <div className="ad-analytics-wrap">
             <div className="ad-charts-grid">
-            <article className="pd-card ad-chart-card">
+            <article className="pd-card ad-chart-card ad-chart-card--premium">
               <h3 className="ad-chart-title">
                 <span className="ad-chart-title-icon material-symbols-outlined">event</span>
                 Appointment Trends
@@ -467,7 +481,7 @@ export default function AdminDashboardPage() {
               </div>
             </article>
 
-            <article className="pd-card ad-chart-card">
+            <article className="pd-card ad-chart-card ad-chart-card--premium">
               <h3 className="ad-chart-title">
                 <span className="ad-chart-title-icon material-symbols-outlined">payments</span>
                 Revenue Analytics
@@ -486,7 +500,7 @@ export default function AdminDashboardPage() {
               </div>
             </article>
 
-            <article className="pd-card ad-chart-card">
+            <article className="pd-card ad-chart-card ad-chart-card--premium">
               <h3 className="ad-chart-title">
                 <span className="ad-chart-title-icon material-symbols-outlined">people</span>
                 User Growth
@@ -505,7 +519,7 @@ export default function AdminDashboardPage() {
               </div>
             </article>
 
-            <article className="pd-card ad-chart-card">
+            <article className="pd-card ad-chart-card ad-chart-card--premium">
               <h3 className="ad-chart-title">
                 <span className="ad-chart-title-icon material-symbols-outlined">admin_panel_settings</span>
                 Role Distribution
@@ -533,35 +547,67 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* RIGHT: Quick Actions (vertical list) */}
-        <div className="ad-section">
-          <div className="ad-section-head">
-            <h2>Quick Actions</h2>
+        {/* RIGHT: Quick Actions — fixed rail, sticky panel */}
+        <aside className="ad-quick-panel" aria-label="Quick actions">
+          <div className="ad-quick-panel-inner">
+            <div className="ad-quick-panel-head">
+              <h2>Quick Actions</h2>
+              <p>Shortcuts to common admin tasks</p>
+            </div>
+            <nav className="ad-quick-actions-list ad-quick-actions-list--panel">
+              <Link to="/admin/doctors-verification" className="ad-quick-action ad-quick-action--panel">
+                <span className="ad-quick-action-icon-wrap">
+                  <span className="material-symbols-outlined ad-quick-icon">verified_user</span>
+                </span>
+                <span className="ad-quick-copy">
+                  <span className="ad-quick-title">Approve Doctors</span>
+                  <span className="ad-quick-desc">Review pending registrations</span>
+                </span>
+                <span className="material-symbols-outlined ad-quick-chevron">chevron_right</span>
+              </Link>
+              <Link to="/admin/users" className="ad-quick-action ad-quick-action--panel">
+                <span className="ad-quick-action-icon-wrap">
+                  <span className="material-symbols-outlined ad-quick-icon">groups</span>
+                </span>
+                <span className="ad-quick-copy">
+                  <span className="ad-quick-title">Manage Users</span>
+                  <span className="ad-quick-desc">Patients & staff accounts</span>
+                </span>
+                <span className="material-symbols-outlined ad-quick-chevron">chevron_right</span>
+              </Link>
+              <Link to="/admin/appointments" className="ad-quick-action ad-quick-action--panel">
+                <span className="ad-quick-action-icon-wrap">
+                  <span className="material-symbols-outlined ad-quick-icon">event</span>
+                </span>
+                <span className="ad-quick-copy">
+                  <span className="ad-quick-title">Appointments</span>
+                  <span className="ad-quick-desc">Schedule & status</span>
+                </span>
+                <span className="material-symbols-outlined ad-quick-chevron">chevron_right</span>
+              </Link>
+              <Link to="/admin/payments" className="ad-quick-action ad-quick-action--panel">
+                <span className="ad-quick-action-icon-wrap">
+                  <span className="material-symbols-outlined ad-quick-icon">payments</span>
+                </span>
+                <span className="ad-quick-copy">
+                  <span className="ad-quick-title">Payments</span>
+                  <span className="ad-quick-desc">Transactions & revenue</span>
+                </span>
+                <span className="material-symbols-outlined ad-quick-chevron">chevron_right</span>
+              </Link>
+              <Link to="/admin/notifications" className="ad-quick-action ad-quick-action--panel">
+                <span className="ad-quick-action-icon-wrap">
+                  <span className="material-symbols-outlined ad-quick-icon">notifications</span>
+                </span>
+                <span className="ad-quick-copy">
+                  <span className="ad-quick-title">Notifications</span>
+                  <span className="ad-quick-desc">Broadcast messages</span>
+                </span>
+                <span className="material-symbols-outlined ad-quick-chevron">chevron_right</span>
+              </Link>
+            </nav>
           </div>
-
-          <div className="ad-quick-actions-list">
-            <Link to="/admin/doctors-verification" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">verified_user</span>
-              <span className="ad-quick-title">Approve Doctors</span>
-            </Link>
-            <Link to="/admin/users" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">groups</span>
-              <span className="ad-quick-title">Manage Users</span>
-            </Link>
-            <Link to="/admin/appointments" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">event</span>
-              <span className="ad-quick-title">View Appointments</span>
-            </Link>
-            <Link to="/admin/payments" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">payments</span>
-              <span className="ad-quick-title">Check Payments</span>
-            </Link>
-            <Link to="/admin/notifications" className="ad-quick-action">
-              <span className="material-symbols-outlined ad-quick-icon">notifications</span>
-              <span className="ad-quick-title">Send Notification</span>
-            </Link>
-          </div>
-        </div>
+        </aside>
       </div>
 
       {/* RECENT ACTIVITY FEED */}

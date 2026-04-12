@@ -5783,6 +5783,386 @@ button, .btn-primary {
   background: #f8fafc;
 }
 
+/* Admin dashboard only: page background, flat UI, grids that fit the viewport */
+.aura-content--admin-dashboard {
+  background: #cefaa0;
+}
+
+.aura-shell--admin-dashboard .aura-topbar-admin {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .aura-profile-btn:hover {
+  transform: none;
+}
+
+.aura-shell--admin-dashboard .aura-profile-menu {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .pd-layout-admin {
+  min-width: 0;
+}
+
+.aura-shell--admin-dashboard .ad-dash-summary {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat {
+  box-shadow: none;
+  min-width: 0;
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat:hover {
+  transform: none;
+}
+
+.aura-shell--admin-dashboard .ad-hero-split {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+}
+
+.aura-shell--admin-dashboard .ad-analytics-wrap {
+  max-width: none;
+}
+
+.aura-shell--admin-dashboard .ad-charts-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.aura-shell--admin-dashboard .ad-chart-card {
+  min-width: 0;
+}
+
+.aura-shell--admin-dashboard .ad-two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.aura-shell--admin-dashboard .ad-global-search {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .ad-global-search-input:focus {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .pd-card {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action {
+  box-shadow: none;
+}
+
+.aura-shell--admin-dashboard .ad-quick-actions-list .ad-quick-action:hover {
+  transform: none;
+}
+
+@media (max-width: 1200px) {
+  .aura-shell--admin-dashboard .ad-dash-summary {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  }
+
+  .aura-shell--admin-dashboard .ad-hero-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .aura-shell--admin-dashboard .ad-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Admin dashboard — premium surface (no box-shadows) */
+.aura-content--admin-dashboard {
+  background: linear-gradient(165deg, #cefaa0 0%, #c4ef95 42%, #d4f5a8 100%);
+}
+
+.aura-shell--admin-dashboard .ad-dashboard {
+  gap: 20px;
+}
+
+.aura-shell--admin-dashboard .ad-dash-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 4px 4px 8px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.aura-shell--admin-dashboard .ad-dash-eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.aura-shell--admin-dashboard .ad-dash-page-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.65rem, 2.5vw, 2rem);
+  font-weight: 950;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+  line-height: 1.15;
+}
+
+.aura-shell--admin-dashboard .ad-dash-page-lead {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.45;
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.aura-shell--admin-dashboard .ad-dash-page-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.aura-shell--admin-dashboard .ad-dash-meta-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.4);
+}
+
+.aura-shell--admin-dashboard .ad-dash-meta-value {
+  font-size: 14px;
+  font-weight: 850;
+  color: #0f172a;
+}
+
+.aura-shell--admin-dashboard .ad-section--tight {
+  margin-top: 0;
+}
+
+.aura-shell--admin-dashboard .ad-global-search--premium {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.aura-shell--admin-dashboard .ad-global-search--premium .ad-global-search-input {
+  border-radius: 14px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: #fff;
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafb 100%);
+  padding: 18px 18px;
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat:hover {
+  border-color: rgba(13, 148, 136, 0.35);
+  background: #fff;
+}
+
+.aura-shell--admin-dashboard .ad-dash-stat-icon {
+  border-radius: 16px;
+}
+
+.aura-shell--admin-dashboard .ad-hero-split--premium {
+  grid-template-columns: minmax(0, 1fr) minmax(272px, 300px);
+  gap: 20px;
+  align-items: start;
+}
+
+.aura-shell--admin-dashboard .ad-analytics-column {
+  min-width: 0;
+}
+
+.aura-shell--admin-dashboard .ad-section-head--premium {
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.aura-shell--admin-dashboard .ad-section-head--premium h2 {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+
+.aura-shell--admin-dashboard .ad-section-head-note {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: rgba(15, 23, 42, 0.45);
+}
+
+.aura-shell--admin-dashboard .ad-chart-card--premium {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #fafdfb 100%);
+  border-top: 3px solid rgba(13, 148, 136, 0.45);
+  padding: 18px;
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel {
+  position: relative;
+  min-width: 0;
+  align-self: start;
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel-inner {
+  position: sticky;
+  top: 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 18px 16px 16px;
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel-head {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel-head h2 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.aura-shell--admin-dashboard .ad-quick-panel-head p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  color: rgba(15, 23, 42, 0.48);
+}
+
+.aura-shell--admin-dashboard .ad-quick-actions-list--panel {
+  gap: 8px;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  background: rgba(255, 255, 255, 0.95);
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel:hover {
+  border-color: rgba(13, 148, 136, 0.4);
+  background: rgba(240, 253, 250, 0.65);
+}
+
+.aura-shell--admin-dashboard .ad-quick-action-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 148, 136, 0.12);
+  flex-shrink: 0;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel .ad-quick-icon {
+  font-size: 20px;
+  color: #0d9488;
+  font-variation-settings: "FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24;
+}
+
+.aura-shell--admin-dashboard .ad-quick-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel .ad-quick-title {
+  font-size: 13px;
+  font-weight: 950;
+  color: #0f172a;
+  text-align: left;
+}
+
+.aura-shell--admin-dashboard .ad-quick-desc {
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(15, 23, 42, 0.45);
+  line-height: 1.3;
+}
+
+.aura-shell--admin-dashboard .ad-quick-chevron {
+  font-size: 20px;
+  color: rgba(15, 23, 42, 0.28);
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+  flex-shrink: 0;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.aura-shell--admin-dashboard .ad-quick-action--panel:hover .ad-quick-chevron {
+  color: #0d9488;
+  transform: translateX(2px);
+}
+
+@media (max-width: 1200px) {
+  .aura-shell--admin-dashboard .ad-hero-split--premium {
+    grid-template-columns: 1fr;
+  }
+
+  .aura-shell--admin-dashboard .ad-quick-panel-inner {
+    position: relative;
+    top: auto;
+  }
+
+  .aura-shell--admin-dashboard .ad-quick-actions-list--panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .aura-shell--admin-dashboard .ad-quick-actions-list--panel {
+    grid-template-columns: 1fr;
+  }
+
+  .aura-shell--admin-dashboard .ad-dash-page-meta {
+    align-items: flex-start;
+    width: 100%;
+  }
+}
+
+.aura-shell--admin-dashboard .ad-activity {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #fafdfb 100%);
+}
+
+.aura-shell--admin-dashboard .ad-two-col .pd-card:not(.ad-chart-card) {
+  border-radius: 20px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #fafcfb 100%);
+}
+
 /* Summary Cards */
 .aura-summary-cards {
   display: grid;

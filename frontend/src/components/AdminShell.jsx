@@ -69,8 +69,10 @@ export default function AdminShell({ children }) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
+  const isAdminDashboard = location.pathname === "/admin/dashboard";
+
   return (
-    <div className="aura-shell">
+    <div className={`aura-shell${isAdminDashboard ? " aura-shell--admin-dashboard" : ""}`}>
       <aside className="aura-sidebar">
         <div className="aura-sidebar-header">
           <div className="aura-user-profile">
@@ -179,7 +181,7 @@ export default function AdminShell({ children }) {
           </div>
         </header>
 
-        <div className="aura-content">{children}</div>
+        <div className={`aura-content${isAdminDashboard ? " aura-content--admin-dashboard" : ""}`}>{children}</div>
       </main>
     </div>
   );
