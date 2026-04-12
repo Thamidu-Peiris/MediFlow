@@ -39,4 +39,15 @@ function constructWebhookEvent(rawBody, signature) {
   }
 }
 
-module.exports = { getStripe, createPaymentIntent, retrievePaymentIntent, constructWebhookEvent };
+async function createRefund(paymentIntentId) {
+  const stripe = getStripe();
+  if (!stripe) return { error: "Stripe not configured" };
+  try {
+    const refund = await stripe.refunds.create({ payment_intent: paymentIntentId });
+    return { refund };
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+module.exports = { getStripe, createPaymentIntent, retrievePaymentIntent, constructWebhookEvent, createRefund };
