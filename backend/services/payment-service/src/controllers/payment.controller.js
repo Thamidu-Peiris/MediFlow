@@ -422,6 +422,7 @@ exports.completeBookingAfterPayment = async (req, res) => {
       reason: doc.reason || `Consultation paid. Order ${doc.orderId}`,
       notes: doc.reason || `Consultation paid. Order ${doc.orderId}`,
       appointmentType: doc.appointmentType || "physical",
+      consultationFee: Math.round(doc.consultationFeeCents) / 100,
     };
 
     try {

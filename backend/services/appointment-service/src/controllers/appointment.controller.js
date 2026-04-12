@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || "http://localhost:8006";
+const DOCTOR_SERVICE_URL = process.env.DOCTOR_SERVICE_URL || "http://localhost:8003";
 
 // Minimal reference model to fetch patient names from the same MongoDB cluster.
 // patient-service stores documents in the `patients` collection with fields:
@@ -158,7 +159,7 @@ exports.requestAppointment = async (req, res) => {
 
 exports.listMyAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find({ patientId: req.user.sub }).sort({ createdAt: -1 });
+        const appointments = await Appointment.find({ patientId: req.user.sub }).sort({ createdAt: -1 }).lean();
         // Backfill empty fields created by earlier flows (also overwrite placeholder "Patient")
         const toBackfill = appointments.filter(
             (a) => !a.patientName || a.patientName === "Patient" || !a.sessionId || !a.notes
@@ -178,6 +179,25 @@ exports.listMyAppointments = async (req, res) => {
                 })
             );
         }
+
+        // Enrich appointments that have no stored consultationFee from doctor service
+        const needsEnrichment = appointments.filter((a) => !a.consultationFee);
+        if (needsEnrichment.length) {
+            try {
+                const doctorsRes = await axios.get(`${DOCTOR_SERVICE_URL}/public`, { timeout: 3000 });
+                const doctors = Array.isArray(doctorsRes.data?.doctors) ? doctorsRes.data.doctors : [];
+                const feeById = {};
+                for (const d of doctors) {
+                    if (d.userId) feeById[String(d.userId)] = d.consultationFee ?? 0;
+                }
+                for (const a of needsEnrichment) {
+                    a.consultationFee = feeById[String(a.doctorId)] ?? 0;
+                }
+            } catch {
+                // doctor service unavailable — proceed without fees
+            }
+        }
+
         return res.status(200).json({ appointments });
     } catch (error) {
         return res.status(500).json({ message: "Failed to fetch appointments" });
