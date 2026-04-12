@@ -13,6 +13,7 @@ router.post("/stripe/create-intent", verifyAuth, requirePatientRole, paymentCont
 router.post("/helapay/checkout", verifyAuth, requirePatientRole, paymentController.createHelaPayCheckout);
 router.post("/helakuru/checkout", verifyAuth, requirePatientRole, paymentController.createHelaPayCheckout);
 router.post("/complete-booking", verifyAuth, requirePatientRole, paymentController.completeBookingAfterPayment);
+router.post("/refund-by-session", verifyAuth, requirePatientRole, paymentController.refundBySession);
 router.post("/simulate-helapay", verifyAuth, requirePatientRole, paymentController.simulateHelaPayDev);
 router.post("/simulate-helakuru", verifyAuth, requirePatientRole, paymentController.simulateHelaPayDev);
 

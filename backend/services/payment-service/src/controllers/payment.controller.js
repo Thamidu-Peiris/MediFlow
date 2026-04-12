@@ -456,6 +456,74 @@ exports.completeBookingAfterPayment = async (req, res) => {
   }
 };
 
+/**
+ * Issue a refund for the PendingBooking linked to a cancelled appointment.
+ * Called by the appointment service (with the patient's JWT forwarded).
+ *
+ * Stripe  → fully automated refund.
+ * PayHere → not supported programmatically in sandbox; returns manual_required.
+ * No payment record → returns no_payment_record (appointment was free / old flow).
+ */
+exports.refundBySession = async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ message: "sessionId is required" });
+    }
+
+    const doc = await PendingBooking.findById(sessionId).catch(() => null);
+    if (!doc) {
+      // Appointment was booked without payment (legacy/free flow) — nothing to refund.
+      return res.status(200).json({ refunded: false, reason: "no_payment_record" });
+    }
+
+    // Security: only the patient who owns this booking can trigger a refund.
+    if (doc.patientSub !== req.user.sub) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const totalCents = doc.consultationFeeCents + doc.serviceFeeCents;
+
+    // ── Stripe ────────────────────────────────────────────────────────────────
+    if (doc.stripePaymentIntentId) {
+      const result = await stripeService.createRefund(doc.stripePaymentIntentId);
+      if (result.error) {
+        // Stripe already refunded, or another Stripe-side issue.
+        return res.status(200).json({
+          refunded: false,
+          method: "stripe",
+          reason: result.error,
+        });
+      }
+      return res.status(200).json({
+        refunded: true,
+        method: "stripe",
+        refundId: result.refund.id,
+        amount: totalCents / 100,
+        currency: doc.currency || "LKR",
+      });
+    }
+
+    // ── PayHere / Helakuru ────────────────────────────────────────────────────
+    if (doc.payherePaymentId) {
+      // PayHere's Refund API requires merchant OAuth and is not available in
+      // sandbox mode. Flag it so support can process manually.
+      return res.status(200).json({
+        refunded: false,
+        method: "payhere",
+        reason: "manual_required",
+        amount: totalCents / 100,
+        currency: doc.currency || "LKR",
+      });
+    }
+
+    return res.status(200).json({ refunded: false, reason: "no_payment_method" });
+  } catch (e) {
+    console.error("Refund error:", e);
+    return res.status(500).json({ message: "Refund processing failed" });
+  }
+};
+
 // Public: return occupied times from paid/pending PendingBookings for a doctor/date.
 // Used by frontend to filter already-booked slots in the booking modal.
 exports.getDoctorOccupiedFromPending = async (req, res) => {

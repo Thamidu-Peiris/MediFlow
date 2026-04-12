@@ -223,7 +223,30 @@ exports.cancelAppointment = async (req, res) => {
             return res.status(404).json({ message: "Appointment not found or cannot be cancelled" });
         }
 
-        return res.status(200).json({ appointment });
+        // Attempt refund via payment service if the appointment was linked to a payment.
+        // The patient's auth token is forwarded so the payment service can verify ownership.
+        let refund = null;
+        if (appointment.sessionId) {
+            try {
+                const refundRes = await axios.post(
+                    `${PAYMENT_SERVICE_URL}/refund-by-session`,
+                    { sessionId: appointment.sessionId },
+                    {
+                        headers: {
+                            Authorization: req.headers.authorization,
+                            "Content-Type": "application/json",
+                        },
+                        timeout: 10000,
+                    }
+                );
+                refund = refundRes.data;
+            } catch {
+                // Refund call failed — appointment is still cancelled; client shows fallback message.
+                refund = { refunded: false, reason: "refund_service_unavailable" };
+            }
+        }
+
+        return res.status(200).json({ appointment, refund });
     } catch (error) {
         return res.status(500).json({ message: "Failed to cancel appointment" });
     }

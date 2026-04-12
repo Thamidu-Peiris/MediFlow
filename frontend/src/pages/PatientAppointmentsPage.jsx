@@ -131,16 +131,25 @@ export default function PatientAppointmentsPage() {
     if (!selectedAppointment) return;
     setActionLoading(true);
     try {
-      await api.patch(`/appointments/${selectedAppointment._id}/cancel`, {}, authHeaders);
-      setMessage("Appointment cancelled successfully");
-      setAppointments(prev => prev.map(app => 
+      const res = await api.patch(`/appointments/${selectedAppointment._id}/cancel`, {}, authHeaders);
+      const refund = res.data?.refund;
+
+      let msg = "Appointment cancelled successfully.";
+      if (refund?.refunded && refund.method === "stripe") {
+        msg = `Appointment cancelled. A full refund of ${refund.currency} ${Number(refund.amount).toLocaleString()} has been issued to your payment method.`;
+      } else if (refund?.method === "payhere" && refund.reason === "manual_required") {
+        msg = `Appointment cancelled. Your PayHere/Helakuru payment of ${refund.currency} ${Number(refund.amount).toLocaleString()} will be refunded manually — please contact support.`;
+      }
+
+      setMessage(msg);
+      setAppointments(prev => prev.map(app =>
         app._id === selectedAppointment._id ? { ...app, status: "cancelled" } : app
       ));
       setTimeout(() => {
         setShowCancelModal(false);
         setSelectedAppointment(null);
         setMessage("");
-      }, 1500);
+      }, 4000);
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to cancel appointment");
     } finally {
