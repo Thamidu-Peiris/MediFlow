@@ -14,49 +14,52 @@ const specialties = [
 
 export default function HomePage() {
   return (
-    <div className="scroll-smooth bg-[#f8fafc] font-sans text-[#1e293b]">
+    <div className="scroll-smooth font-sans text-[#1e293b]">
       <LandingTopBar active="home" onHomePage />
 
-      <section className="mx-auto grid max-w-screen-2xl grid-cols-1 items-center gap-12 overflow-hidden px-8 pb-20 pt-36 lg:grid-cols-12">
-        <div className="lg:col-span-7">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#CBF79D] px-4 py-2 text-[#356600] border border-[#356600]/10">
-            <span className="material-symbols-outlined text-sm">verified</span>
-            <span className="text-xs font-bold uppercase tracking-widest">Medical Excellence Redefined</span>
-          </div>
-          <h1 className="mb-6 font-headline text-5xl font-extrabold leading-tight tracking-tight lg:text-7xl text-[#0f172a]">
-            Your <span className="bg-gradient-to-br from-[#0d9488] to-[#0f766e] bg-clip-text text-transparent">Health</span>,<br />On Your Schedule
-          </h1>
-          <p className="mb-10 max-w-2xl text-xl leading-relaxed text-[#475569]">
-            Experience healthcare that respects your time. Connect with world-class medical specialists through our seamless editorial platform designed for clarity and care.
-          </p>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <Link to="/doctors" className="rounded-full bg-gradient-to-br from-[#0d9488] to-[#0f766e] px-10 py-5 text-center text-lg font-bold text-white shadow-xl shadow-[#0d9488]/20 transition-all hover:opacity-90 active:scale-95">
-              Book a Doctor
-            </Link>
-            <Link to="/register" className="rounded-full border border-[#e2e8f0] bg-white px-10 py-5 text-center font-bold text-[#1e293b] transition-all hover:bg-[#f8fafc]">
-              Sign Up Free
-            </Link>
-          </div>
-        </div>
-
-        <div className="relative lg:col-span-5">
-          <div className="overflow-hidden rounded-[2.5rem] border-8 border-white bg-white shadow-[0px_32px_64px_rgba(15,23,42,0.12)]">
-            <img
-              src="https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&w=900&q=80"
-              alt="Medical team"
-              className="h-[500px] w-full object-cover"
-            />
-          </div>
-
-          <div className="absolute -bottom-6 -left-6 flex max-w-[240px] items-start gap-3 rounded-2xl border border-[#e2e8f0] bg-white px-5 py-4 shadow-[0px_20px_40px_rgba(15,23,42,0.08)]">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f0fdfa] text-[#0d9488]">
-              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                favorite
-              </span>
+      {/* Hero Section with requested gradient background */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#CBF79D] to-[#DAFFB3] pb-20 pt-36">
+        <div className="mx-auto grid max-w-screen-2xl grid-cols-1 items-center gap-12 px-8 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/40 px-4 py-2 text-[#356600] border border-[#356600]/10 backdrop-blur-sm">
+              <span className="material-symbols-outlined text-sm">verified</span>
+              <span className="text-xs font-bold uppercase tracking-widest">Medical Excellence Redefined</span>
             </div>
-            <div>
-              <p className="text-sm font-bold text-[#0f172a]">Care Quality</p>
-              <p className="text-[12px] leading-tight text-[#64748b]">Top-rated health advisory services available 24/7.</p>
+            <h1 className="mb-6 font-headline text-5xl font-extrabold leading-tight tracking-tight lg:text-7xl text-[#043927]">
+              Your <span className="bg-gradient-to-br from-[#356600] to-[#437A00] bg-clip-text text-transparent">Health</span>,<br />On Your Schedule
+            </h1>
+            <p className="mb-10 max-w-2xl text-xl font-medium leading-relaxed text-[#043927]/80">
+              Experience healthcare that respects your time. Connect with world-class medical specialists through our seamless editorial platform designed for clarity and care.
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <Link to="/doctors" className="rounded-full bg-[#043927] px-10 py-5 text-center text-lg font-bold text-white shadow-xl shadow-[#043927]/20 transition-all hover:bg-[#065036] active:scale-95">
+                Book a Doctor
+              </Link>
+              <Link to="/register" className="rounded-full border-2 border-[#043927]/10 bg-white/40 px-10 py-5 text-center font-bold text-[#043927] backdrop-blur-sm transition-all hover:bg-white/60">
+                Sign Up Free
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative lg:col-span-5">
+            <div className="overflow-hidden rounded-[2.5rem] border-8 border-white/60 bg-white/20 shadow-[0px_32px_64px_rgba(53,102,0,0.12)] backdrop-blur-md">
+              <img
+                src="https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&w=900&q=80"
+                alt="Medical team"
+                className="h-[500px] w-full object-cover"
+              />
+            </div>
+
+            <div className="absolute -bottom-6 -left-6 flex max-w-[240px] items-start gap-3 rounded-2xl border border-white/60 bg-white/80 px-5 py-4 shadow-[0px_20px_40px_rgba(53,102,0,0.08)] backdrop-blur-md">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#CBF79D] text-[#356600]">
+                <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  favorite
+                </span>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#043927]">Care Quality</p>
+                <p className="text-[12px] leading-tight text-[#043927]/60">Top-rated health advisory services available 24/7.</p>
+              </div>
             </div>
           </div>
         </div>
