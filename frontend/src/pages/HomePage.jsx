@@ -75,7 +75,7 @@ export default function HomePage() {
       <section className="relative overflow-hidden bg-gradient-to-br from-[#CBF79D] to-[#DAFFB3] pb-20 pt-36">
         <div className="mx-auto grid max-w-screen-2xl grid-cols-1 items-center gap-12 px-8 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/40 px-4 py-2 text-[#356600] border border-[#356600]/10 backdrop-blur-sm">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[#356600] border border-[#356600]/10 shadow-sm">
               <span className="material-symbols-outlined text-sm">verified</span>
               <span className="text-xs font-bold uppercase tracking-widest">Medical Excellence Redefined</span>
             </div>
@@ -89,7 +89,7 @@ export default function HomePage() {
               <Link to="/doctors" className="rounded-full bg-[#043927] px-10 py-5 text-center text-lg font-bold text-white shadow-xl shadow-[#043927]/20 transition-all hover:bg-[#065036] active:scale-95">
                 Book a Doctor
               </Link>
-              <Link to="/register" className="rounded-full border-2 border-[#043927]/10 bg-white/40 px-10 py-5 text-center font-bold text-[#043927] backdrop-blur-sm transition-all hover:bg-white/60">
+              <Link to="/register" className="rounded-full border-2 border-[#043927]/10 bg-white px-10 py-5 text-center font-bold text-[#043927] transition-all hover:bg-white/80 shadow-sm">
                 Sign Up Free
               </Link>
             </div>
