@@ -1,5 +1,59 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from "react-router-dom";
 import LandingTopBar from "../components/LandingTopBar";
+
+const CountUp = ({ end, duration = 2000, suffix = "", decimals = 0 }) => {
+  const [count, setCount] = useState(0);
+  const countRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (countRef.current) {
+      observer.observe(countRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    let startTime;
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      
+      const currentCount = progress * end;
+      setCount(currentCount);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isVisible, end, duration]);
+
+  return (
+    <span ref={countRef}>
+      {count.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      })}
+      {suffix}
+    </span>
+  );
+};
 
 const specialties = [
   { icon: "cardiology", title: "Cardiology", subtitle: "Heart & Vascular Care" },
@@ -68,17 +122,30 @@ export default function HomePage() {
       <section className="bg-white border-y border-[#e2e8f0] py-20">
         <div className="mx-auto max-w-screen-2xl px-8">
           <div className="flex flex-wrap items-center justify-between divide-y divide-[#e2e8f0] md:flex-nowrap md:divide-x md:divide-y-0">
-            {[
-              ["500+", "Verified Specialists"],
-              ["10,000+", "Happy Patients"],
-              ["4.9/5", "Patient Rating"],
-              ["24/7", "Care Support"]
-            ].map(([value, label]) => (
-              <div key={label} className="flex w-full flex-col items-center justify-center py-8 md:w-1/4 md:py-0">
-                <p className="font-headline text-5xl font-light tracking-tight text-[#396E00] lg:text-6xl">{value}</p>
-                <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#396E00]/60">{label}</p>
-              </div>
-            ))}
+            <div className="flex w-full flex-col items-center justify-center py-8 md:w-1/4 md:py-0">
+              <p className="font-headline text-5xl font-light tracking-tight text-[#396E00] lg:text-6xl">
+                <CountUp end={500} suffix="+" />
+              </p>
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#396E00]/60">Verified Specialists</p>
+            </div>
+            <div className="flex w-full flex-col items-center justify-center py-8 md:w-1/4 md:py-0">
+              <p className="font-headline text-5xl font-light tracking-tight text-[#396E00] lg:text-6xl">
+                <CountUp end={10000} suffix="+" />
+              </p>
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#396E00]/60">Happy Patients</p>
+            </div>
+            <div className="flex w-full flex-col items-center justify-center py-8 md:w-1/4 md:py-0">
+              <p className="font-headline text-5xl font-light tracking-tight text-[#396E00] lg:text-6xl">
+                <CountUp end={4.9} decimals={1} suffix="/5" />
+              </p>
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#396E00]/60">Patient Rating</p>
+            </div>
+            <div className="flex w-full flex-col items-center justify-center py-8 md:w-1/4 md:py-0">
+              <p className="font-headline text-5xl font-light tracking-tight text-[#396E00] lg:text-6xl">
+                <CountUp end={24} suffix="/7" />
+              </p>
+              <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#396E00]/60">Care Support</p>
+            </div>
           </div>
         </div>
       </section>
