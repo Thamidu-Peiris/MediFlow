@@ -201,9 +201,9 @@ export default function HomePage() {
 
       <section id="doctors" className="mx-auto max-w-screen-2xl overflow-hidden px-8 py-28">
         <div className="mb-20">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#0d9488]">Our Experts</span>
-          <h2 className="mt-2 font-headline text-4xl font-extrabold tracking-tight text-[#0f172a] sm:text-5xl">Meet Our Featured Doctors</h2>
-          <p className="mt-4 text-lg text-[#64748b]">Qualified practitioners with decades of combined experience.</p>
+          <span className="text-xs font-bold uppercase tracking-widest text-[#356600]">Our Experts</span>
+          <h2 className="mt-2 font-headline text-4xl font-extrabold tracking-tight text-[#043927] sm:text-5xl">Meet Our Featured Doctors</h2>
+          <p className="mt-4 text-lg text-[#043927]/60">Qualified practitioners with decades of combined experience.</p>
         </div>
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 xl:grid-cols-4">
           {[
@@ -212,60 +212,62 @@ export default function HomePage() {
             ["Dr. Aisha Khan", "Dermatologist", "4.9"],
             ["Dr. Simon Peter", "Neurologist", "4.7"]
           ].map(([name, spec, rating]) => (
-            <div key={name} className="group rounded-[2rem] border border-[#e2e8f0] bg-white p-6 shadow-sm transition-all hover:shadow-[0px_32px_64px_rgba(15,23,42,0.08)] hover:-translate-y-1">
-              <div className="mb-6 aspect-square overflow-hidden rounded-2xl bg-[#f8fafc]">
-                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80" alt={name} className="h-full w-full object-cover grayscale-[0.2] transition-all group-hover:grayscale-0 group-hover:scale-105" />
+            <div key={name} className="group rounded-[2.5rem] border border-[#356600]/10 bg-white p-6 shadow-sm transition-all duration-500 hover:shadow-[0px_32px_64px_rgba(4,57,39,0.08)] hover:-translate-y-2">
+              <div className="mb-6 aspect-square overflow-hidden rounded-3xl bg-[#fcfdfa]">
+                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80" alt={name} className="h-full w-full object-cover grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110" />
               </div>
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <h4 className="text-xl font-bold text-[#0f172a]">{name}</h4>
-                  <p className="font-bold text-[#0d9488]">{spec}</p>
+                  <h4 className="text-xl font-bold text-[#043927]">{name}</h4>
+                  <p className="font-bold text-[#356600]">{spec}</p>
                 </div>
                 <div className="flex items-center gap-1 text-[#f59e0b]">
                   <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  <span className="font-bold">{rating}</span>
+                  <span className="font-bold text-[#043927]">{rating}</span>
                 </div>
               </div>
-              <button className="mt-4 w-full rounded-xl bg-[#f0fdfa] py-4 font-bold text-[#0d9488] transition-all hover:bg-[#0d9488] hover:text-white" type="button">View Profile</button>
+              <button className="mt-4 w-full rounded-2xl bg-[#CBF79D] py-4 font-bold text-[#043927] transition-all duration-300 hover:bg-[#043927] hover:text-white" type="button">View Profile</button>
             </div>
           ))}
         </div>
       </section>
 
-      <section id="testimonials" className="bg-[#0f172a] px-8 py-32 text-white">
+      <section id="testimonials" className="bg-[#043927] px-8 py-32 text-white">
         <div className="mx-auto grid max-w-screen-2xl grid-cols-1 items-center gap-24 lg:grid-cols-2">
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-[#0d9488]">Patient Stories</span>
-            <h2 className="mt-4 font-headline text-4xl font-extrabold leading-tight tracking-tight lg:text-6xl">Stories of Trust and Recovery</h2>
+            <span className="text-xs font-bold uppercase tracking-widest text-[#BDFC79]">Patient Stories</span>
+            <h2 className="mt-4 font-headline text-4xl font-extrabold leading-tight tracking-tight lg:text-6xl text-[#CBF79D]">Stories of Trust and Recovery</h2>
             <div className="mt-16 space-y-16">
               <div className="flex flex-col gap-8 md:flex-row md:items-start">
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-[#0d9488]/30">
+                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-[#BDFC79]/30">
                   <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" alt="Patient" className="h-full w-full object-cover" />
                 </div>
                 <div>
-                  <div className="mb-4 flex text-[#f59e0b]">
+                  <div className="mb-4 flex text-[#BDFC79]">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <span key={i} className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                     ))}
                   </div>
-                  <p className="mb-6 text-2xl italic font-medium leading-relaxed text-slate-300">"The level of care and attention I received was unprecedented. Booking was instant, and the video consultation felt as personal as an in-person visit."</p>
-                  <h4 className="text-xl font-bold">Jessica Miller</h4>
-                  <p className="font-bold text-[#0d9488]">Heart Patient</p>
+                  <p className="mb-6 text-2xl italic font-medium leading-relaxed text-[#DAFFB3]/80">"The level of care and attention I received was unprecedented. Booking was instant, and the video consultation felt as personal as an in-person visit."</p>
+                  <h4 className="text-xl font-bold text-white">Jessica Miller</h4>
+                  <p className="font-bold text-[#BDFC79]">Heart Patient</p>
                 </div>
               </div>
             </div>
           </div>
           <div className="group relative">
-            <div className="absolute -inset-4 rounded-3xl bg-[#0d9488]/20 transition-transform group-hover:scale-105" />
-            <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1000&q=80" alt="Doctor patient interaction" className="relative rounded-3xl shadow-2xl" />
+            <div className="absolute -inset-4 rounded-[2.5rem] bg-[#BDFC79]/10 transition-transform group-hover:scale-105" />
+            <div className="relative overflow-hidden rounded-[2rem] border-8 border-white/10 shadow-2xl">
+              <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1000&q=80" alt="Doctor patient interaction" className="w-full grayscale-[0.2] transition-all group-hover:grayscale-0 group-hover:scale-105" />
+            </div>
           </div>
         </div>
       </section>
 
       <section id="faq" className="mx-auto max-w-screen-md px-8 py-32">
         <div className="text-center mb-20">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#0d9488]">Common Questions</span>
-          <h2 className="mt-2 font-headline text-4xl font-extrabold tracking-tight text-[#0f172a] sm:text-5xl">Support FAQ</h2>
+          <span className="text-xs font-bold uppercase tracking-widest text-[#356600]">Common Questions</span>
+          <h2 className="mt-2 font-headline text-4xl font-extrabold tracking-tight text-[#043927] sm:text-5xl">Support FAQ</h2>
         </div>
         <div className="space-y-6">
           {[
@@ -273,40 +275,40 @@ export default function HomePage() {
             ["Are my medical records private?", "MediFlow uses strong encryption for data storage and transmission. Your records are only accessible by you and your designated medical team."],
             ["Can I get prescriptions online?", "Yes. Following consultation, doctors can issue digital prescriptions available for download and follow-up."]
           ].map(([q, a]) => (
-            <details key={q} className="group overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white [&_summary::-webkit-details-marker]:hidden transition-all hover:border-[#0d9488]/30">
-              <summary className="flex cursor-pointer items-center justify-between p-8 transition-colors hover:bg-[#f8fafc]">
-                <h3 className="text-xl font-bold text-[#0f172a]">{q}</h3>
-                <span className="material-symbols-outlined text-[#0d9488] transition-transform group-open:rotate-180">expand_more</span>
+            <details key={q} className="group overflow-hidden rounded-2xl border border-[#356600]/10 bg-white [&_summary::-webkit-details-marker]:hidden transition-all hover:border-[#356600]/30">
+              <summary className="flex cursor-pointer items-center justify-between p-8 transition-colors hover:bg-[#fcfdfa]">
+                <h3 className="text-xl font-bold text-[#043927]">{q}</h3>
+                <span className="material-symbols-outlined text-[#356600] transition-transform group-open:rotate-180">expand_more</span>
               </summary>
-              <div className="px-8 pb-8 text-lg leading-relaxed text-[#475569]">{a}</div>
+              <div className="px-8 pb-8 text-lg leading-relaxed text-[#043927]/60">{a}</div>
             </details>
           ))}
         </div>
       </section>
 
-      <footer className="border-t border-[#e2e8f0] bg-white">
+      <footer className="border-t border-[#356600]/10 bg-white">
         <div className="mx-auto grid max-w-screen-2xl grid-cols-1 gap-16 px-12 py-24 md:grid-cols-4">
           <div>
             <h2 className="mb-8 font-headline text-3xl font-extrabold tracking-tight text-[#043927]">MediFlow</h2>
-            <p className="mb-8 text-lg leading-relaxed text-[#64748b]">Redefining modern healthcare with clinical precision and a human touch. Accessible, efficient, and compassionate.</p>
+            <p className="mb-8 text-lg leading-relaxed text-[#043927]/60">Redefining modern healthcare with clinical precision and a human touch. Accessible, efficient, and compassionate.</p>
           </div>
-          <div><h4 className="mb-8 text-sm font-bold uppercase tracking-widest text-[#0f172a]">Company</h4><ul className="space-y-5 text-[#64748b]"><li><Link to="/about" className="hover:text-[#0d9488] transition-colors">About Us</Link></li><li><Link to="/doctors" className="hover:text-[#0d9488] transition-colors">Doctors</Link></li><li><Link to="/login" className="hover:text-[#0d9488] transition-colors">Login</Link></li><li><Link to="/register" className="hover:text-[#0d9488] transition-colors">Register</Link></li></ul></div>
-          <div><h4 className="mb-8 text-sm font-bold uppercase tracking-widest text-[#0f172a]">Support</h4><ul className="space-y-5 text-[#64748b]"><li><Link to="/contact" className="hover:text-[#0d9488] transition-colors">Contact Us</Link></li><li><Link to="/privacy" className="hover:text-[#0d9488] transition-colors">Privacy Policy</Link></li><li><a href="#faq" className="hover:text-[#0d9488] transition-colors">FAQ</a></li></ul></div>
+          <div><h4 className="mb-8 text-sm font-bold uppercase tracking-widest text-[#043927]">Company</h4><ul className="space-y-5 text-[#043927]/60"><li><Link to="/about" className="hover:text-[#356600] transition-colors">About Us</Link></li><li><Link to="/doctors" className="hover:text-[#356600] transition-colors">Doctors</Link></li><li><Link to="/login" className="hover:text-[#356600] transition-colors">Login</Link></li><li><Link to="/register" className="hover:text-[#356600] transition-colors">Register</Link></li></ul></div>
+          <div><h4 className="mb-8 text-sm font-bold uppercase tracking-widest text-[#043927]">Support</h4><ul className="space-y-5 text-[#043927]/60"><li><Link to="/contact" className="hover:text-[#356600] transition-colors">Contact Us</Link></li><li><Link to="/privacy" className="hover:text-[#356600] transition-colors">Privacy Policy</Link></li><li><a href="#faq" className="hover:text-[#356600] transition-colors">FAQ</a></li></ul></div>
           <div>
-            <h4 className="mb-8 text-sm font-bold uppercase tracking-widest text-[#0f172a]">Newsletter</h4>
-            <p className="mb-6 text-[#64748b]">Stay updated with the latest clinical insights.</p>
+            <h4 className="mb-8 text-sm font-bold uppercase tracking-widest text-[#043927]">Newsletter</h4>
+            <p className="mb-6 text-[#043927]/60">Stay updated with the latest clinical insights.</p>
             <div className="flex gap-2">
-              <input type="email" placeholder="Email address" className="w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-3 text-sm focus:border-[#0d9488] focus:outline-none focus:ring-4 focus:ring-[#0d9488]/10 transition-all" />
-              <button className="rounded-xl bg-[#0d9488] p-3 text-white shadow-lg shadow-[#0d9488]/20 hover:opacity-90" type="button"><span className="material-symbols-outlined">send</span></button>
+              <input type="email" placeholder="Email address" className="w-full rounded-xl border border-[#356600]/10 bg-[#fcfdfa] px-5 py-3 text-sm focus:border-[#356600] focus:outline-none focus:ring-4 focus:ring-[#356600]/10 transition-all" />
+              <button className="rounded-xl bg-[#043927] p-3 text-white shadow-lg shadow-[#043927]/20 hover:bg-[#065036] transition-all" type="button"><span className="material-symbols-outlined">send</span></button>
             </div>
           </div>
         </div>
-        <div className="mx-auto flex max-w-screen-2xl flex-col items-center justify-between gap-6 border-t border-[#e2e8f0] px-12 py-10 md:flex-row">
-          <p className="text-sm font-medium text-[#94a3b8]">© {new Date().getFullYear()} MediFlow Enterprise. All rights reserved.</p>
-          <div className="flex gap-8 text-sm font-medium text-[#94a3b8]">
-            <a href="#" className="hover:text-[#0d9488] transition-colors">Clinical Standards</a>
-            <a href="#" className="hover:text-[#0d9488] transition-colors">HIPAA Compliance</a>
-            <a href="#" className="hover:text-[#0d9488] transition-colors">Accessibility</a>
+        <div className="mx-auto flex max-w-screen-2xl flex-col items-center justify-between gap-6 border-t border-[#356600]/10 px-12 py-10 md:flex-row">
+          <p className="text-sm font-medium text-[#043927]/40">© {new Date().getFullYear()} MediFlow Enterprise. All rights reserved.</p>
+          <div className="flex gap-8 text-sm font-medium text-[#043927]/40">
+            <a href="#" className="hover:text-[#356600] transition-colors">Clinical Standards</a>
+            <a href="#" className="hover:text-[#356600] transition-colors">HIPAA Compliance</a>
+            <a href="#" className="hover:text-[#356600] transition-colors">Accessibility</a>
           </div>
         </div>
       </footer>
