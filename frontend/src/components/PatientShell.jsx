@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../api/client";
 import { useAuthMediaSrc } from "../hooks/useAuthMediaSrc";
 
@@ -66,12 +66,27 @@ const pageTitles = {
 };
 
 export default function PatientShell({ children }) {
-  const { logout, authHeaders, token } = useAuth();
+  const { user, logout, authHeaders, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [patientInfo, setPatientInfo] = useState(null);
   const resolvedAvatar = useAuthMediaSrc(patientInfo?.avatar || "", token);
   const avatarImgSrc = resolvedAvatar || "";
+
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileWrapRef = useRef(null);
+
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!profileWrapRef.current) return;
+      if (!profileWrapRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   useEffect(() => {
     api
@@ -101,25 +116,45 @@ export default function PatientShell({ children }) {
     if (p === "/patient/profile" || p.startsWith("/patient/profile/")) return "Profile";
     return "Dashboard";
   })();
+
+  const isPatientDashboard = location.pathname.startsWith("/patient/") || location.pathname === "/ai-checker";
+
   return (
-    <div className="flex min-h-screen bg-slate-100 text-on-surface">
-      <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 shrink-0 flex-col border-r border-slate-200/80 bg-white py-6 shadow-[1px_0_0_rgba(0,0,0,0.04)]">
-        <div className="mb-8 px-6">
-          <h1 className="font-headline text-xl font-bold tracking-tight text-teal-800">MediFlow</h1>
-          <p className="text-xs font-medium uppercase tracking-widest text-on-surface-variant">Patient Portal</p>
+    <div className={`aura-shell${isPatientDashboard ? " aura-shell--admin-dashboard" : ""}`}>
+      <aside className="aura-sidebar">
+        <div className="aura-sidebar-header">
+          <div className="aura-brand">
+            <h1 className="aura-brand-title">MediFlow</h1>
+            <p className="aura-brand-subtitle">PATIENT PORTAL</p>
+          </div>
         </div>
 
-        <div className="mb-6 px-6">
+        <div className="aura-user-profile px-2">
+          <div className="aura-user-avatar">
+            {avatarImgSrc ? (
+              <img src={avatarImgSrc} alt="Profile" />
+            ) : (
+              <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold">
+                {patientInfo?.fullName?.charAt(0) || "P"}
+              </div>
+            )}
+          </div>
+          <div className="aura-user-info">
+            <p className="aura-welcome-text">Welcome back,</p>
+            <p className="aura-user-name">{patientInfo?.fullName?.split(" ")[0] || "Patient"}</p>
+          </div>
+        </div>
+
+        <div className="mb-6 px-2">
           <Link
             to="/patient/doctors"
-            className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-sm transition-colors hover:bg-primary-container"
+            className="aura-book-btn"
           >
-            <span className="material-symbols-outlined text-[18px]">calendar_month</span>
             Book Appointment
           </Link>
         </div>
 
-        <nav className="flex-1 space-y-1 px-4">
+        <nav className="aura-sidebar-nav">
           {navItems.map((item) => {
             const isActive =
               item.to === "/patient/dashboard"
@@ -129,76 +164,78 @@ export default function PatientShell({ children }) {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
-                  isActive
-                    ? "-mr-4 rounded-r-full bg-emerald-50 pr-8 font-bold text-teal-700"
-                    : "rounded-lg text-slate-600 hover:bg-slate-50 group"
-                }`}
+                className={`aura-nav-item ${isActive ? "active" : ""}`}
               >
-                <span
-                  className={`material-symbols-outlined ${
-                    isActive ? "text-primary" : "text-slate-400 group-hover:text-primary"
-                  }`}
-                >
-                  {item.icon}
+                <span className="aura-nav-icon">
+                  <span className="material-symbols-outlined">{item.icon}</span>
                 </span>
-                <span className="text-sm font-medium">{item.label}</span>
+                <span className="aura-nav-label">{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="mt-auto px-6">
-          <div className="space-y-3 border-t border-slate-200 pt-6">
-            <Link
-              to="/patient/profile"
-              className="mb-1 flex items-center gap-3 rounded-lg px-4 py-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-primary"
-            >
-              <span className="material-symbols-outlined text-[20px]">info</span>
-              <span className="text-sm font-medium">Help Center</span>
-            </Link>
-            <button
-              type="button"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-              onClick={onLogout}
-            >
-              <span className="material-symbols-outlined text-[20px]">logout</span>
-              Logout
-            </button>
-          </div>
+        <div className="aura-sidebar-footer">
+          <button
+            type="button"
+            className="aura-logout-btn"
+            onClick={onLogout}
+          >
+            <span className="material-symbols-outlined">logout</span>
+            Logout
+          </button>
         </div>
       </aside>
 
-      <main className="ml-64 flex min-h-screen min-w-0 flex-1 flex-col bg-slate-100">
-        <header className="fixed left-64 right-0 top-0 z-50 flex min-h-[80px] items-center justify-between border-b border-slate-200/80 bg-white px-8 py-2 shadow-sm">
-          <div className="font-headline text-2xl font-black tracking-tight text-teal-800">{activePageTitle}</div>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              className="grid h-10 w-10 place-items-center bg-transparent p-0 text-[#0B3B5B] shadow-none border-none transition-colors hover:bg-transparent hover:text-[#0B3B5B]"
-              aria-label="Notifications"
-            >
-              <span className="material-symbols-rounded text-[22px]">notifications</span>
+      <main className="aura-main">
+        <header className="aura-topbar aura-topbar-admin">
+          <div className="aura-topbar-left">
+            <span className="aura-logo" style={{ fontSize: '24px', fontWeight: 400 }}>Patient Panel</span>
+          </div>
+          <div className="aura-topbar-right">
+            <button className="aura-topbar-icon-btn">
+              <span className="material-symbols-outlined">notifications</span>
             </button>
-            <Link
-              to="/patient/profile"
-              className="grid h-10 w-10 place-items-center bg-transparent p-0 text-[#0B3B5B] shadow-none border-none transition-colors hover:bg-transparent hover:text-[#0B3B5B]"
-              aria-label="Profile settings"
-            >
-              <span className="material-symbols-rounded text-[22px]">settings</span>
+            <Link to="/patient/profile" className="aura-topbar-icon-btn">
+              <span className="material-symbols-outlined">settings</span>
             </Link>
-            <Link
-              to="/patient/profile"
-              className="grid h-10 w-10 place-items-center rounded-full border border-slate-300 bg-slate-100 text-slate-700 transition-colors hover:border-primary hover:text-primary"
-              aria-label="Profile"
-              title="Profile"
-            >
-              <span className="material-symbols-rounded text-[22px]">person</span>
-            </Link>
+            <div className="aura-profile-wrap" ref={profileWrapRef}>
+              <button
+                type="button"
+                className="aura-topbar-profile-btn"
+                onClick={() => setProfileOpen((v) => !v)}
+              >
+                <span className="material-symbols-outlined">person</span>
+              </button>
+
+              {profileOpen ? (
+                <div className="aura-profile-menu">
+                  <Link
+                    to="/patient/profile"
+                    className="aura-profile-item"
+                    onClick={() => setProfileOpen(false)}
+                  >
+                    <span className="material-symbols-outlined">person</span>
+                    Profile
+                  </Link>
+                  <button
+                    type="button"
+                    className="aura-profile-item aura-profile-logout"
+                    onClick={() => {
+                      setProfileOpen(false);
+                      onLogout();
+                    }}
+                  >
+                    <span className="material-symbols-outlined">logout</span>
+                    Logout
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
         </header>
 
-        <div className="flex-1 px-8 pt-24">
+        <div className={`aura-content${isPatientDashboard ? " aura-content--admin-dashboard" : ""}`}>
           {children}
         </div>
       </main>
