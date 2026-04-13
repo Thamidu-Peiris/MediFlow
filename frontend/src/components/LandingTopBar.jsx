@@ -11,11 +11,10 @@ export default function LandingTopBar({ active = "home", onHomePage = false }) {
         <Link to="/" className="font-headline text-2xl font-extrabold tracking-tight text-primary">MediFlow</Link>
         <div className="hidden items-center gap-8 md:flex">
           <Link className={active === "home" ? activeClass : linkClass} to="/">Home</Link>
-          <a className={linkClass} href={sec("how-it-works")}>How It Works</a>
-          <a className={linkClass} href={sec("specialties")}>Specialties</a>
+          <Link className={active === "about" ? activeClass : linkClass} to="/about">About Us</Link>
           <Link className={active === "doctors" ? activeClass : linkClass} to="/doctors">Doctors</Link>
-          <a className={linkClass} href={sec("testimonials")}>Testimonials</a>
-          <a className={linkClass} href={sec("faq")}>FAQ</a>
+          <Link className={active === "privacy" ? activeClass : linkClass} to="/privacy">Privacy Policy</Link>
+          <Link className={active === "contact" ? activeClass : linkClass} to="/contact">Contact Us</Link>
         </div>
         <div className="flex items-center gap-4">
           <Link className="hidden rounded-full px-4 py-2 font-bold text-primary transition-all hover:bg-primary-fixed/30 lg:block" to="/login">Login</Link>

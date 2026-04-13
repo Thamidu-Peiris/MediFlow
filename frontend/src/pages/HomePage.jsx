@@ -199,8 +199,8 @@ export default function HomePage() {
             <h2 className="mb-6 font-headline text-2xl font-extrabold tracking-tight text-primary">MediFlow</h2>
             <p className="mb-6 text-sm leading-relaxed text-on-surface-variant">Redefining modern healthcare with clinical precision and a human touch. Accessible, efficient, and compassionate.</p>
           </div>
-          <div><h4 className="mb-6 font-bold">Company</h4><ul className="space-y-4 text-sm text-on-surface-variant"><li><a href="#how-it-works">How It Works</a></li><li><a href="#specialties">Specialties</a></li><li><a href="#doctors">Doctors</a></li></ul></div>
-          <div><h4 className="mb-6 font-bold">Support</h4><ul className="space-y-4 text-sm text-on-surface-variant"><li><a href="#faq">FAQ</a></li><li><a href="#">Contact Us</a></li><li><a href="#">Privacy Policy</a></li></ul></div>
+          <div><h4 className="mb-6 font-bold">Company</h4><ul className="space-y-4 text-sm text-on-surface-variant"><li><Link to="/about">About Us</Link></li><li><Link to="/doctors">Doctors</Link></li><li><Link to="/login">Login</Link></li><li><Link to="/register">Register</Link></li></ul></div>
+          <div><h4 className="mb-6 font-bold">Support</h4><ul className="space-y-4 text-sm text-on-surface-variant"><li><Link to="/contact">Contact Us</Link></li><li><Link to="/privacy">Privacy Policy</Link></li><li><a href="#faq">FAQ</a></li></ul></div>
           <div>
             <h4 className="mb-6 font-bold">Newsletter</h4>
             <p className="mb-4 text-xs text-on-surface-variant">Stay updated with the latest clinical insights.</p>
