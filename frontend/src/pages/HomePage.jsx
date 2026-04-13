@@ -98,8 +98,8 @@ export default function HomePage() {
           <div className="relative lg:col-span-5">
             <div className="overflow-hidden rounded-[2.5rem] border-8 border-white/60 bg-white/20 shadow-[0px_32px_64px_rgba(53,102,0,0.12)] backdrop-blur-md">
               <img
-                src="https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&w=900&q=80"
-                alt="Medical team"
+                src="/assets/hero-img.png"
+                alt="Medical Professional"
                 className="h-[500px] w-full object-cover"
               />
             </div>
