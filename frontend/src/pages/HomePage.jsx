@@ -178,7 +178,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="specialties" className="bg-[#fcfdfa] border-y border-[#356600]/10 px-8 py-28">
+      <section id="specialties" className="bg-[#DCFFB8] border-y border-[#356600]/10 px-8 py-28">
         <div className="mx-auto max-w-screen-2xl">
           <div className="mb-20 text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-[#356600]">Departments</span>
@@ -188,7 +188,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4 lg:gap-8">
             {specialties.map((s) => (
               <div key={s.title} className="group cursor-pointer rounded-3xl border border-[#356600]/5 bg-white p-8 transition-all duration-500 hover:border-[#356600]/20 hover:shadow-[0px_24px_48px_rgba(53,102,0,0.06)] hover:-translate-y-1">
-                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#CBF79D]/20 text-[#356600] transition-all duration-500 group-hover:bg-[#356600] group-hover:text-white">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#BDFC79] text-[#356600] transition-all duration-500 group-hover:bg-[#356600] group-hover:text-white">
                   <span className="material-symbols-outlined text-3xl">{s.icon}</span>
                 </div>
                 <h4 className="mb-2 text-xl font-bold text-[#043927]">{s.title}</h4>
