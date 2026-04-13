@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export default function AboutUsPage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
-      <LandingTopBar />
+      <LandingTopBar active="about" />
       
       <main className="pt-24 pb-20">
         <div className="mx-auto max-w-4xl px-6">

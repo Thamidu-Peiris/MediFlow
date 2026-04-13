@@ -3,7 +3,7 @@ import LandingTopBar from "../components/LandingTopBar";
 export default function ContactUsPage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
-      <LandingTopBar />
+      <LandingTopBar active="contact" />
       
       <main className="pt-24 pb-20">
         <div className="mx-auto max-w-5xl px-6">

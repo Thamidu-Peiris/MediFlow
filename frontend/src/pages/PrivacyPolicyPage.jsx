@@ -3,7 +3,7 @@ import LandingTopBar from "../components/LandingTopBar";
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">
-      <LandingTopBar />
+      <LandingTopBar active="privacy" />
       
       <main className="pt-24 pb-20">
         <div className="mx-auto max-w-4xl px-6">
