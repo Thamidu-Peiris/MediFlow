@@ -164,10 +164,10 @@ export default function HomePage() {
               ["3", "video_call", "Video Consult", "Secure, HD video appointments from the comfort of your home."]
             ].map(([step, icon, title, text]) => (
               <div key={title} className="group relative rounded-[2.5rem] border border-[#356600]/10 bg-white p-10 shadow-sm transition-all duration-500 hover:shadow-[0px_32px_64px_rgba(4,57,39,0.08)] hover:-translate-y-2">
-                <div className="absolute right-8 top-8 text-6xl font-black text-[#CBF79D]/30 transition-colors group-hover:text-[#CBF79D]/50">
+                <div className="absolute right-8 top-8 text-6xl font-black text-[#9CED45] transition-colors group-hover:text-[#9CED45]/70">
                   {step}
                 </div>
-                <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#CBF79D]/30 text-[#043927] transition-all duration-500 group-hover:scale-110 group-hover:bg-[#043927] group-hover:text-white">
+                <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#D7FAB1] text-[#043927] transition-all duration-500 group-hover:scale-110 group-hover:bg-[#043927] group-hover:text-white">
                   <span className="material-symbols-outlined text-3xl">{icon}</span>
                 </div>
                 <h3 className="mb-4 text-2xl font-bold text-[#043927]">{title}</h3>
