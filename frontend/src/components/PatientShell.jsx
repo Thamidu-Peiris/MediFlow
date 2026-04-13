@@ -129,28 +129,13 @@ export default function PatientShell({ children }) {
           </div>
         </div>
 
-        <div className="aura-user-profile px-2">
-          <div className="aura-user-avatar">
-            {avatarImgSrc ? (
-              <img src={avatarImgSrc} alt="Profile" />
-            ) : (
-              <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold">
-                {patientInfo?.fullName?.charAt(0) || "P"}
-              </div>
-            )}
-          </div>
-          <div className="aura-user-info">
-            <p className="aura-welcome-text">Welcome back,</p>
-            <p className="aura-user-name">{patientInfo?.fullName?.split(" ")[0] || "Patient"}</p>
-          </div>
-        </div>
-
         <div className="mb-6 px-2">
           <Link
             to="/patient/doctors"
             className="aura-book-btn"
           >
-            Book Appointment
+            <span className="material-symbols-outlined">calendar_month</span>
+            <span>Book Appointment</span>
           </Link>
         </div>
 
@@ -190,7 +175,9 @@ export default function PatientShell({ children }) {
       <main className="aura-main">
         <header className="aura-topbar aura-topbar-admin">
           <div className="aura-topbar-left">
-            <span className="aura-logo" style={{ fontSize: '24px', fontWeight: 400 }}>Patient Panel</span>
+            <span className="aura-logo" style={{ fontSize: "24px", fontWeight: 400 }}>
+              {activePageTitle}
+            </span>
           </div>
           <div className="aura-topbar-right">
             <button className="aura-topbar-icon-btn">
@@ -205,7 +192,15 @@ export default function PatientShell({ children }) {
                 className="aura-topbar-profile-btn"
                 onClick={() => setProfileOpen((v) => !v)}
               >
-                <span className="material-symbols-outlined">person</span>
+                {avatarImgSrc ? (
+                  <img
+                    src={avatarImgSrc}
+                    alt="Profile"
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="material-symbols-outlined">person</span>
+                )}
               </button>
 
               {profileOpen ? (
