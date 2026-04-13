@@ -27,6 +27,9 @@ import AdminNotificationsPage from "./pages/AdminNotificationsPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import AdminSettingsPage from "./pages/AdminSettingsPage";
 import AICheckerPage from "./pages/AICheckerPage";
+import AboutUsPage from "./pages/AboutUsPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import ContactUsPage from "./pages/ContactUsPage";
 import PatientDoctorsPage from "./pages/PatientDoctorsPage";
 import PatientDoctorBookingPage from "./pages/PatientDoctorBookingPage";
 import PatientPaymentPage from "./pages/PatientPaymentPage";
@@ -52,6 +55,9 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/doctors" element={<DoctorsPage />} />
+      <Route path="/about" element={<AboutUsPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/contact" element={<ContactUsPage />} />
 
       {/* Admin Routes */}
       <Route path="/admin/bootstrap" element={<AdminBootstrapPage />} />
