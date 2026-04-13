@@ -787,20 +787,14 @@ export default function PatientPaymentPage() {
                     In your <strong>PayHere merchant portal</strong>, enable <strong>HelaPay</strong> so customers see
                     the Helakuru wallet option alongside cards.
                   </p>
-                  {import.meta.env.DEV && (
-                    <p className="rounded-lg bg-amber-500/10 px-2.5 py-2 text-xs text-amber-950 dark:text-amber-100">
-                      Development: after PayHere redirects back (success <strong>or</strong> cancel), MediFlow runs{" "}
-                      <strong>Simulate Helakuru success</strong> so the booking completes without notify_url.
-                    </p>
-                  )}
                   {helakuruMsg && <p className="text-sm text-amber-800">{helakuruMsg}</p>}
                   <button
                     type="button"
                     disabled={simBusy}
                     onClick={submitHelakuru}
-                    className="w-full rounded-full bg-gradient-to-br from-primary to-primary-container py-3 font-headline text-sm font-bold text-on-primary shadow-md transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 md:py-3.5 md:text-base"
+                    className="w-full rounded-full bg-[#0A66C2] py-3 font-headline text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] hover:bg-[#0958A8] active:scale-[0.98] disabled:opacity-50 md:py-3.5 md:text-base"
                   >
-                    {simBusy ? "Working…" : "Continue with Helakuru (PayHere)"}
+                    {simBusy ? "Working..." : "Pay Now"}
                   </button>
                   <div className="rounded-xl border border-dashed border-outline-variant/30 p-3">
                     <p className="mb-3 text-xs font-bold uppercase tracking-wider text-on-surface-variant">

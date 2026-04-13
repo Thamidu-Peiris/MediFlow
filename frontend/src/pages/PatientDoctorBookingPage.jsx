@@ -56,6 +56,7 @@ export default function PatientDoctorBookingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const doctor = location.state?.doctor || null;
+  const [bookingStep, setBookingStep] = useState(1);
 
   // ── Appointment type is now chosen FIRST ─────────────────────────────────
   const [appointmentType, setAppointmentType] = useState("physical");
@@ -260,6 +261,19 @@ export default function PatientDoctorBookingPage() {
     navigate("/patient/payment", { state: draft });
   };
 
+  const goToStepTwo = () => {
+    if (appointmentType === "online" && !hasOnlineAvailability) {
+      setBookingMsg("Online appointments are not available for this doctor.");
+      return;
+    }
+    if (appointmentType === "physical" && !hasPhysicalAvailability) {
+      setBookingMsg("In-person appointments are not available for this doctor.");
+      return;
+    }
+    setBookingMsg("");
+    setBookingStep(2);
+  };
+
   const summaryLine = useMemo(() => {
     if (!selectedDate || !selectedTime) return "—";
     const d = new Date(`${selectedDate}T12:00:00`);
@@ -305,8 +319,18 @@ export default function PatientDoctorBookingPage() {
 
   if (!doctor) return null;
 
-  const locationText =
-    doctor.clinicAddress || doctor.clinicName || doctor.hospitalName || doctor.address || "—";
+  const locationParts = [
+    doctor.clinicAddress,
+    doctor.clinicName,
+    doctor.hospitalName,
+    doctor.address,
+    doctor.location,
+    doctor.city,
+    doctor.district,
+  ]
+    .map((v) => String(v || "").trim())
+    .filter(Boolean);
+  const locationText = locationParts.length > 0 ? locationParts.join(", ") : "Clinic location will be confirmed by the doctor";
 
   // Check if doctor has online availability set at all
   const hasOnlineAvailability = Boolean(doctor.onlineAvailability?.length);
@@ -314,122 +338,241 @@ export default function PatientDoctorBookingPage() {
     doctor.physicalAvailability?.length || doctor.availability?.length
   );
 
+  const renderDoctorSidebar = () => (
+    <aside className="space-y-6 lg:col-span-4">
+      <div className="relative overflow-hidden rounded-[2rem] bg-white p-6 shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
+        <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary-fixed/20 blur-2xl" />
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="relative mb-4">
+            <img src={doctor.image} alt="" className="h-24 w-24 rounded-3xl object-cover shadow-md" />
+            <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#1D9BF0] text-white shadow-md">
+              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                verified
+              </span>
+            </div>
+          </div>
+          <h2 className="font-headline text-xl font-bold text-on-surface">{doctor.fullName}</h2>
+          <p className="text-sm font-semibold text-primary">{doctor.specialization || "General Practitioner"}</p>
+          <div className="mt-3 flex items-center justify-center space-x-2 rounded-full bg-surface-container-low px-4 py-1.5">
+            <span className="material-symbols-outlined text-sm text-[#EAB308]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              star
+            </span>
+            <span className="text-xs font-bold text-on-surface">{doctor.rating}</span>
+            <span className="text-[10px] font-medium text-slate-500 font-label">({doctor.reviewCount} reviews)</span>
+          </div>
+
+          <div className="mt-6 w-full space-y-3.5 border-t border-outline-variant/10 pt-6 text-left">
+            <div className="flex items-start">
+              <div className="mr-3 rounded-xl bg-surface-container-high p-2">
+                <span className="material-symbols-outlined text-xl text-primary">location_on</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">Location</p>
+                <p className="text-xs font-semibold text-on-surface">{locationText}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-start">
+                <div className="mr-2 rounded-xl bg-surface-container-high p-2">
+                  <span className="material-symbols-outlined text-xl text-primary">payments</span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">Fee</p>
+                  <p className="text-xs font-semibold text-on-surface">
+                    LKR {(doctor.consultationFee || 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <div className="mr-2 rounded-xl bg-surface-container-high p-2">
+                  <span
+                    className="material-symbols-outlined text-xl"
+                    style={{ color: appointmentType === "online" ? "#7c3aed" : "var(--color-primary)" }}
+                  >
+                    {appointmentType === "online" ? "videocam" : "medical_information"}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">Type</p>
+                  <p className="text-xs font-semibold text-on-surface">
+                    {appointmentType === "online" ? "Online" : "In-Person"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 w-full rounded-2xl border border-primary-fixed/20 bg-primary-fixed/10 p-4">
+            <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-widest text-primary font-label">
+              Booking summary
+            </p>
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="text-slate-600">Selected time</span>
+              <span className="font-bold text-on-surface">{summaryLine}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-600">Appointment type</span>
+              <span className="font-bold text-on-surface">
+                {appointmentType === "online" ? "Online" : "In-Person"}
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </aside>
+  );
+
   return (
     <PatientShell>
       <div className="mx-auto max-w-7xl px-4 pb-24 pt-2 font-body text-on-surface md:px-8">
 
-        {/* ── Step 1: Appointment Type (moved to top) ─────────────────────── */}
-        <div className="mb-8 rounded-3xl bg-surface-container-lowest p-6 shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
-          <div className="mb-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Step 1</p>
-            <h2 className="font-headline text-xl font-bold text-on-surface">Choose Appointment Type</h2>
-            <p className="text-sm text-on-surface-variant mt-1">
-              Select how you'd like to meet with {doctor.fullName}. Available dates will update accordingly.
-            </p>
+        {bookingStep === 1 && (
+          <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
+            <div className="lg:col-span-8">
+              <div className="rounded-3xl bg-surface-container-lowest p-6 shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Step 1</p>
+                  <h2 className="font-headline text-xl font-bold text-on-surface">Choose Appointment Type</h2>
+                  <p className="text-sm text-on-surface-variant mt-1">
+                    Select how you'd like to meet with {doctor.fullName}. Available dates will update accordingly.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 max-w-sm">
+                  <button
+                    type="button"
+                    onClick={() => setAppointmentType("physical")}
+                    disabled={!hasPhysicalAvailability}
+                    className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 py-4 px-3 text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                      appointmentType === "physical"
+                        ? "border-primary bg-primary-fixed/20 text-primary"
+                        : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-primary/40"
+                    }`}
+                  >
+                    <span
+                      className="material-symbols-outlined text-2xl"
+                      style={appointmentType === "physical" ? { fontVariationSettings: "'FILL' 1" } : {}}
+                    >
+                      local_hospital
+                    </span>
+                    <span>In-Person</span>
+                    {appointmentType === "physical" && (
+                      <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary"></span>
+                    )}
+                    {!hasPhysicalAvailability && (
+                      <span className="text-[9px] font-normal text-slate-400">Not configured</span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAppointmentType("online")}
+                    disabled={!hasOnlineAvailability}
+                    className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 py-4 px-3 text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                      appointmentType === "online"
+                        ? "border-violet-600 bg-violet-50 text-violet-700"
+                        : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-violet-300"
+                    }`}
+                  >
+                    <span
+                      className="material-symbols-outlined text-2xl"
+                      style={appointmentType === "online" ? { fontVariationSettings: "'FILL' 1", color: "#7c3aed" } : {}}
+                    >
+                      videocam
+                    </span>
+                    <span>Online</span>
+                    {appointmentType === "online" && (
+                      <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-violet-600"></span>
+                    )}
+                    {!hasOnlineAvailability && (
+                      <span className="text-[9px] font-normal text-slate-400">Not configured</span>
+                    )}
+                  </button>
+                </div>
+
+                {appointmentType === "online" && hasOnlineAvailability && (
+                  <p className="mt-3 text-xs text-violet-600 font-medium flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">videocam</span>
+                    Online — you'll receive a video call link after booking confirmation.
+                  </p>
+                )}
+                {appointmentType === "physical" && hasPhysicalAvailability && (
+                  <p className="mt-3 text-xs text-teal-700 font-medium flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">location_on</span>
+                    In-person — visit the doctor at their clinic.
+                  </p>
+                )}
+
+              </div>
+
+              <div className="mt-6 rounded-3xl bg-surface-container-lowest p-6 shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">
+                  Reason for visit (optional)
+                </label>
+                <textarea
+                  rows={4}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Briefly describe your symptoms or reason for visit..."
+                  className="w-full resize-none rounded-2xl border border-outline-variant/20 bg-white px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+
+              <div className="mt-5 flex justify-end">
+                <button
+                  type="button"
+                  onClick={goToStepTwo}
+                  className="rounded-full bg-black px-8 py-3 text-sm font-bold text-white shadow-md transition-transform hover:bg-neutral-900 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Next Step
+                </button>
+              </div>
+            </div>
+            {renderDoctorSidebar()}
           </div>
-
-          <div className="grid grid-cols-2 gap-3 max-w-sm">
-            <button
-              type="button"
-              onClick={() => setAppointmentType("physical")}
-              disabled={!hasPhysicalAvailability}
-              className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 py-4 px-3 text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                appointmentType === "physical"
-                  ? "border-primary bg-primary-fixed/20 text-primary"
-                  : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-primary/40"
-              }`}
-            >
-              <span
-                className="material-symbols-outlined text-2xl"
-                style={appointmentType === "physical" ? { fontVariationSettings: "'FILL' 1" } : {}}
-              >
-                local_hospital
-              </span>
-              <span>In-Person</span>
-              {appointmentType === "physical" && (
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary"></span>
-              )}
-              {!hasPhysicalAvailability && (
-                <span className="text-[9px] font-normal text-slate-400">Not configured</span>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setAppointmentType("online")}
-              disabled={!hasOnlineAvailability}
-              className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 py-4 px-3 text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                appointmentType === "online"
-                  ? "border-violet-600 bg-violet-50 text-violet-700"
-                  : "border-outline-variant/20 bg-white text-on-surface-variant hover:border-violet-300"
-              }`}
-            >
-              <span
-                className="material-symbols-outlined text-2xl"
-                style={appointmentType === "online" ? { fontVariationSettings: "'FILL' 1", color: "#7c3aed" } : {}}
-              >
-                videocam
-              </span>
-              <span>Online</span>
-              {appointmentType === "online" && (
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-violet-600"></span>
-              )}
-              {!hasOnlineAvailability && (
-                <span className="text-[9px] font-normal text-slate-400">Not configured</span>
-              )}
-            </button>
-          </div>
-
-          {appointmentType === "online" && hasOnlineAvailability && (
-            <p className="mt-3 text-xs text-violet-600 font-medium flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm">videocam</span>
-              Online — you'll receive a video call link after booking confirmation.
-            </p>
-          )}
-          {appointmentType === "physical" && hasPhysicalAvailability && (
-            <p className="mt-3 text-xs text-teal-700 font-medium flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm">location_on</span>
-              In-person — visit the doctor at their clinic.
-            </p>
-          )}
-        </div>
+        )}
 
         {/* ── Step 2: Date & Time ──────────────────────────────────────────── */}
+        {bookingStep === 2 && (
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
-            <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Step 2</p>
-                <h1 className="font-headline text-3xl font-extrabold tracking-tight text-on-surface">
-                  {appointmentType === "physical" ? "In-Person" : "Online"} Available Slots
-                </h1>
-                <p className="mt-1 font-body text-on-surface-variant">
-                  Select a date and time for your {appointmentType === "physical" ? "in-person visit" : "video consultation"}.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setWeekOffset((w) => w - 1)}
-                  className="rounded-full border border-outline-variant/20 bg-surface-container-lowest px-3 py-2 text-primary hover:bg-surface-container-high"
-                  aria-label="Previous week"
-                >
-                  <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-                </button>
-                <div className="flex items-center rounded-full bg-surface-container-low px-4 py-2 text-sm font-semibold text-primary">
-                  <span className="material-symbols-outlined mr-2 text-[20px]">calendar_today</span>
-                  <span>{weekRangeLabel}</span>
+            <div className="rounded-3xl border border-outline-variant/10 bg-white p-5 shadow-[0px_18px_34px_rgba(0,29,50,0.06)] md:p-6">
+              <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Step 2</p>
+                  <h1 className="font-headline text-3xl font-extrabold tracking-tight text-on-surface">
+                    {appointmentType === "physical" ? "In-Person" : "Online"} Available Slots
+                  </h1>
+                  <p className="mt-1 font-body text-on-surface-variant">
+                    Select a date and time for your {appointmentType === "physical" ? "in-person visit" : "video consultation"}.
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setWeekOffset((w) => w + 1)}
-                  className="rounded-full border border-outline-variant/20 bg-surface-container-lowest px-3 py-2 text-primary hover:bg-surface-container-high"
-                  aria-label="Next week"
-                >
-                  <span className="material-symbols-outlined text-[20px]">chevron_right</span>
-                </button>
-              </div>
-            </header>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset((w) => w - 1)}
+                    className="rounded-full border border-emerald-200 bg-emerald-100 px-3 py-2 text-emerald-700 hover:bg-emerald-200"
+                    aria-label="Previous week"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                  </button>
+                  <div className="flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700">
+                    <span className="material-symbols-outlined mr-2 text-[20px] text-emerald-700">calendar_today</span>
+                    <span>{weekRangeLabel}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset((w) => w + 1)}
+                    className="rounded-full border border-emerald-200 bg-emerald-100 px-3 py-2 text-emerald-700 hover:bg-emerald-200"
+                    aria-label="Next week"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                  </button>
+                </div>
+              </header>
+            </div>
 
             {bookingMsg && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
@@ -486,7 +629,7 @@ export default function PatientDoctorBookingPage() {
                 })}
               </div>
 
-              <div className="custom-scrollbar grid max-h-[min(70vh,720px)] grid-cols-1 gap-6 overflow-y-auto pr-1 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {[
                   { key: "morning", title: "Morning", icon: "light_mode" },
                   { key: "afternoon", title: "Afternoon", icon: "sunny" },
@@ -505,133 +648,27 @@ export default function PatientDoctorBookingPage() {
               </div>
             </div>
 
-            <div className="flex flex-col items-stretch justify-between gap-4 border-t border-outline-variant/10 pt-8 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-stretch justify-between gap-3 border-t border-outline-variant/10 pt-2 sm:flex-row sm:items-center">
               <button
                 type="button"
-                onClick={() => navigate("/patient/doctors")}
-                className="flex items-center justify-center rounded-full px-8 py-4 font-bold text-primary hover:bg-primary-fixed/20 sm:justify-start"
+                onClick={() => setBookingStep(1)}
+                className="flex items-center justify-center rounded-full border border-emerald-300 bg-emerald-200 px-8 py-3 text-sm font-bold text-emerald-900 shadow-md transition-transform hover:bg-emerald-300 hover:scale-[1.02] active:scale-[0.98] sm:justify-start"
               >
-                <span className="material-symbols-outlined mr-2">arrow_back</span>
                 Previous Step
               </button>
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="rounded-full bg-primary px-10 py-4 font-bold text-on-primary shadow-lg shadow-primary/20 transition-transform hover:scale-[1.02] active:scale-[0.99]"
+                className="rounded-full bg-black px-8 py-3 text-sm font-bold text-white shadow-md transition-transform hover:bg-neutral-900 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Continue to payment
               </button>
             </div>
           </div>
 
-          {/* Sidebar */}
-          <aside className="space-y-6 lg:col-span-4">
-            <div className="relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-[0px_20px_40px_rgba(0,29,50,0.06)]">
-              <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary-fixed/20 blur-2xl" />
-              <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="relative mb-4">
-                  <img src={doctor.image} alt="" className="h-24 w-24 rounded-3xl object-cover shadow-md" />
-                  <div className="absolute -bottom-2 -right-2 rounded-xl bg-primary p-2 text-on-primary shadow-lg">
-                    <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      verified
-                    </span>
-                  </div>
-                </div>
-                <h2 className="font-headline text-xl font-bold text-on-surface">{doctor.fullName}</h2>
-                <p className="text-sm font-semibold text-primary">{doctor.specialization || "General Practitioner"}</p>
-                <div className="mt-4 flex items-center justify-center space-x-2 rounded-full bg-surface-container-low px-4 py-1.5">
-                  <span className="material-symbols-outlined text-sm text-[#EAB308]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    star
-                  </span>
-                  <span className="text-xs font-bold text-on-surface">{doctor.rating}</span>
-                  <span className="text-[10px] font-medium text-slate-500 font-label">({doctor.reviewCount} reviews)</span>
-                </div>
-
-                <div className="mt-8 w-full space-y-4 border-t border-outline-variant/10 pt-8 text-left">
-                  <div className="flex items-start">
-                    <div className="mr-3 rounded-xl bg-surface-container-high p-2">
-                      <span className="material-symbols-outlined text-xl text-primary">location_on</span>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">Location</p>
-                      <p className="text-xs font-semibold text-on-surface">{locationText}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="mr-3 rounded-xl bg-surface-container-high p-2">
-                      <span className="material-symbols-outlined text-xl text-primary">payments</span>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">Fee</p>
-                      <p className="text-xs font-semibold text-on-surface">
-                        LKR {(doctor.consultationFee || 0).toLocaleString()} per session
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="mr-3 rounded-xl bg-surface-container-high p-2">
-                      <span
-                        className="material-symbols-outlined text-xl"
-                        style={{ color: appointmentType === "online" ? "#7c3aed" : "var(--color-primary)" }}
-                      >
-                        {appointmentType === "online" ? "videocam" : "medical_information"}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">Type</p>
-                      <p className="text-xs font-semibold text-on-surface">
-                        {appointmentType === "online" ? "Online / Video Consultation" : "In-Person Visit"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Booking summary */}
-                <div className="mt-8 w-full rounded-2xl border border-primary-fixed/20 bg-primary-fixed/10 p-4">
-                  <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-widest text-primary font-label">
-                    Booking summary
-                  </p>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-slate-600">Selected time</span>
-                    <span className="font-bold text-on-surface">{summaryLine}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-600">Appointment type</span>
-                    <span className="font-bold text-on-surface capitalize">{appointmentType}</span>
-                  </div>
-                </div>
-
-                {/* Reason for visit */}
-                <div className="mt-6 w-full text-left">
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-slate-400 font-label">
-                    Reason for visit
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    placeholder="Briefly describe your symptoms or reason for visit..."
-                    className="w-full resize-none rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-3 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="relative overflow-hidden rounded-[2rem] bg-inverse-surface p-6 text-on-primary">
-              <div className="relative z-10">
-                <h4 className="mb-2 font-headline font-bold">Need assistance?</h4>
-                <p className="mb-4 text-xs opacity-80 font-body">Our support team can help if you have trouble booking.</p>
-                <button
-                  type="button"
-                  className="w-full rounded-full bg-primary py-3 text-sm font-bold text-on-primary transition-all hover:bg-primary-container"
-                >
-                  Contact support
-                </button>
-              </div>
-              <span className="material-symbols-outlined absolute -bottom-6 -right-6 text-9xl opacity-10">support_agent</span>
-            </div>
-          </aside>
+          {renderDoctorSidebar()}
         </div>
+        )}
       </div>
     </PatientShell>
   );

@@ -5421,6 +5421,7 @@ button, .btn-primary {
   display: flex;
   min-height: 100vh;
   background: #f8fafc;
+  overflow-x: hidden;
 }
 
 /* Sidebar */
@@ -5489,24 +5490,34 @@ button, .btn-primary {
 
 /* Book Appointment Button */
 .aura-book-btn {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
   padding: 14px 20px;
-  background: #0d9488; /* teal */
-  color: white;
+  background: transparent;
+  color: #22c55e;
+  border: 2px solid #22c55e;
   border-radius: 12px;
   font-weight: 700;
   font-size: 14px;
   text-align: center;
   text-decoration: none;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
+  box-shadow: none;
 }
 
 .aura-book-btn:hover {
-  background: #0b7f77; /* darker teal */
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.45);
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border-color: #16a34a;
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: none;
+}
+
+.aura-book-btn .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .aura-brand-title {
@@ -5624,9 +5635,12 @@ button, .btn-primary {
 .aura-main {
   flex: 1;
   margin-left: 260px;
+  width: calc(100vw - 260px);
+  max-width: calc(100vw - 260px);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
 }
 
 /* Top Navigation Bar */
