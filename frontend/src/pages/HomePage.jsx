@@ -19,7 +19,7 @@ export default function HomePage() {
 
       <section className="mx-auto grid max-w-screen-2xl grid-cols-1 items-center gap-12 overflow-hidden px-8 pb-20 pt-36 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#f0fdfa] px-4 py-2 text-[#0d9488] border border-[#ccfbf1]">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[#CBF79D] px-4 py-2 text-[#356600] border border-[#356600]/10">
             <span className="material-symbols-outlined text-sm">verified</span>
             <span className="text-xs font-bold uppercase tracking-widest">Medical Excellence Redefined</span>
           </div>
@@ -62,12 +62,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white border-y border-[#e2e8f0] px-8 py-16">
-        <div className="mx-auto flex w-full max-w-screen-2xl flex-wrap items-center justify-center gap-12 px-4 md:justify-between md:px-16 lg:px-24">
-          <div className="text-center md:text-left"><p className="text-4xl font-extrabold tracking-tight text-[#0f172a]">500+</p><p className="text-sm font-bold uppercase tracking-wider text-[#0d9488]">Verified Specialists</p></div>
-          <div className="text-center md:text-left"><p className="text-4xl font-extrabold tracking-tight text-[#0f172a]">10,000+</p><p className="text-sm font-bold uppercase tracking-wider text-[#0d9488]">Happy Patients</p></div>
-          <div className="text-center md:text-left"><p className="text-4xl font-extrabold tracking-tight text-[#0f172a]">4.9/5</p><p className="text-sm font-bold uppercase tracking-wider text-[#0d9488]">Patient Rating</p></div>
-          <div className="text-center md:text-left"><p className="text-4xl font-extrabold tracking-tight text-[#0f172a]">24/7</p><p className="text-sm font-bold uppercase tracking-wider text-[#0d9488]">Care Support</p></div>
+      <section className="bg-white border-y border-[#e2e8f0] py-20">
+        <div className="mx-auto max-w-screen-2xl px-8">
+          <div className="flex flex-wrap items-center justify-between divide-y divide-[#e2e8f0] md:flex-nowrap md:divide-x md:divide-y-0">
+            {[
+              ["500+", "Verified Specialists"],
+              ["10,000+", "Happy Patients"],
+              ["4.9/5", "Patient Rating"],
+              ["24/7", "Care Support"]
+            ].map(([value, label]) => (
+              <div key={label} className="flex w-full flex-col items-center justify-center py-8 md:w-1/4 md:py-0">
+                <p className="font-headline text-5xl font-light tracking-tight text-[#396E00] lg:text-6xl">{value}</p>
+                <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#396E00]/60">{label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
