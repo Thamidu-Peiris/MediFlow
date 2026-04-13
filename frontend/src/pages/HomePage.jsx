@@ -150,42 +150,49 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="how-it-works" className="mx-auto max-w-screen-2xl px-8 py-28">
-        <div className="mb-20 text-center">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#0d9488]">The Process</span>
-          <h2 className="mt-2 font-headline text-4xl font-extrabold tracking-tight text-[#0f172a] sm:text-5xl">Simple Care Steps</h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-[#64748b]">Accessing professional medical advice has never been easier. Three steps to better health.</p>
-        </div>
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-          {[
-            ["search", "Search Doctor", "Find specialists by name, symptom, or clinic across our vast network."],
-            ["calendar_month", "Book Slot", "Select a time that works for you. Instant confirmation every time."],
-            ["video_call", "Video Consult", "Secure, HD video appointments from the comfort of your home."]
-          ].map(([icon, title, text]) => (
-            <div key={title} className="group rounded-[2rem] border border-[#e2e8f0] bg-white p-10 shadow-sm transition-all duration-500 hover:shadow-[0px_32px_64px_rgba(15,23,42,0.08)] hover:-translate-y-1">
-              <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-[#f0fdfa] text-[#0d9488] transition-transform group-hover:scale-110 group-hover:bg-[#0d9488] group-hover:text-white">
-                <span className="material-symbols-outlined text-3xl">{icon}</span>
+      <section id="how-it-works" className="bg-[#F0F0F0] py-28">
+        <div className="mx-auto max-w-screen-2xl px-8">
+          <div className="mb-20 text-center">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#356600]">The Process</span>
+            <h2 className="mt-2 font-headline text-4xl font-extrabold tracking-tight text-[#043927] sm:text-5xl">Simple Care Steps</h2>
+            <p className="mx-auto mt-4 max-w-xl text-lg text-[#043927]/60">Accessing professional medical advice has never been easier. Three steps to better health.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+            {[
+              ["1", "search", "Search Doctor", "Find specialists by name, symptom, or clinic across our vast network."],
+              ["2", "calendar_month", "Book Slot", "Select a time that works for you. Instant confirmation every time."],
+              ["3", "video_call", "Video Consult", "Secure, HD video appointments from the comfort of your home."]
+            ].map(([step, icon, title, text]) => (
+              <div key={title} className="group relative rounded-[2.5rem] border border-[#356600]/10 bg-white p-10 shadow-sm transition-all duration-500 hover:shadow-[0px_32px_64px_rgba(4,57,39,0.08)] hover:-translate-y-2">
+                <div className="absolute right-8 top-8 text-6xl font-black text-[#CBF79D]/30 transition-colors group-hover:text-[#CBF79D]/50">
+                  {step}
+                </div>
+                <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#CBF79D]/30 text-[#043927] transition-all duration-500 group-hover:scale-110 group-hover:bg-[#043927] group-hover:text-white">
+                  <span className="material-symbols-outlined text-3xl">{icon}</span>
+                </div>
+                <h3 className="mb-4 text-2xl font-bold text-[#043927]">{title}</h3>
+                <p className="text-lg leading-relaxed text-[#043927]/70">{text}</p>
               </div>
-              <h3 className="mb-4 text-2xl font-bold text-[#0f172a]">{title}</h3>
-              <p className="text-lg leading-relaxed text-[#475569]">{text}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      <section id="specialties" className="bg-white border-y border-[#e2e8f0] px-8 py-28">
+      <section id="specialties" className="bg-[#fcfdfa] border-y border-[#356600]/10 px-8 py-28">
         <div className="mx-auto max-w-screen-2xl">
           <div className="mb-20 text-center">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#0d9488]">Departments</span>
-            <h2 className="mt-2 font-headline text-4xl font-extrabold tracking-tight text-[#0f172a] sm:text-5xl">Browse Specialties</h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-[#64748b]">Expertise across all major medical fields. Connect with the right specialist for your specific needs.</p>
+            <span className="text-xs font-bold uppercase tracking-widest text-[#356600]">Departments</span>
+            <h2 className="mt-2 font-headline text-4xl font-extrabold tracking-tight text-[#043927] sm:text-5xl">Browse Specialties</h2>
+            <p className="mx-auto mt-4 max-w-xl text-lg text-[#043927]/60">Expertise across all major medical fields. Connect with the right specialist for your specific needs.</p>
           </div>
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4 lg:gap-8">
             {specialties.map((s) => (
-              <div key={s.title} className="group cursor-pointer rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] p-8 transition-all hover:bg-white hover:shadow-[0px_24px_48px_rgba(15,23,42,0.08)] hover:-translate-y-1">
-                <span className="material-symbols-outlined mb-6 block text-4xl text-[#0d9488] transition-transform group-hover:scale-110">{s.icon}</span>
-                <h4 className="mb-2 text-xl font-bold text-[#0f172a]">{s.title}</h4>
-                <p className="text-sm font-medium text-[#64748b]">{s.subtitle}</p>
+              <div key={s.title} className="group cursor-pointer rounded-3xl border border-[#356600]/5 bg-white p-8 transition-all duration-500 hover:border-[#356600]/20 hover:shadow-[0px_24px_48px_rgba(53,102,0,0.06)] hover:-translate-y-1">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#CBF79D]/20 text-[#356600] transition-all duration-500 group-hover:bg-[#356600] group-hover:text-white">
+                  <span className="material-symbols-outlined text-3xl">{s.icon}</span>
+                </div>
+                <h4 className="mb-2 text-xl font-bold text-[#043927]">{s.title}</h4>
+                <p className="text-sm font-medium text-[#043927]/50">{s.subtitle}</p>
               </div>
             ))}
           </div>
