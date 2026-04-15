@@ -159,6 +159,45 @@ exports.addNotes = async (req, res) => {
     }
 };
 
+exports.addChatMessage = async (req, res) => {
+    try {
+        const { text, role, senderName } = req.body;
+        if (!text) return res.status(400).json({ message: "Message text is required" });
+
+        const session = await Session.findByIdAndUpdate(
+            req.params.id,
+            {
+                $push: {
+                    chatMessages: {
+                        text,
+                        role,
+                        senderId: req.user.sub,
+                        senderName: senderName || req.user.name,
+                        time: new Date()
+                    }
+                }
+            },
+            { new: true }
+        );
+
+        if (!session) return res.status(404).json({ message: "Session not found" });
+        return res.status(200).json({ chatMessages: session.chatMessages });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Failed to add message" });
+    }
+};
+
+exports.getChatMessages = async (req, res) => {
+    try {
+        const session = await Session.findById(req.params.id).select("chatMessages");
+        if (!session) return res.status(404).json({ message: "Session not found" });
+        return res.status(200).json({ chatMessages: session.chatMessages || [] });
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch messages" });
+    }
+};
+
 exports.generateToken = (req, res) => {
     try {
         const { channelName, uid } = req.query;
