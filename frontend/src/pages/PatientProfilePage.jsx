@@ -627,7 +627,7 @@ export default function PatientProfilePage() {
               </div>
             </div>
 
-            <div className="symptom-checker-card clickable" onClick={() => window.location.href = '/ai-checker'}>
+            <div className="symptom-checker-card clickable" onClick={() => window.location.href = '/patient/ai-checker'}>
               <div className="checker-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
@@ -635,7 +635,7 @@ export default function PatientProfilePage() {
               </div>
               <h4>Try Symptom Checker</h4>
               <p>Check your symptoms and get instant AI-powered insights</p>
-              <button className="checker-btn" onClick={(e) => { e.stopPropagation(); window.location.href = '/ai-checker'; }}>Start Check</button>
+              <button className="checker-btn" onClick={(e) => { e.stopPropagation(); window.location.href = '/patient/ai-checker'; }}>Start Check</button>
             </div>
           </div>
         </div>
