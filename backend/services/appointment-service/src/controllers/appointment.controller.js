@@ -10,45 +10,45 @@ const DOCTOR_SERVICE_URL = process.env.DOCTOR_SERVICE_URL || "http://localhost:8
 // - userId
 // - fullName
 const PatientRef =
-  mongoose.models.PatientRef ||
-  mongoose.model(
-    "PatientRef",
-    new mongoose.Schema(
-      {
-        userId: { type: String, index: true },
-        fullName: { type: String },
-        avatar: { type: String, default: "" },
-        dob: { type: Date, default: null },
-        gender: { type: String, default: "" },
-        bloodType: { type: String, default: "" },
-        age: { type: Number, default: null }
-      },
-      { collection: "patients" }
-    )
-  );
+    mongoose.models.PatientRef ||
+    mongoose.model(
+        "PatientRef",
+        new mongoose.Schema(
+            {
+                userId: { type: String, index: true },
+                fullName: { type: String },
+                avatar: { type: String, default: "" },
+                dob: { type: Date, default: null },
+                gender: { type: String, default: "" },
+                bloodType: { type: String, default: "" },
+                age: { type: Number, default: null }
+            },
+            { collection: "patients" }
+        )
+    );
 
 function calcAge(dob) {
-  if (!dob) return null;
-  const birthDate = new Date(dob);
-  if (Number.isNaN(birthDate.getTime())) return null;
-  const now = new Date();
-  let age = now.getFullYear() - birthDate.getFullYear();
-  const monthDiff = now.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
+    if (!dob) return null;
+    const birthDate = new Date(dob);
+    if (Number.isNaN(birthDate.getTime())) return null;
+    const now = new Date();
+    let age = now.getFullYear() - birthDate.getFullYear();
+    const monthDiff = now.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
 }
 
 function toMinutes12h(timeLabel = "") {
-  const m = String(timeLabel).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (!m) return null;
-  let h = Number(m[1]);
-  const min = Number(m[2]);
-  const ampm = m[3].toUpperCase();
-  if (h === 12) h = 0;
-  if (ampm === "PM") h += 12;
-  return h * 60 + min;
+    const m = String(timeLabel).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m) return null;
+    let h = Number(m[1]);
+    const min = Number(m[2]);
+    const ampm = m[3].toUpperCase();
+    if (h === 12) h = 0;
+    if (ampm === "PM") h += 12;
+    return h * 60 + min;
 }
 
 // ── Public (no auth) ──────────────────────────────────────────────────────────
@@ -320,53 +320,53 @@ exports.listDoctorAppointments = async (req, res) => {
         const patientIds = Array.from(new Set(appointments.map((a) => a.patientId).filter(Boolean)));
 
         const patientRows = patientIds.length
-          ? await PatientRef.find({ userId: { $in: patientIds } }).select(
-              "userId fullName avatar dob gender bloodType age"
+            ? await PatientRef.find({ userId: { $in: patientIds } }).select(
+                "userId fullName avatar dob gender bloodType age"
             )
-          : [];
+            : [];
 
         const patientById = {};
         for (const p of patientRows) {
-          patientById[String(p.userId)] = p;
+            patientById[String(p.userId)] = p;
         }
 
         // Persist minimal fields backfill (patientName/sessionId/notes) if missing.
         const toBackfill = appointments.filter(
-          (a) => !a.patientName || a.patientName === "Patient" || !a.sessionId || !a.notes
+            (a) => !a.patientName || a.patientName === "Patient" || !a.sessionId || !a.notes
         );
 
         if (toBackfill.length) {
-          await Promise.all(
-            toBackfill.map(async (a) => {
-              const set = {};
+            await Promise.all(
+                toBackfill.map(async (a) => {
+                    const set = {};
 
-              const patient = patientById[String(a.patientId)];
+                    const patient = patientById[String(a.patientId)];
 
-              if (!a.patientName || a.patientName === "Patient") {
-                set.patientName = patient?.fullName || "Patient";
-              }
-              if (!a.sessionId) set.sessionId = String(a._id);
-              if (!a.notes) set.notes = a.reason || "Consultation paid";
+                    if (!a.patientName || a.patientName === "Patient") {
+                        set.patientName = patient?.fullName || "Patient";
+                    }
+                    if (!a.sessionId) set.sessionId = String(a._id);
+                    if (!a.notes) set.notes = a.reason || "Consultation paid";
 
-              a.patientName = set.patientName ?? a.patientName;
-              a.sessionId = set.sessionId ?? a.sessionId;
-              a.notes = set.notes ?? a.notes;
+                    a.patientName = set.patientName ?? a.patientName;
+                    a.sessionId = set.sessionId ?? a.sessionId;
+                    a.notes = set.notes ?? a.notes;
 
-              return Appointment.updateOne({ _id: a._id }, { $set: set });
-            })
-          );
+                    return Appointment.updateOne({ _id: a._id }, { $set: set });
+                })
+            );
         }
 
         // Attach enrichment fields for response without changing appointment schema.
         for (const a of appointments) {
-          const patient = patientById[String(a.patientId)];
-          a.patientImage = patient?.avatar || a.patientImage || "";
-          a.patientGender = patient?.gender || a.patientGender || "";
-          a.bloodType = patient?.bloodType || a.bloodType || "";
-          // Prefer explicit `patients.age` (exists in patient schema) over `dob` calculation.
-          a.patientAge = patient?.age != null ? patient.age : calcAge(patient?.dob);
-          // Always set patientName from patient profile when available.
-          a.patientName = patient?.fullName || a.patientName || "Patient";
+            const patient = patientById[String(a.patientId)];
+            a.patientImage = patient?.avatar || a.patientImage || "";
+            a.patientGender = patient?.gender || a.patientGender || "";
+            a.bloodType = patient?.bloodType || a.bloodType || "";
+            // Prefer explicit `patients.age` (exists in patient schema) over `dob` calculation.
+            a.patientAge = patient?.age != null ? patient.age : calcAge(patient?.dob);
+            // Always set patientName from patient profile when available.
+            a.patientName = patient?.fullName || a.patientName || "Patient";
         }
 
         return res.status(200).json({ appointments });
@@ -386,6 +386,20 @@ exports.acceptAppointment = async (req, res) => {
         if (!appointment) {
             return res.status(404).json({ message: "Appointment not found or already processed" });
         }
+
+        // Trigger Notification Service asynchronously
+        axios.post("http://notification-service:8005/api/notifications/send", {
+            type: "APPOINTMENT_BOOKED",
+            doctorEmail: req.user?.email || "doc@example.com",
+            doctorPhone: "+11234567890", // Defaulting to mock formatted phone
+            patientEmail: `patient_${appointment.patientId || "000"}@example.com`,
+            patientPhone: "+10987654321",
+            payload: {
+                appointmentId: appointment._id,
+                date: appointment.date,
+                time: appointment.time
+            }
+        }).catch(err => console.error("[Appointment] Notification trigger failed:", err.message));
 
         return res.status(200).json({ appointment });
     } catch (error) {
