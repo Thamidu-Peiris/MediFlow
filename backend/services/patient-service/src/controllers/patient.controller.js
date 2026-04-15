@@ -138,7 +138,8 @@ exports.getMyProfile = async (req, res) => {
   try {
     const patient = await Patient.findOne({ userId: req.user.sub });
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      // Return null profile instead of 404 to allow frontend to handle "create profile" state
+      return res.status(200).json({ patient: null });
     }
     return res.status(200).json({ patient: serializePatientForClient(patient) });
   } catch (error) {
@@ -196,12 +197,16 @@ exports.uploadReport = async (req, res) => {
       );
     }
 
-    const patient = await Patient.findOne({ userId: req.user.sub });
+    let patient = await Patient.findOne({ userId: req.user.sub });
     if (!patient) {
-      req._uploadStep?.("05_reject_no_patient_profile", { userId: req.user.sub });
-      return res
-        .status(404)
-        .json(attachTraceToJsonPayload(req, { message: "Create profile before uploading reports" }));
+      req._uploadStep?.("05_auto_create_patient", { userId: req.user.sub });
+      // Create a basic patient profile automatically if it doesn't exist
+      patient = new Patient({
+        userId: req.user.sub,
+        fullName: req.user.name || "Patient",
+        email: req.user.email || ""
+      });
+      await patient.save();
     }
 
     req._uploadStep?.("05_patient_found", { patientId: String(patient._id) });
@@ -459,10 +464,13 @@ exports.streamAvatar = async (req, res) => {
 };
 
 exports.listReports = async (req, res) => {
+  console.log("[DEBUG] listReports entry. User:", req.user?.sub);
   try {
     const patient = await Patient.findOne({ userId: req.user.sub }).select("reports");
+    console.log("[DEBUG] listReports patient found:", !!patient);
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      console.log("[DEBUG] listReports: No patient record. Returning empty reports array.");
+      return res.status(200).json({ reports: [] });
     }
 
     res.setHeader("X-MediFlow-Upload-Engine", preferredUploadEngine());
@@ -572,7 +580,12 @@ exports.getHistory = async (req, res) => {
       "medicalHistory appointments prescriptions"
     );
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      return res.status(200).json({
+        medicalHistory: [],
+        diagnoses: [],
+        prescriptions: [],
+        appointments: []
+      });
     }
     const diagnoses = (patient.appointments || [])
       .map((item) => item.diagnosis)
@@ -590,10 +603,13 @@ exports.getHistory = async (req, res) => {
 };
 
 exports.getPrescriptions = async (req, res) => {
+  console.log("[DEBUG] getPrescriptions entry. User:", req.user?.sub);
   try {
     const patient = await Patient.findOne({ userId: req.user.sub }).select("prescriptions");
+    console.log("[DEBUG] getPrescriptions patient found:", !!patient);
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      console.log("[DEBUG] getPrescriptions: No patient record. Returning empty prescriptions array.");
+      return res.status(200).json({ prescriptions: [] });
     }
     return res.status(200).json({ prescriptions: patient.prescriptions || [] });
   } catch (error) {
@@ -765,7 +781,7 @@ exports.setEmergencyContact = async (req, res) => {
     const phone = String(req.body.phone || "").trim();
     const patient = await Patient.findOne({ userId: req.user.sub });
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      return res.status(200).json({ patient: null });
     }
     patient.emergencyContact = { name, relationship, phone };
     await patient.save();
@@ -780,7 +796,7 @@ exports.clearEmergencyContact = async (req, res) => {
   try {
     const patient = await Patient.findOne({ userId: req.user.sub });
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      return res.status(200).json({ patient: null });
     }
     patient.emergencyContact = { name: "", relationship: "", phone: "" };
     await patient.save();

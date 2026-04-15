@@ -4,7 +4,7 @@ const multer = require("multer");
 const {
   upsertProfile,
   getMyProfile,
-  getPatientProfile, // Add this
+  getPatientProfile,
   uploadReport,
   uploadAvatar,
   streamReportFile,
@@ -31,8 +31,6 @@ const diagnostics = require("../controllers/diagnostics.controller");
 
 const router = express.Router();
 
-// Gateway: http://localhost:8081/api/patients/health  →  /health on this service
-//          http://localhost:8081/api/patients/build   →  /build
 router.get("/health", diagnostics.health);
 router.get("/medi-flow-build", diagnostics.buildInfo);
 router.get("/build", diagnostics.buildInfo);
@@ -84,23 +82,14 @@ function handleMulter(mw) {
   };
 }
 
+// Fixed-path routes first
 router.get("/me", verifyAuth, requirePatientRole, getMyProfile);
-router.get("/:patientId", verifyAuth, getPatientProfile); // Add this for doctor access
-/* Prefer /me/health/... through the gateway — avoids any clash with service GET /health (diagnostics). */
-router.put("/me/health/emergency-contact", verifyAuth, requirePatientRole, setEmergencyContact);
-router.delete("/me/health/emergency-contact", verifyAuth, requirePatientRole, clearEmergencyContact);
-router.post("/me/health/:section", verifyAuth, requirePatientRole, addHealthItem);
-router.put("/me/health/:section/:itemId", verifyAuth, requirePatientRole, updateHealthItem);
-router.delete("/me/health/:section/:itemId", verifyAuth, requirePatientRole, deleteHealthItem);
-/* Legacy aliases (same handlers) */
-router.put("/health/emergency-contact", verifyAuth, requirePatientRole, setEmergencyContact);
-router.delete("/health/emergency-contact", verifyAuth, requirePatientRole, clearEmergencyContact);
-router.post("/health/:section", verifyAuth, requirePatientRole, addHealthItem);
-router.put("/health/:section/:itemId", verifyAuth, requirePatientRole, updateHealthItem);
-router.delete("/health/:section/:itemId", verifyAuth, requirePatientRole, deleteHealthItem);
+router.get("/profiles/me", verifyAuth, requirePatientRole, getMyProfile);
+router.post("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
+router.put("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
 router.put("/update-profile", verifyAuth, requirePatientRole, upsertProfile);
-router.delete("/delete-account", verifyAuth, requirePatientRole, deleteAccount);
-router.get("/avatar/me", verifyAuth, requirePatientRole, streamAvatar);
+
+router.get("/reports", verifyAuth, requirePatientRole, listReports);
 router.get("/reports/:id/download", verifyAuth, requirePatientRole, streamReportFile);
 router.post(
   "/upload-report",
@@ -112,23 +101,6 @@ router.post(
   uploadReport
 );
 router.post(
-  "/upload-avatar",
-  verifyAuth,
-  requirePatientRole,
-  handleMulter(uploadAvatarMw.single("avatar")),
-  uploadAvatar
-);
-router.get("/reports", verifyAuth, requirePatientRole, listReports);
-router.delete("/reports/:id", verifyAuth, requirePatientRole, deleteReport);
-router.get("/history", verifyAuth, requirePatientRole, getHistory);
-router.get("/prescriptions", verifyAuth, requirePatientRole, getPrescriptions);
-router.post("/prescriptions/sync", verifyAuth, syncPrescription);
-router.get("/appointments", verifyAuth, requirePatientRole, getAppointments);
-
-router.get("/profiles/me", verifyAuth, requirePatientRole, getMyProfile);
-router.post("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
-router.put("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
-router.post(
   "/reports/upload",
   verifyAuth,
   requirePatientRole,
@@ -137,5 +109,37 @@ router.post(
   afterReportMulter,
   uploadReport
 );
+router.delete("/reports/:id", verifyAuth, requirePatientRole, deleteReport);
+
+router.get("/history", verifyAuth, requirePatientRole, getHistory);
+router.get("/prescriptions", verifyAuth, requirePatientRole, getPrescriptions);
+router.post("/prescriptions/sync", verifyAuth, syncPrescription);
+router.get("/appointments", verifyAuth, requirePatientRole, getAppointments);
+
+router.get("/avatar/me", verifyAuth, requirePatientRole, streamAvatar);
+router.post(
+  "/upload-avatar",
+  verifyAuth,
+  requirePatientRole,
+  handleMulter(uploadAvatarMw.single("avatar")),
+  uploadAvatar
+);
+
+router.put("/me/health/emergency-contact", verifyAuth, requirePatientRole, setEmergencyContact);
+router.delete("/me/health/emergency-contact", verifyAuth, requirePatientRole, clearEmergencyContact);
+router.post("/me/health/:section", verifyAuth, requirePatientRole, addHealthItem);
+router.put("/me/health/:section/:itemId", verifyAuth, requirePatientRole, updateHealthItem);
+router.delete("/me/health/:section/:itemId", verifyAuth, requirePatientRole, deleteHealthItem);
+
+router.put("/health/emergency-contact", verifyAuth, requirePatientRole, setEmergencyContact);
+router.delete("/health/emergency-contact", verifyAuth, requirePatientRole, clearEmergencyContact);
+router.post("/health/:section", verifyAuth, requirePatientRole, addHealthItem);
+router.put("/health/:section/:itemId", verifyAuth, requirePatientRole, updateHealthItem);
+router.delete("/health/:section/:itemId", verifyAuth, requirePatientRole, deleteHealthItem);
+
+router.delete("/delete-account", verifyAuth, requirePatientRole, deleteAccount);
+
+// Generic parameter routes last
+router.get("/:patientId", verifyAuth, getPatientProfile);
 
 module.exports = router;
