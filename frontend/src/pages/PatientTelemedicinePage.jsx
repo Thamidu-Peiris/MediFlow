@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import PatientShell from "../components/PatientShell";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -29,21 +29,11 @@ export default function PatientTelemedicinePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authHeaders]);
 
-  const openRoomByCode = async (roomCode) => {
-    if (!roomCode) return;
-    try {
-      await api.get(`/telemedicine/room/${roomCode}`, authHeaders);
-      setActiveRoom(roomCode);
-    } catch (err) {
-      setMessage(err?.response?.data?.message || "Invalid or unavailable room");
-    }
+  const joinVideoCall = (session) => {
+    const peerName = encodeURIComponent(session.doctorName || "Doctor");
+    const videoCallUrl = `/video-call?channel=${session.roomId}&role=patient&peer=${peerName}`;
+    window.open(videoCallUrl, '_blank');
   };
-
-  const roomUrl = useMemo(() => {
-    if (!activeRoom) return "";
-    const safeName = encodeURIComponent(user?.name || "Patient");
-    return `https://meet.jit.si/MediFlow_${activeRoom}#userInfo.displayName="${safeName}"`;
-  }, [activeRoom, user?.name]);
 
   if (activeRoom) {
     return (
@@ -80,12 +70,31 @@ export default function PatientTelemedicinePage() {
         </div>
 
         <div style={{ flex: 1 }}>
-          <iframe
-            src={roomUrl}
-            allow="camera; microphone; fullscreen; display-capture"
-            style={{ width: "100%", height: "100%", border: "none" }}
-            title="Patient Telemedicine"
-          />
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100%",
+            color: "#ffffff",
+            textAlign: "center"
+          }}>
+            <div style={{
+              background: "rgba(255,255,255,0.1)",
+              padding: "2rem",
+              borderRadius: "12px",
+              border: "1px solid rgba(255,255,255,0.2)",
+              maxWidth: "400px"
+            }}>
+              <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.2rem" }}>In Video Call</h3>
+              <p style={{ margin: "0 0 1.5rem 0", opacity: 0.8 }}>
+                You are currently connected to the video consultation room.
+              </p>
+              <p style={{ fontSize: "0.9rem", opacity: 0.6 }}>
+                Room ID: <strong>{activeRoom}</strong>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -138,8 +147,8 @@ export default function PatientTelemedicinePage() {
                   </p>
                   <div className="pd-actions" style={{ marginTop: 8 }}>
                     {(s.status === "waiting" || s.status === "active") && (
-                      <button type="button" onClick={() => openRoomByCode(s.roomId)}>
-                        Join Room
+                      <button type="button" onClick={() => joinVideoCall(s)}>
+                        Join Video Call
                       </button>
                     )}
                     {s.status === "ended" && <span className="muted">Session ended</span>}

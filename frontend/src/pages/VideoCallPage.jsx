@@ -7,6 +7,9 @@ import { useAuth } from "../context/AuthContext";
 /* Silence Agora's verbose console output in production */
 AgoraRTC.setLogLevel(4);
 
+/* Agora Configuration */
+const AGORA_APP_ID = "813878b01fed414a85775bdf1796deb6";
+
 export default function VideoCallPage() {
   const [searchParams] = useSearchParams();
   const channel  = searchParams.get("channel")  || "";
@@ -14,6 +17,16 @@ export default function VideoCallPage() {
   const peerName = searchParams.get("peer")     || (role === "doctor" ? "Patient" : "Doctor");
 
   const { authHeaders } = useAuth();
+
+  /* Enhanced features state */
+  const [activeTab, setActiveTab] = useState("notes"); // chat | notes | reports
+  const [showSidePanel, setShowSidePanel] = useState(true);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [prescriptions, setPrescriptions] = useState([
+    { id: 1, name: "Ferrous Sulfate (Iron Supplement)", dosage: "65 mg", frequency: "Once Daily" }
+  ]);
+  const [observationNotes, setObservationNotes] = useState("Patient reports persistent fatigue and occasional dizziness for the last 3 weeks. Symptoms seem to worsen in the late afternoon. No history of cardiovascular issues.");
 
   /* ── state ─────────────────────────────────────────────────────── */
   const [phase,      setPhase]      = useState("idle");   // idle | joining | live | ended | error
@@ -44,10 +57,9 @@ export default function VideoCallPage() {
 
     (async () => {
       try {
-        /* 1 — fetch Agora App ID from backend */
-        const cfg = await api.get("/telemedicine/agora-config", authHeaders);
-        const appId = cfg.data?.appId;
-        if (!appId) throw new Error("Agora App ID not configured on the server.");
+        /* 1 — use Agora App ID directly */
+        const appId = AGORA_APP_ID;
+        if (!appId) throw new Error("Agora App ID not configured.");
 
         /* 2 — create Agora client */
         const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
@@ -73,11 +85,16 @@ export default function VideoCallPage() {
 
         client.on("user-left", () => setHasRemote(false));
 
-        /* 4 — join channel (no token = App ID only mode) */
+        /* 4 — fetch token for secure authentication */
         const uid = Math.floor(Math.random() * 99000) + 1000;
-        await client.join(appId, channel, null, uid);
+        const tokenRes = await api.get(`/telemedicine/token?channelName=${channel}&uid=${uid}&role=publisher`, authHeaders);
+        const token = tokenRes.data?.token;
+        if (!token) throw new Error("Failed to generate authentication token.");
+        
+        /* 5 — join channel with token */
+        await client.join(appId, channel, token, uid);
 
-        /* 5 — create local audio + video tracks */
+        /* 6 — create local audio + video tracks */
         const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
           {},
           { encoderConfig: "720p_1" }
@@ -90,12 +107,12 @@ export default function VideoCallPage() {
         if (cancelled) return;
         setPhase("live");
 
-        /* 6 — play local video in PiP */
+        /* 7 — play local video in PiP */
         if (localDivRef.current) {
           videoTrack.play(localDivRef.current);
         }
 
-        /* 7 — start elapsed timer */
+        /* 8 — start elapsed timer */
         timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
       } catch (err) {
         if (!cancelled) {
@@ -141,6 +158,17 @@ export default function VideoCallPage() {
 
   const fmt = (s) =>
     `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) return;
+    const msg = {
+      text: newMessage,
+      role: role,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setChatMessages([...chatMessages, msg]);
+    setNewMessage("");
+  };
 
   /* ── UI states ─────────────────────────────────────────────────── */
   if (phase === "error") {
@@ -204,6 +232,17 @@ export default function VideoCallPage() {
             {role === "doctor" ? "Doctor Console" : "Patient View"}
           </span>
         </div>
+
+        {/* Workspace toggle (only if panel is hidden) */}
+        {phase === "live" && !showSidePanel && (
+          <button
+            onClick={() => setShowSidePanel(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#006566] text-white text-xs font-bold shadow-lg hover:bg-[#004f51] transition-all"
+          >
+            <span className="material-symbols-outlined text-sm">dock_to_left</span>
+            Open Workspace
+          </button>
+        )}
 
         {phase === "live" && (
           <div className="flex items-center gap-3">
@@ -308,6 +347,198 @@ export default function VideoCallPage() {
             <span className="text-sm font-semibold text-white/80">{peerName}</span>
           </div>
         </div>
+      )}
+
+      {/* ── Enhanced Side Panel (Doctor & Patient) ───────────────── */}
+      {phase === "live" && showSidePanel && (
+        <aside className="absolute top-0 right-0 h-full w-[400px] bg-white border-l border-slate-200 z-40 flex flex-col shadow-2xl">
+          {/* Panel Tabs (Design Match) */}
+          <nav className="flex items-center gap-2 px-4 py-4 border-b border-slate-100 bg-white">
+            {[
+              { id: "chat", icon: "chat", label: "Chat" },
+              { id: "notes", icon: "medical_information", label: role === "doctor" ? "Notes" : "Health" },
+              { id: "reports", icon: "description", label: "Reports" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === tab.id 
+                    ? "bg-[#006566] text-white shadow-lg shadow-teal-900/20" 
+                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+            
+            <button 
+              onClick={() => setShowSidePanel(false)}
+              className="ml-auto flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"
+            >
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </nav>
+
+          <div className="flex-1 overflow-y-auto p-5 space-y-6">
+            {activeTab === "notes" && (
+              <>
+                {/* Observation Notes Section */}
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-bold text-slate-800">
+                      {role === "doctor" ? "Observation Notes" : "Medical Summary"}
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-[10px] text-teal-600 font-bold bg-teal-50 px-2 py-1 rounded-full">
+                      <span className="material-symbols-outlined text-sm">cloud_done</span>
+                      Auto-saved 14:22
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                      {observationNotes}
+                    </p>
+                    <div className="pl-3 border-l-2 border-teal-200 italic text-sm text-teal-700/70">
+                      Advised blood panel focusing on iron levels and Vitamin D.
+                    </div>
+                    <div className="flex gap-2 pt-2 border-t border-slate-50">
+                      <span className="px-2 py-1 bg-slate-100 text-[10px] rounded font-bold text-slate-500 uppercase tracking-tight">Fatigue</span>
+                      <span className="px-2 py-1 bg-slate-100 text-[10px] rounded font-bold text-slate-500 uppercase tracking-tight">Routine Follow-up</span>
+                    </div>
+                  </div>
+                </section>
+
+                {/* E-Prescription Section */}
+                <section className="bg-teal-50/30 p-5 rounded-3xl border border-teal-100/50 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-teal-600" style={{ fontVariationSettings: "'FILL' 1" }}>medication</span>
+                    <h3 className="text-base font-bold text-teal-900">E-Prescription</h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {prescriptions.map((p) => (
+                      <div key={p.id} className="space-y-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-teal-700/60 uppercase ml-1 tracking-wider">Medicine Name</label>
+                          <div className="bg-white border border-teal-100 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700">
+                            {p.name}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-teal-700/60 uppercase ml-1 tracking-wider">Dosage</label>
+                            <div className="bg-white border border-teal-100 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700">
+                              {p.dosage}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-teal-700/60 uppercase ml-1 tracking-wider">Frequency</label>
+                            <div className="bg-white border border-teal-100 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700">
+                              {p.frequency}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {role === "doctor" && (
+                      <button className="w-full py-3 bg-teal-700 text-white rounded-2xl text-xs font-bold hover:bg-teal-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-900/10">
+                        <span className="material-symbols-outlined text-sm">add</span>
+                        Add Another Medication
+                      </button>
+                    )}
+                  </div>
+                </section>
+              </>
+            )}
+
+            {activeTab === "chat" && (
+              <div className="flex flex-col h-[calc(100vh-180px)]">
+                <div className="flex-1 space-y-4 overflow-y-auto">
+                  {chatMessages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-2">
+                      <span className="material-symbols-outlined text-4xl opacity-20">chat_bubble</span>
+                      <p className="text-sm font-medium">No messages yet</p>
+                    </div>
+                  ) : (
+                    chatMessages.map((msg, idx) => (
+                      <div key={idx} className={`flex flex-col ${msg.role === role ? "items-end" : "items-start"}`}>
+                        <div className={`max-w-[85%] px-4 py-2 rounded-2xl text-sm ${
+                          msg.role === role ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-700"
+                        }`}>
+                          {msg.text}
+                        </div>
+                        <span className="text-[10px] text-slate-400 mt-1 px-1">{msg.time}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder="Type message..."
+                    className="flex-1 bg-slate-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500 transition-all"
+                  />
+                  <button 
+                    onClick={handleSendMessage}
+                    className="p-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-sm">send</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "reports" && (
+              <section className="space-y-4">
+                <h3 className="text-sm font-bold text-slate-800 px-1">Shared Files (2)</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm group cursor-pointer hover:border-teal-200 transition-all">
+                    <div className="w-10 h-10 bg-red-50 flex items-center justify-center rounded-xl text-red-500">
+                      <span className="material-symbols-outlined">picture_as_pdf</span>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-xs font-bold text-slate-700 truncate">Blood_Test_Result_Oct.pdf</p>
+                      <p className="text-[10px] text-slate-400 font-medium">Shared 5m ago • 1.2 MB</p>
+                    </div>
+                    <span className="material-symbols-outlined text-slate-300 text-lg group-hover:text-teal-500">visibility</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm group cursor-pointer hover:border-teal-200 transition-all">
+                    <div className="w-10 h-10 bg-blue-50 flex items-center justify-center rounded-xl text-blue-500">
+                      <span className="material-symbols-outlined">description</span>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-xs font-bold text-slate-700 truncate">Patient_History_Summary.docx</p>
+                      <p className="text-[10px] text-slate-400 font-medium">System generated • 840 KB</p>
+                    </div>
+                    <span className="material-symbols-outlined text-slate-300 text-lg group-hover:text-teal-500">download</span>
+                  </div>
+                </div>
+
+                <div className="mt-6 border-2 border-dashed border-slate-100 rounded-3xl p-8 flex flex-col items-center justify-center text-center hover:bg-slate-50 hover:border-teal-200 transition-all cursor-pointer group">
+                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-teal-50 transition-all">
+                    <span className="material-symbols-outlined text-slate-400 group-hover:text-teal-600">upload_file</span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-600">Drag or click to upload report</p>
+                  <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">PDF, JPG up to 10MB</p>
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* Footer Action */}
+          <div className="p-5 border-t border-slate-100 bg-slate-50/30">
+            <button className="w-full py-4 bg-teal-100/50 text-teal-800 font-bold rounded-2xl hover:bg-teal-100 transition-all flex items-center justify-center gap-2">
+              <span className="material-symbols-outlined text-lg">assignment_turned_in</span>
+              Finalize & Send Summary
+            </button>
+          </div>
+        </aside>
       )}
 
       {/* ── Control bar ──────────────────────────────────────────── */}

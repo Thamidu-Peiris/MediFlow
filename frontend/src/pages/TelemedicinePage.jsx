@@ -47,13 +47,13 @@ export default function TelemedicinePage() {
         }
     };
 
-    const joinVideo = (roomId) => {
-        setActiveRoom(roomId);
+    const joinVideoCall = (session) => {
+        const peerName = encodeURIComponent(session.patientName || "Patient");
+        const videoCallUrl = `/video-call?channel=${session.roomId}&role=doctor&peer=${peerName}`;
+        window.open(videoCallUrl, '_blank');
     };
 
     if (activeRoom) {
-        // A VERY simple mock video UI embedding Jitsi (no auth needed for testing)
-        const roomUrl = `https://meet.jit.si/MediFlow_${activeRoom}#userInfo.displayName="${user.name}"`;
         return (
             <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#111" }}>
                 <div style={{ background: "#222", color: "#fff", padding: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -69,12 +69,31 @@ export default function TelemedicinePage() {
                     </button>
                 </div>
                 <div style={{ flex: 1 }}>
-                    <iframe
-                        src={roomUrl}
-                        allow="camera; microphone; fullscreen; display-capture"
-                        style={{ width: "100%", height: "100%", border: "none" }}
-                        title="Telemedicine Video"
-                    />
+                    <div style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100%",
+                        color: "#ffffff",
+                        textAlign: "center"
+                    }}>
+                        <div style={{
+                            background: "rgba(255,255,255,0.1)",
+                            padding: "2rem",
+                            borderRadius: "12px",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                            maxWidth: "400px"
+                        }}>
+                            <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.2rem" }}>In Video Call</h3>
+                            <p style={{ margin: "0 0 1.5rem 0", opacity: 0.8 }}>
+                                You are currently conducting a video consultation.
+                            </p>
+                            <p style={{ fontSize: "0.9rem", opacity: 0.6 }}>
+                                Room ID: <strong>{activeRoom}</strong>
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -122,7 +141,7 @@ export default function TelemedicinePage() {
                                         )}
 
                                         {(s.status === "waiting" || s.status === "active") && (
-                                            <button onClick={() => joinVideo(s.roomId)} className="mf-secondary-btn" style={{ padding: "0.4rem 0.8rem", fontSize: "0.85rem", background: "#8e44ad", color: "white", borderColor: "#8e44ad" }}>Join Room</button>
+                                            <button onClick={() => joinVideoCall(s)} className="mf-secondary-btn" style={{ padding: "0.4rem 0.8rem", fontSize: "0.85rem", background: "#8e44ad", color: "white", borderColor: "#8e44ad" }}>Join Video Call</button>
                                         )}
 
                                         {s.status === "active" && (

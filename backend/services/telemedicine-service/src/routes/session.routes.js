@@ -8,13 +8,15 @@ const {
     startSession,
     endSession,
     addNotes,
-    getAgoraConfig
+    getAgoraConfig,
+    generateToken
 } = require("../controllers/session.controller");
 const { verifyAuth } = require("../middleware/auth.middleware");
 
 const router = express.Router();
 
 router.get("/agora-config", verifyAuth, getAgoraConfig);
+router.get("/token", verifyAuth, generateToken);
 router.post("/", verifyAuth, createSession);
 router.get("/my", verifyAuth, listMySessions);
 router.get("/room/:roomId", verifyAuth, getSessionByRoom);
