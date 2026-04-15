@@ -38,6 +38,7 @@ export default function VideoCallPage() {
   const [micMuted,   setMicMuted]   = useState(false);
   const [camOff,     setCamOff]     = useState(false);
   const [elapsed,    setElapsed]    = useState(0);
+  const [chatPollInterval, setChatPollInterval] = useState(null);
 
   /* ── refs ──────────────────────────────────────────────────────── */
   const clientRef        = useRef(null);
@@ -212,16 +213,59 @@ export default function VideoCallPage() {
     "Cetirizine", "Azithromycin", "Prednisone", "Pantoprazole", "Sertraline"
   ];
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    const msg = {
-      text: newMessage,
-      role: role,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    setChatMessages([...chatMessages, msg]);
-    setNewMessage("");
+  const handleSendMessage = async () => {
+    const trimmed = newMessage.trim();
+    if (!trimmed || !sessionData?._id || isSaving) return;
+    
+    try {
+      // Clear input immediately for better UX
+      setNewMessage("");
+      
+      const msgData = {
+        text: trimmed,
+        role: role,
+        senderName: role === "doctor" ? "Doctor" : "Patient"
+      };
+      
+      const res = await api.post(`/telemedicine/${sessionData._id}/chat`, msgData, authHeaders);
+      if (res.data?.chatMessages) {
+        setChatMessages(res.data.chatMessages.map(m => ({
+          ...m,
+          time: new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        })));
+      }
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      // Optional: restore the message if it failed
+      setNewMessage(trimmed);
+    }
   };
+
+  // Chat polling effect
+  useEffect(() => {
+    let interval;
+    if (phase === "live" && sessionData?._id) {
+      const fetchMessages = async () => {
+        try {
+          const res = await api.get(`/telemedicine/${sessionData._id}/chat`, authHeaders);
+          if (res.data?.chatMessages) {
+            setChatMessages(res.data.chatMessages.map(m => ({
+              ...m,
+              time: new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            })));
+          }
+        } catch (err) {
+          console.error("Chat polling failed:", err);
+        }
+      };
+      
+      fetchMessages();
+      interval = setInterval(fetchMessages, 3000); // Poll every 3 seconds
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [phase, sessionData?._id, authHeaders]);
 
   const handleAddMed = () => {
     if (!newMed.name || !newMed.dosage) return;
@@ -685,8 +729,8 @@ export default function VideoCallPage() {
             )}
 
             {activeTab === "chat" && (
-              <div className="flex flex-col h-[calc(100vh-180px)]">
-                <div className="flex-1 space-y-4 overflow-y-auto">
+              <div className="flex flex-col h-[calc(100vh-220px)]">
+                <div className="flex-1 space-y-4 overflow-y-auto pr-2 pb-4">
                   {chatMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-2">
                       <span className="material-symbols-outlined text-4xl opacity-20">chat_bubble</span>
@@ -696,27 +740,40 @@ export default function VideoCallPage() {
                     chatMessages.map((msg, idx) => (
                       <div key={idx} className={`flex flex-col ${msg.role === role ? "items-end" : "items-start"}`}>
                         <div className={`max-w-[85%] px-4 py-2 rounded-2xl text-sm ${
-                          msg.role === role ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-700"
+                          msg.role === role ? "bg-teal-600 text-white shadow-sm" : "bg-slate-100 text-slate-700 shadow-sm"
                         }`}>
                           {msg.text}
                         </div>
-                        <span className="text-[10px] text-slate-400 mt-1 px-1">{msg.time}</span>
+                        <span className="text-[10px] text-slate-400 mt-1 px-1 font-medium">{msg.time}</span>
                       </div>
                     ))
                   )}
                 </div>
-                <div className="mt-4 flex gap-2">
+                
+                {/* Chat input stays at the bottom */}
+                <div className="mt-2 flex gap-2 p-1 bg-white border-t border-slate-50 pt-4">
                   <input
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
                     placeholder="Type message..."
-                    className="flex-1 bg-slate-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500 transition-all"
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500 focus:bg-white outline-none transition-all text-slate-700"
+                    autoFocus
                   />
                   <button 
-                    onClick={handleSendMessage}
-                    className="p-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }}
+                    disabled={!newMessage.trim()}
+                    className="p-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all flex items-center justify-center min-w-[48px] shadow-md shadow-teal-600/20"
                   >
                     <span className="material-symbols-outlined text-sm">send</span>
                   </button>

@@ -9,7 +9,9 @@ const {
     endSession,
     addNotes,
     getAgoraConfig,
-    generateToken
+    generateToken,
+    addChatMessage,
+    getChatMessages
 } = require("../controllers/session.controller");
 const { verifyAuth } = require("../middleware/auth.middleware");
 
@@ -25,5 +27,7 @@ router.get("/:id", verifyAuth, getSession);
 router.patch("/:id/start", verifyAuth, startSession);
 router.patch("/:id/end", verifyAuth, endSession);
 router.patch("/:id/notes", verifyAuth, addNotes);
+router.get("/:id/chat", verifyAuth, getChatMessages);
+router.post("/:id/chat", verifyAuth, addChatMessage);
 
 module.exports = router;
