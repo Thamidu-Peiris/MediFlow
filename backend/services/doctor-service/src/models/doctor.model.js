@@ -22,7 +22,12 @@ const prescriptionSchema = new mongoose.Schema(
         patientId: { type: String, required: true },
         patientName: { type: String, default: "" },
         appointmentId: { type: String, default: "" },
-        medicines: [{ type: String }],
+        medicines: [{ 
+            name: String, 
+            dosage: String, 
+            frequency: String, 
+            duration: String 
+        }],
         notes: { type: String, default: "" }
     },
     { timestamps: true }

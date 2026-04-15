@@ -21,8 +21,14 @@ const reportSchema = new mongoose.Schema(
 const prescriptionSchema = new mongoose.Schema(
   {
     doctorId: { type: String, default: "" },
+    doctorName: { type: String, default: "" },
     notes: { type: String, default: "" },
-    medicines: [{ type: String }]
+    medicines: [{ 
+        name: String, 
+        dosage: String, 
+        frequency: String, 
+        duration: String 
+    }]
   },
   { timestamps: true }
 );
