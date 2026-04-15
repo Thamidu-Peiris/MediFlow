@@ -104,6 +104,14 @@ export default function PatientShell({ children }) {
     navigate("/");
   };
 
+  const displayName =
+    patientInfo?.fullName ||
+    patientInfo?.name ||
+    [patientInfo?.firstName, patientInfo?.lastName].filter(Boolean).join(" ") ||
+    user?.name ||
+    "Patient";
+  const displayEmail = patientInfo?.email || user?.email || "";
+
   const activePageTitle = (() => {
     const p = location.pathname;
     if (p === "/patient/dashboard" || p.startsWith("/patient/dashboard/")) return "Dashboard";
@@ -113,6 +121,7 @@ export default function PatientShell({ children }) {
     if (p === "/patient/reports" || p.startsWith("/patient/reports/")) return "Reports";
     if (p === "/patient/ai-checker" || p.startsWith("/patient/ai-checker/")) return "AI Checker";
     if (p === "/patient/prescriptions" || p.startsWith("/patient/prescriptions/")) return "Prescriptions";
+    if (p === "/patient/payment-history" || p.startsWith("/patient/payment-history/")) return "Payment History";
     if (p === "/patient/profile" || p.startsWith("/patient/profile/")) return "Profile";
     return "Dashboard";
   })();
@@ -196,7 +205,7 @@ export default function PatientShell({ children }) {
                   <img
                     src={avatarImgSrc}
                     alt="Profile"
-                    className="h-full w-full rounded-full object-cover"
+                    className="aura-topbar-profile-img"
                   />
                 ) : (
                   <span className="material-symbols-outlined">person</span>
@@ -205,13 +214,23 @@ export default function PatientShell({ children }) {
 
               {profileOpen ? (
                 <div className="aura-profile-menu">
+                  <div className="aura-profile-menu-head">
+                    <p className="aura-profile-menu-name">{displayName}</p>
+                    {displayEmail ? <p className="aura-profile-menu-email">{displayEmail}</p> : null}
+                  </div>
                   <Link
                     to="/patient/profile"
                     className="aura-profile-item"
                     onClick={() => setProfileOpen(false)}
                   >
-                    <span className="material-symbols-outlined">person</span>
                     Profile
+                  </Link>
+                  <Link
+                    to="/patient/payment-history"
+                    className="aura-profile-item"
+                    onClick={() => setProfileOpen(false)}
+                  >
+                    Payment History
                   </Link>
                   <button
                     type="button"

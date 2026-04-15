@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from "react-router-dom";
 import LandingTopBar from "../components/LandingTopBar";
+import api from "../api/client";
 
 const CountUp = ({ end, duration = 2000, suffix = "", decimals = 0 }) => {
   const [count, setCount] = useState(0);
@@ -67,6 +68,47 @@ const specialties = [
 ];
 
 export default function HomePage() {
+  const [featuredDoctors, setFeaturedDoctors] = useState([]);
+  const [loadingFeaturedDoctors, setLoadingFeaturedDoctors] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    api.get("/doctors/public")
+      .then((res) => {
+        if (!isMounted) return;
+        const doctors = Array.isArray(res?.data?.doctors) ? res.data.doctors : [];
+        const topDoctors = doctors.slice(0, 4).map((doctor, idx) => {
+          const seed = String(doctor?._id || doctor?.userId || idx);
+          const imagePick = seed.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 4;
+          return {
+            _id: doctor?._id || doctor?.userId || `doctor-${idx}`,
+            name: doctor?.fullName || "Doctor",
+            specialization: doctor?.specialization || "General Practitioner",
+            rating: Number(doctor?.rating || 0),
+            image: doctor?.image || `https://images.unsplash.com/photo-${[
+              "1559839734-2b71ea197ec2",
+              "1612277795421-9bc7706a4a41",
+              "1594824476967-48c8b964273f",
+              "1622253692010-333f2da6031d"
+            ][imagePick]}?auto=format&fit=crop&w=500&q=80`
+          };
+        });
+        setFeaturedDoctors(topDoctors);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch featured doctors", err);
+        if (isMounted) setFeaturedDoctors([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingFeaturedDoctors(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="scroll-smooth font-sans text-[#1e293b]">
       <LandingTopBar active="home" onHomePage />
@@ -206,29 +248,29 @@ export default function HomePage() {
           <p className="mt-4 text-lg text-[#043927]/60">Qualified practitioners with decades of combined experience.</p>
         </div>
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            ["Dr. Emily Rivera", "Pediatrician", "5.0"],
-            ["Dr. Marcus Thorne", "Orthopedic Surgeon", "4.8"],
-            ["Dr. Aisha Khan", "Dermatologist", "4.9"],
-            ["Dr. Simon Peter", "Neurologist", "4.7"]
-          ].map(([name, spec, rating]) => (
-            <div key={name} className="group rounded-[2.5rem] border border-[#356600]/10 bg-white p-6 shadow-sm transition-all duration-500 hover:shadow-[0px_32px_64px_rgba(4,57,39,0.08)] hover:-translate-y-2">
+          {(loadingFeaturedDoctors ? [] : featuredDoctors).map((doctor) => (
+            <div key={doctor._id} className="group rounded-[2.5rem] border border-[#356600]/10 bg-white p-6 shadow-sm transition-all duration-500 hover:shadow-[0px_32px_64px_rgba(4,57,39,0.08)] hover:-translate-y-2">
               <div className="mb-6 aspect-square overflow-hidden rounded-3xl bg-[#fcfdfa]">
-                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80" alt={name} className="h-full w-full object-cover grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110" />
+                <img src={doctor.image} alt={doctor.name} className="h-full w-full object-cover grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110" />
               </div>
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <h4 className="text-xl font-bold text-[#043927]">{name}</h4>
-                  <p className="font-bold text-[#356600]">{spec}</p>
+                  <h4 className="text-xl font-bold text-[#043927]">{doctor.name}</h4>
+                  <p className="font-bold text-[#356600]">{doctor.specialization}</p>
                 </div>
                 <div className="flex items-center gap-1 text-[#f59e0b]">
                   <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  <span className="font-bold text-[#043927]">{rating}</span>
+                  <span className="font-bold text-[#043927]">{doctor.rating > 0 ? doctor.rating.toFixed(1) : "N/A"}</span>
                 </div>
               </div>
               <button className="mt-4 w-full rounded-2xl bg-[#CBF79D] py-4 font-bold text-[#043927] transition-all duration-300 hover:bg-[#043927] hover:text-white" type="button">View Profile</button>
             </div>
           ))}
+          {!loadingFeaturedDoctors && featuredDoctors.length === 0 ? (
+            <div className="col-span-full rounded-3xl border border-[#356600]/10 bg-white p-8 text-center text-[#043927]/70">
+              No featured doctors available right now.
+            </div>
+          ) : null}
         </div>
       </section>
 

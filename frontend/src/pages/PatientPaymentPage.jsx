@@ -792,7 +792,7 @@ export default function PatientPaymentPage() {
                     type="button"
                     disabled={simBusy}
                     onClick={submitHelakuru}
-                    className="w-full rounded-full bg-[#0A66C2] py-3 font-headline text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] hover:bg-[#0958A8] active:scale-[0.98] disabled:opacity-50 md:py-3.5 md:text-base"
+                    className="w-full rounded-full bg-[#49fc6d] py-3 font-headline text-sm font-bold text-black shadow-md transition-transform hover:scale-[1.02] hover:brightness-[0.93] active:scale-[0.98] disabled:opacity-50 md:py-3.5 md:text-base"
                   >
                     {simBusy ? "Working..." : "Pay Now"}
                   </button>

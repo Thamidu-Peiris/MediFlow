@@ -22,8 +22,6 @@ const quickActions = [
   { to: "/patient/reports", label: "Upload Report", icon: "upload", color: "indigo" },
   { to: "/patient/appointments", label: "View Appointments", icon: "clock", color: "amber" },
   { to: "/patient/prescriptions", label: "View Prescriptions", icon: "pill", color: "rose" },
-  { to: "/patient/profile", label: "Edit Profile", icon: "user", color: "gray" },
-  { to: "/patient/ai-checker", label: "AI Symptom Check", icon: "brain", color: "teal" },
 ];
 
 const quickIcons = {
@@ -59,30 +57,6 @@ const quickIcons = {
   ),
 };
 
-// Health Tips
-const healthTips = [
-  "Drink 8 glasses of water daily 💧",
-  "Schedule regular checkups 📅",
-  "Take breaks every 30 mins 🧘",
-  "Get 7-8 hours of sleep 😴",
-  "Walk 10,000 steps daily 🚶",
-  "Eat more fruits & veggies 🥗",
-];
-
-// Calculate time until next appointment
-function getTimeUntil(date) {
-  const now = new Date();
-  const diff = date - now;
-  if (diff <= 0) return "Starting now";
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  if (hours > 24) {
-    const days = Math.floor(hours / 24);
-    return `In ${days} day${days > 1 ? "s" : ""}`;
-  }
-  return `In ${hours}h ${minutes}m`;
-}
-
 export default function PatientDashboardPage() {
   const { authHeaders } = useAuth();
   const [appointments, setAppointments] = useState([]);
@@ -90,15 +64,6 @@ export default function PatientDashboardPage() {
   const [doctors, setDoctors] = useState([]);
   const [patientInfo, setPatientInfo] = useState(null);
   const [reports, setReports] = useState([]);
-  const [healthTip, setHealthTip] = useState(healthTips[0]);
-
-  useEffect(() => {
-    const tipInterval = setInterval(() => {
-      setHealthTip(healthTips[Math.floor(Math.random() * healthTips.length)]);
-    }, 10000);
-    return () => clearInterval(tipInterval);
-  }, []);
-
   useEffect(() => {
     let mounted = true;
 
@@ -129,8 +94,6 @@ export default function PatientDashboardPage() {
   }, [authHeaders]);
 
   const upcoming = appointments.filter((a) => a.status === "upcoming" || a.status === "scheduled");
-  const completed = appointments.filter((a) => a.status === "completed" || a.status === "done");
-  const nextAppointment = upcoming[0];
   const recentPrescriptions = [...prescriptions].reverse().slice(0, 3);
 
   const today = new Date();
@@ -242,81 +205,56 @@ export default function PatientDashboardPage() {
             </div>
           </section>
 
-          {/* Quick Actions Grid */}
-          <section className="aura-col-12">
-            <h3 className="aura-section-title">Quick Actions</h3>
-            <div className="aura-quick-actions-grid">
-              {quickActions.map((action) => (
-                <Link key={action.to} to={action.to} className={`aura-quick-action-card aura-${action.color}`}>
-                  <span className="aura-quick-action-icon">{quickIcons[action.icon]}</span>
-                  <span className="aura-quick-action-label">{action.label}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          {/* Next Appointment Card */}
           <section className="aura-col-8">
-            <div className="aura-consultation-card">
-              <div className="aura-consultation-glow"></div>
-              <div className="aura-consultation-content">
-                <div className="aura-consultation-info">
-                  <span className="aura-badge" style={{ color: 'white' }}>Next Appointment</span>
-                  {nextAppointment ? (
-                    <>
-                      <h2 className="aura-doctor-name" style={{ color: 'white' }}>{nextAppointment.doctorName}</h2>
-                      <p className="aura-doctor-specialty" style={{ color: 'rgba(255,255,255,0.9)' }}>
-                        {nextAppointment.specialty || nextAppointment.specialization || ''}{nextAppointment.time ? ` • ${nextAppointment.time}` : ''}
-                      </p>
-                      <p className="aura-countdown" style={{ color: 'rgba(255,255,255,0.9)' }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        {getTimeUntil(new Date(nextAppointment.date))}
-                      </p>
-                    </>
-                  ) : (
-                    <h2 className="aura-doctor-name" style={{ color: 'white' }}>No upcoming appointments</h2>
-                  )}
-                  <div className="aura-consultation-actions">
-                    <Link to={nextAppointment ? `/patient/appointments` : '/doctors'} className="aura-btn-primary">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-                      </svg>
-                      {nextAppointment ? 'Join Video Call' : 'Book Appointment'}
-                    </Link>
-                  </div>
-                </div>
-                <div className="aura-doctor-image">
-                  <img src={nextAppointment?.doctorImage || "/doctor-placeholder.svg"} alt="Doctor" />
-                </div>
+            <div className="aura-report-left-grid">
+              <div className="aura-chart-card">
+                <h3 className="aura-chart-title">Reports Upload Trend</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={reportsData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                    <XAxis dataKey="month" tick={{fontSize: 12}} stroke="#9ca3af" />
+                    <YAxis tick={{fontSize: 12}} stroke="#9ca3af" />
+                    <Tooltip contentStyle={{borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
+                    <Bar dataKey="reports" fill={COLORS.indigo} radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="aura-chart-card">
+                <h3 className="aura-chart-title">Report Activity</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={reportsData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="month" tick={{fontSize: 12}} stroke="#9ca3af" />
+                    <YAxis tick={{fontSize: 12}} stroke="#9ca3af" />
+                    <Tooltip contentStyle={{borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
+                    <Line
+                      type="monotone"
+                      dataKey="reports"
+                      stroke={COLORS.teal}
+                      strokeWidth={3}
+                      dot={{fill: COLORS.teal, strokeWidth: 2, r: 4}}
+                      activeDot={{r: 6}}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </section>
 
-          {/* Smart Widgets */}
-          <section className="aura-col-4">
-            {/* Health Tips Widget */}
-            <div className="aura-widget">
-              <div className="aura-widget-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                </svg>
-                <span>Health Tip</span>
+          {/* Right Side Quick Actions */}
+          <section className="aura-col-4 aura-col-right">
+            <div className="aura-quick-side">
+              <h3 className="aura-quick-side__title">Quick Actions</h3>
+              <div className="aura-quick-side__list">
+                {quickActions.map((action) => (
+                  <Link key={action.to} to={action.to} className="aura-quick-side__item">
+                    <span className={`aura-quick-side__icon aura-${action.color}`}>{quickIcons[action.icon]}</span>
+                    <span className="aura-quick-side__label">{action.label}</span>
+                    <span className="aura-quick-side__arrow" aria-hidden>›</span>
+                  </Link>
+                ))}
               </div>
-              <p className="aura-widget-text">{healthTip}</p>
-            </div>
-
-            {/* AI Suggestion Widget */}
-            <div className="aura-widget ai">
-              <div className="aura-widget-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5A2.5 2.5 0 0 0 11 11"/><path d="M15.5 8.5A2.5 2.5 0 0 1 13 11"/>
-                </svg>
-                <span>AI Suggestion</span>
-              </div>
-              <p className="aura-widget-text">Try our AI symptom checker to get instant health insights.</p>
-              <Link to="/patient/ai-checker" className="aura-widget-link">Check Symptoms →</Link>
             </div>
           </section>
 
@@ -357,21 +295,6 @@ export default function PatientDashboardPage() {
                   <Tooltip contentStyle={{borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
                   <Legend verticalAlign="bottom" height={36} iconType="circle" />
                 </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </section>
-
-          <section className="aura-col-4">
-            <div className="aura-chart-card">
-              <h3 className="aura-chart-title">Reports Upload Trend</h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={reportsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                  <XAxis dataKey="month" tick={{fontSize: 12}} stroke="#9ca3af" />
-                  <YAxis tick={{fontSize: 12}} stroke="#9ca3af" />
-                  <Tooltip contentStyle={{borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                  <Bar dataKey="reports" fill={COLORS.indigo} radius={[8, 8, 0, 0]} />
-                </BarChart>
               </ResponsiveContainer>
             </div>
           </section>
