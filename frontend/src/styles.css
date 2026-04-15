@@ -5644,6 +5644,308 @@ button, .btn-primary {
   font-variation-settings: "FILL" 1, "wght" 600, "GRAD" 0, "opsz" 24;
 }
 
+:root {
+  /* Atelier Premium Palette */
+  --at-primary: #004d4d;
+  --at-primary-container: #266565;
+  --at-on-primary: #ffffff;
+  --at-secondary: #4a6363;
+  --at-secondary-container: #cce8e7;
+  --at-on-secondary-container: #506969;
+  --at-tertiary: #6c3518;
+  --at-tertiary-container: #894c2d;
+  --at-tertiary-fixed: #ffdbcc;
+  --at-background: #f1f7f6; /* Premium light mint background */
+  --at-surface: #f1f7f6;
+  --at-surface-container-low: #e8efee;
+  --at-surface-container-high: #e1e9e8;
+  --at-surface-container-lowest: #ffffff;
+  --at-outline: #6f7978;
+  --at-on-surface: #191c1d;
+  --at-on-surface-variant: #3e4948;
+  --at-error: #ba1a1a;
+  --at-error-container: #ffdad6;
+}
+
+/* ── Atelier Premium Styles (Matching Provided Image) ── */
+
+.at-appointments-page {
+  background-color: var(--at-background);
+  min-height: 100vh;
+  padding: 3rem 2rem;
+}
+
+.at-hero-header {
+  margin-bottom: 3.5rem;
+  max-width: 52rem;
+}
+
+.at-hero-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--at-on-surface);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 1.25rem;
+}
+
+.at-hero-lead {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--at-on-surface-variant);
+  line-height: 1.6;
+}
+
+/* Filter Section */
+.at-filter-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.at-tabs-container {
+  display: flex;
+  background-color: var(--at-surface-container-low);
+  padding: 0.375rem;
+  border-radius: 1.25rem;
+  gap: 0.25rem;
+}
+
+.at-tab-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--at-on-surface-variant);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.at-tab-btn.active {
+  background-color: var(--at-surface-container-lowest);
+  color: var(--at-primary);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.at-tab-count {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  font-weight: 500;
+}
+
+.at-advanced-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--at-primary);
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.at-advanced-filter:hover {
+  opacity: 0.8;
+}
+
+/* Appointment Grid */
+.at-appointments-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Main Bento Card Style (Matching Image) */
+.at-card-premium {
+  background-color: var(--at-surface-container-lowest);
+  padding: 2.5rem;
+  border-radius: 4rem; /* Restored to 4rem for a fully rounded 'big box' feel */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: center;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: all 0.4s ease;
+  border: 1px solid rgba(255,255,255,0.5);
+}
+
+.at-card-premium:hover {
+  box-shadow: 0 24px 48px -12px rgba(0, 77, 77, 0.08);
+  transform: translateY(-2px);
+}
+
+.at-card-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+  min-width: 300px;
+}
+
+.at-doc-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.at-doc-img {
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 1.5rem;
+  object-fit: cover;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.at-type-indicator {
+  position: absolute;
+  bottom: -0.25rem;
+  right: -0.25rem;
+  background-color: #004d4d;
+  color: white;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+.at-doc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.at-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.at-doc-name {
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: var(--at-on-surface);
+  letter-spacing: -0.01em;
+}
+
+.at-status-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: var(--at-secondary-container);
+  color: var(--at-on-secondary-container);
+}
+
+.at-specialty {
+  color: #006766;
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.at-meta-row {
+  display: flex;
+  gap: 1.5rem;
+  color: var(--at-on-surface-variant);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.at-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.at-meta-item .material-symbols-outlined {
+  font-size: 20px;
+  color: #94a3b8;
+}
+
+/* Action Area */
+.at-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 200px;
+}
+
+.at-btn-join {
+  background: linear-gradient(135deg, #004d4d 0%, #266565 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 1rem;
+  font-weight: 800;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 12px 24px -6px rgba(0, 77, 77, 0.3);
+  transition: all 0.2s;
+}
+
+.at-btn-join:hover {
+  transform: scale(1.02);
+  box-shadow: 0 16px 32px -8px rgba(0, 77, 77, 0.4);
+}
+
+.at-bottom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.5rem;
+}
+
+.at-btn-reschedule {
+  background-color: #e8efee;
+  color: #191c1d;
+  padding: 0.8rem 1.25rem;
+  border-radius: 0.8rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.at-btn-reschedule:hover {
+  background-color: #dce5e4;
+}
+
+.at-btn-cancel {
+  color: #ba1a1a;
+  background-color: #ffdad6; /* Added light red background */
+  font-weight: 800;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  padding: 0.8rem 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.at-btn-cancel:hover {
+  background-color: #ffb4ab; /* Slightly darker light red on hover */
+  transform: translateY(-1px);
+}
+
 .aura-nav-label {
   white-space: nowrap;
 }
