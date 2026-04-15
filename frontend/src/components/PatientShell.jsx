@@ -10,7 +10,7 @@ const navItems = [
   { to: "/patient/telemedicine", label: "Video Consultations", icon: "videocam" },
   { to: "/patient/doctors", label: "Doctors", icon: "medical_services" },
   { to: "/patient/reports", label: "Reports", icon: "description" },
-  { to: "/ai-checker", label: "AI Checker", icon: "psychology" },
+  { to: "/patient/ai-checker", label: "AI Checker", icon: "psychology" },
   { to: "/patient/prescriptions", label: "Prescriptions", icon: "medication" },
   { to: "/patient/profile", label: "Profile", icon: "person" },
 ];
@@ -62,7 +62,7 @@ const pageTitles = {
   "/patient/reports": { title: "Medical Reports", subtitle: "Upload, view and manage your medical documents" },
   "/patient/prescriptions": { title: "Prescriptions", subtitle: "View your prescriptions and medications" },
   "/patient/history": { title: "Medical History", subtitle: "View your medical history and diagnoses" },
-  "/ai-checker": { title: "AI Symptom Checker", subtitle: "AI-powered symptom analysis and health insights" },
+  "/patient/ai-checker": { title: "AI Symptom Checker", subtitle: "AI-powered symptom analysis and health insights" },
 };
 
 export default function PatientShell({ children }) {
@@ -111,13 +111,13 @@ export default function PatientShell({ children }) {
     if (p === "/patient/telemedicine" || p.startsWith("/patient/telemedicine/")) return "Video Consultations";
     if (p === "/patient/doctors" || p.startsWith("/patient/doctors/")) return "Doctors";
     if (p === "/patient/reports" || p.startsWith("/patient/reports/")) return "Reports";
-    if (p === "/ai-checker" || p.startsWith("/ai-checker/")) return "AI Checker";
+    if (p === "/patient/ai-checker" || p.startsWith("/patient/ai-checker/")) return "AI Checker";
     if (p === "/patient/prescriptions" || p.startsWith("/patient/prescriptions/")) return "Prescriptions";
     if (p === "/patient/profile" || p.startsWith("/patient/profile/")) return "Profile";
     return "Dashboard";
   })();
 
-  const isPatientDashboard = location.pathname.startsWith("/patient/") || location.pathname === "/ai-checker";
+  const isPatientDashboard = location.pathname.startsWith("/patient/");
 
   return (
     <div className={`aura-shell${isPatientDashboard ? " aura-shell--admin-dashboard" : ""}`}>

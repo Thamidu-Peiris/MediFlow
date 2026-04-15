@@ -121,6 +121,21 @@ exports.endSession = async (req, res) => {
         if (!session) {
             return res.status(404).json({ message: "Session not found or not active" });
         }
+
+        // Trigger Notification Service asynchronously
+        const axios = require("axios");
+        axios.post("http://notification-service:8005/api/notifications/send", {
+            type: "CONSULTATION_COMPLETED",
+            doctorEmail: req.user?.email || "doc@example.com",
+            doctorPhone: "+11234567890", // Mock formatted phone
+            patientEmail: `patient_${session.patientId || "000"}@example.com`,
+            patientPhone: "+10987654321",
+            payload: {
+                sessionId: session._id,
+                date: new Date().toLocaleDateString()
+            }
+        }).catch(err => console.error("[Telemedicine] Notification trigger failed:", err.message));
+
         return res.status(200).json({ session });
     } catch (error) {
         return res.status(500).json({ message: "Failed to end session" });
@@ -147,23 +162,23 @@ exports.addNotes = async (req, res) => {
 exports.generateToken = (req, res) => {
     try {
         const { channelName, uid } = req.query;
-        
+
         if (!channelName) {
             return res.status(400).json({ message: "channelName is required" });
         }
-        
+
         const appId = process.env.AGORA_APP_ID;
         const appCertificate = process.env.AGORA_PRIMARY_CERTIFICATE;
-        
+
         if (!appId || !appCertificate) {
             return res.status(503).json({ message: "Agora App ID or Certificate not configured" });
         }
-        
+
         // Token expiration time (24 hours)
         const expirationTimeInSeconds = 86400;
         const currentTimestamp = Math.floor(Date.now() / 1000);
         const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
-        
+
         // Generate token with publisher role
         const token = RtcTokenBuilder.buildTokenWithUid(
             appId,
@@ -173,8 +188,8 @@ exports.generateToken = (req, res) => {
             RtcRole.PUBLISHER,
             privilegeExpiredTs
         );
-        
-        return res.status(200).json({ 
+
+        return res.status(200).json({
             token,
             uid,
             channelName,

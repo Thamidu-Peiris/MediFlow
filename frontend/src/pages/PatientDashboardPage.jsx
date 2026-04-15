@@ -23,7 +23,7 @@ const quickActions = [
   { to: "/patient/appointments", label: "View Appointments", icon: "clock", color: "amber" },
   { to: "/patient/prescriptions", label: "View Prescriptions", icon: "pill", color: "rose" },
   { to: "/patient/profile", label: "Edit Profile", icon: "user", color: "gray" },
-  { to: "/ai-checker", label: "AI Symptom Check", icon: "brain", color: "teal" },
+  { to: "/patient/ai-checker", label: "AI Symptom Check", icon: "brain", color: "teal" },
 ];
 
 const quickIcons = {
@@ -316,7 +316,7 @@ export default function PatientDashboardPage() {
                 <span>AI Suggestion</span>
               </div>
               <p className="aura-widget-text">Try our AI symptom checker to get instant health insights.</p>
-              <Link to="/ai-checker" className="aura-widget-link">Check Symptoms →</Link>
+              <Link to="/patient/ai-checker" className="aura-widget-link">Check Symptoms →</Link>
             </div>
           </section>
 
