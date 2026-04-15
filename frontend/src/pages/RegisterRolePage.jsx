@@ -5,7 +5,7 @@ import api from "../api/client";
 
 const ROLE_CONFIG = {
   patient: {
-    image: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=800&q=80",
+    image: "https://plus.unsplash.com/premium_photo-1661600719400-d537c4981818?auto=format&fit=crop&w=1600&q=80",
     label: "Patient Account",
     heading: "Create Patient Account",
     sub: "Start managing your health with MediFlow",
@@ -16,7 +16,7 @@ const ROLE_CONFIG = {
     iconColor: "#2563eb",
   },
   doctor: {
-    image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80",
+    image: "https://plus.unsplash.com/premium_photo-1681843126728-04eab730febe?auto=format&fit=crop&w=1600&q=80",
     label: "Doctor Account",
     heading: "Create Doctor Account",
     sub: "Join MediFlow's network of trusted professionals",
@@ -164,50 +164,80 @@ export default function RegisterRolePage() {
   };
 
   return (
-    <main className="ap-page">
-      {/* Left Visual Panel */}
-      <div className="ap-panel">
-        <div className="ap-panel-bg" />
-        <div className="ap-panel-content">
-          <Link to="/" className="ap-logo">
-            <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
-              <defs>
-                <linearGradient id="rrLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#93c5fd" />
-                  <stop offset="100%" stopColor="#ffffff" />
-                </linearGradient>
-              </defs>
-              <circle cx="20" cy="20" r="18" stroke="url(#rrLogoGrad)" strokeWidth="2.5" fill="none"/>
-              <rect x="18" y="10" width="4" height="20" rx="2" fill="url(#rrLogoGrad)"/>
-              <rect x="10" y="18" width="20" height="4" rx="2" fill="url(#rrLogoGrad)"/>
-            </svg>
-            <span>MediFlow</span>
-          </Link>
-          <img
-            src={cfg.image}
-            alt={cfg.label}
-            className="ap-panel-img"
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
-          />
-        </div>
-      </div>
+    <div className="m-0 flex min-h-screen w-full flex-col overflow-x-hidden bg-surface p-0 font-body text-on-surface">
+      <main className="flex min-h-screen w-full flex-1 overflow-hidden">
+        <aside className="relative hidden w-[55%] flex-col justify-between overflow-hidden p-8 lg:flex">
+          <div className="absolute inset-0 z-0">
+            <img
+              className="h-full w-full object-cover"
+              src={cfg.image}
+              alt={cfg.label}
+              decoding="async"
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary-container/40 to-transparent" />
+          </div>
 
-      {/* Right Form Panel */}
-      <div className="ap-form-panel">
-        <div className="ap-form-wrap">
-          <div className="ap-form-header">
-            <div className="ap-form-icon" style={{ background: cfg.iconBg, color: cfg.iconColor }}>
-              {selectedRole === "patient" ? (
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              ) : (
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
-              )}
+          <div className="relative z-10">
+            <Link to="/" className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-fixed shadow-lg">
+                <span
+                  className="material-symbols-outlined text-primary"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  medical_services
+                </span>
+              </div>
+              <span className="font-headline text-xl font-extrabold tracking-tighter text-on-primary">MediFlow</span>
+            </Link>
+          </div>
+
+          <div className="relative z-10 space-y-4">
+            <div className="max-w-lg">
+              <h1 className="mb-3 font-headline text-[1.8rem] font-bold leading-tight tracking-tight text-on-primary">
+                {selectedRole === "patient" ? "Start your care journey." : "Build your clinical profile."}
+              </h1>
+              <p className="text-sm font-medium leading-relaxed text-on-primary-container/90">
+                {selectedRole === "patient"
+                  ? "Create your patient account to manage appointments, records, and secure healthcare interactions in one place."
+                  : "Create your doctor account to manage consultations, availability, and patient care securely through MediFlow."}
+              </p>
             </div>
+
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-md">
+                <span className="material-symbols-outlined text-xs">verified_user</span>
+                HIPAA Compliant
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-md">
+                <span className="material-symbols-outlined text-xs">lock</span>
+                256-bit Encryption
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section className="flex w-full items-center justify-center bg-[#eef9ec] p-3 md:pb-16 md:pt-6 lg:w-[45%] lg:p-10">
+          <div className="w-full max-w-[400px]">
+            <div className="-ml-2 -mt-2 mb-6">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/20 bg-white/70 px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-white hover:text-on-surface"
+              >
+                <span className="material-symbols-outlined text-base">arrow_back</span>
+                Back
+              </button>
+            </div>
+
+            <div className="mb-8 flex items-center gap-2 lg:hidden">
+              <Link to="/" className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-3xl text-primary">medical_services</span>
+                <span className="font-headline text-2xl font-bold tracking-tighter text-primary">MediFlow</span>
+              </Link>
+            </div>
+            <div className="ap-form-wrap ap-form-wrap--compact">
+          <div className="ap-form-header">
             <h1>{step === 2 ? (selectedRole === "doctor" ? "Professional Details" : "Personal Details") : cfg.heading}</h1>
             <p>{step === 2 ? (selectedRole === "doctor" ? "Tell us about your medical background" : "Help us personalise your experience") : cfg.sub}</p>
           </div>
@@ -507,14 +537,13 @@ export default function RegisterRolePage() {
 
           <div className="rr-footer-links">
             <p className="ap-switch">
-              Wrong account type? <Link to="/register">Go back</Link>
-            </p>
-            <p className="ap-switch">
               Already have an account? <Link to="/login">Sign in</Link>
             </p>
           </div>
-        </div>
-      </div>
-    </main>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
   );
 }
