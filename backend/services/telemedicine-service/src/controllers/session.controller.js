@@ -1,8 +1,9 @@
 const { randomUUID } = require("crypto");
 const Session = require("../models/session.model");
+const { RtcTokenBuilder, RtcRole } = require("agora-token");
 
 exports.getAgoraConfig = (req, res) => {
-    const appId = process.env.AGORA_API_KEY || "";
+    const appId = process.env.AGORA_APP_ID || "";
     if (!appId) {
         return res.status(503).json({ message: "Agora is not configured on this server." });
     }
@@ -140,5 +141,48 @@ exports.addNotes = async (req, res) => {
         return res.status(200).json({ session });
     } catch (error) {
         return res.status(500).json({ message: "Failed to add notes" });
+    }
+};
+
+exports.generateToken = (req, res) => {
+    try {
+        const { channelName, uid } = req.query;
+        
+        if (!channelName) {
+            return res.status(400).json({ message: "channelName is required" });
+        }
+        
+        const appId = process.env.AGORA_APP_ID;
+        const appCertificate = process.env.AGORA_PRIMARY_CERTIFICATE;
+        
+        if (!appId || !appCertificate) {
+            return res.status(503).json({ message: "Agora App ID or Certificate not configured" });
+        }
+        
+        // Token expiration time (24 hours)
+        const expirationTimeInSeconds = 86400;
+        const currentTimestamp = Math.floor(Date.now() / 1000);
+        const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+        
+        // Generate token with publisher role
+        const token = RtcTokenBuilder.buildTokenWithUid(
+            appId,
+            appCertificate,
+            channelName,
+            uid,
+            RtcRole.PUBLISHER,
+            privilegeExpiredTs
+        );
+        
+        return res.status(200).json({ 
+            token,
+            uid,
+            channelName,
+            role: "publisher",
+            expiresIn: expirationTimeInSeconds
+        });
+    } catch (error) {
+        console.error("Token generation error:", error);
+        return res.status(500).json({ message: "Failed to generate token" });
     }
 };
