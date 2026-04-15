@@ -320,192 +320,144 @@ export default function PatientAppointmentsPage() {
 
   return (
     <PatientShell>
-      <div className="aura-appointments-page">
-        <header className="aura-appointments-header">
-          <h1 className="aura-title">My Appointments</h1>
-          <p className="aura-subtitle">Manage your bookings and consultations</p>
+      <div className="at-appointments-page">
+        {/* Hero Header Section */}
+        <header className="at-hero-header">
+          <h1 className="at-hero-title">My Appointments</h1>
+          <p className="at-hero-lead">
+            Manage your upcoming clinical sessions, review past diagnoses, and coordinate your wellness journey through our dedicated atelier.
+          </p>
         </header>
 
         {paymentSuccessBanner && (
-          <div
-            className="aura-alert success"
-            style={{
-              marginBottom: "1rem",
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: "12px",
-            }}
-            role="status"
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 22, fontVariationSettings: "'FILL' 1" }}
-                aria-hidden
-              >
-                verified
-              </span>
-              <span>{paymentSuccessBanner}</span>
-            </span>
-            <button
-              type="button"
-              className="aura-btn-secondary"
-              style={{ flexShrink: 0, padding: "6px 12px", fontSize: "13px" }}
-              onClick={() => setPaymentSuccessBanner("")}
-            >
-              Dismiss
-            </button>
+          <div className="aura-alert success" style={{ marginBottom: "2rem", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", borderRadius: "16px", backgroundColor: "#dcfce7", border: "1px solid #b9f6ca" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span className="material-symbols-outlined" style={{ color: "#166534", fontVariationSettings: "'FILL' 1" }}>verified</span>
+              <span style={{ color: "#166534", fontWeight: "600", fontSize: "14px" }}>{paymentSuccessBanner}</span>
+            </div>
+            <button onClick={() => setPaymentSuccessBanner("")} style={{ background: "white", color: "#166534", border: "none", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Dismiss</button>
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="aura-tabs">
-          {tabs.map(tab => {
-            const count = appointments.filter(app => {
-              const status = String(app.status || "").toLowerCase();
-              if (tab.id === "upcoming") return UPCOMING_STATUSES.includes(status);
-              if (tab.id === "completed") return COMPLETED_STATUSES.includes(status);
-              if (tab.id === "cancelled") return CANCELLED_STATUSES.includes(status);
-              return false;
-            }).length;
-            
-            return (
-              <button
-                key={tab.id}
-                className={`aura-tab ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {tabIcons[tab.icon]}
-                <span>{tab.label}</span>
-                <span className="aura-tab-count">{count}</span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Navigation Filters */}
+        <section className="at-filter-section">
+          <div className="at-tabs-container">
+            {tabs.map(tab => {
+              const count = appointments.filter(app => {
+                const status = String(app.status || "").toLowerCase();
+                if (tab.id === "upcoming") return UPCOMING_STATUSES.includes(status);
+                if (tab.id === "completed") return COMPLETED_STATUSES.includes(status);
+                if (tab.id === "cancelled") return CANCELLED_STATUSES.includes(status);
+                return false;
+              }).length;
+              
+              return (
+                <button
+                  key={tab.id}
+                  className={`at-tab-btn ${activeTab === tab.id ? "active" : ""}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <span>{tab.label}</span>
+                  <span className="at-tab-count">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+          
+          <div className="at-advanced-filter">
+            <span className="material-symbols-outlined">filter_list</span>
+            <span>Advanced Filter</span>
+          </div>
+        </section>
 
         {/* Appointments List */}
-        <div className="aura-appointments-content">
+        <div className="at-appointments-content">
           {loading ? (
-            <div className="aura-loading">
-              <div className="aura-spinner"></div>
-              <p>Loading appointments...</p>
+            <div className="aura-loading" style={{ padding: "100px 0", textAlign: "center" }}>
+              <div className="aura-spinner" style={{ margin: "0 auto 20px" }}></div>
+              <p style={{ color: "#64748b", fontWeight: "600" }}>Loading your schedule...</p>
             </div>
           ) : filteredAppointments.length === 0 ? (
             <div className="aura-empty-state">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              <h3 style={{ marginBottom: '12px' }}>No {activeTab} appointments</h3>
-              <p style={{ marginBottom: '24px' }}>{activeTab === "upcoming" ? "Book a new appointment to get started" : "Your appointments will appear here"}</p>
+              <div style={{ width: "80px", height: "80px", background: "#f1f5f9", borderRadius: "24px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "24px", margin: "0 auto 24px" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "40px", color: "#94a3b8" }}>event_busy</span>
+              </div>
+              <h3>No {activeTab} appointments</h3>
+              <p>You don't have any appointments in this category at the moment.</p>
               {activeTab === "upcoming" && (
-                <Link to="/patient/doctors" className="aura-btn-primary" style={{ marginTop: '8px' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                  Book Appointment
+                <Link to="/patient/doctors" className="at-btn-join" style={{ marginTop: "24px", textDecoration: "none", padding: "12px 24px" }}>
+                  Book an Appointment
                 </Link>
               )}
             </div>
           ) : (
-            <div className="aura-appointments-list">
+            <div className="at-appointments-grid">
               {filteredAppointments.map(appointment => {
-                const statusStyle = getStatusStyle(appointment.status);
                 const isUpcoming = UPCOMING_STATUSES.includes(String(appointment.status || "").toLowerCase());
-                
                 const isOnline = String(appointment.appointmentType || "").toLowerCase() === "online";
                 const isAcceptedOrConfirmed = ["accepted", "confirmed"].includes(String(appointment.status || "").toLowerCase());
 
                 return (
-                  <div key={appointment._id} className="aura-appointment-card">
-                    <div className="aura-appointment-doctor">
-                      <img src={appointment.doctorImage} alt={appointment.doctorName} />
-                      <div className="aura-appointment-doctor-info">
-                        <h4>{appointment.doctorName || "Doctor"}</h4>
-                        <p>{appointment.specialty}</p>
-                        {/* Appointment type pill */}
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            marginTop: "4px",
-                            padding: "2px 10px",
-                            borderRadius: "999px",
-                            fontSize: "10px",
-                            fontWeight: 800,
-                            letterSpacing: "0.05em",
-                            textTransform: "uppercase",
-                            ...(isOnline
-                              ? { background: "rgba(124,58,237,0.1)", color: "#7c3aed", border: "1px solid rgba(124,58,237,0.2)" }
-                              : { background: "rgba(0,106,97,0.08)", color: "#006a61", border: "1px solid rgba(0,106,97,0.15)" }),
-                          }}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: "11px", fontVariationSettings: "'FILL' 1" }}>
-                            {isOnline ? "videocam" : "local_hospital"}
+                  <div key={appointment._id} className="at-card-premium">
+                    <div className="at-card-left">
+                      <div className="at-doc-avatar-wrap">
+                        <img 
+                          src={appointment.doctorImage || "https://via.placeholder.com/150"} 
+                          alt={appointment.doctorName} 
+                          className="at-doc-img"
+                        />
+                        <div className="at-type-indicator">
+                          <span className="material-symbols-outlined" style={{ fontSize: "14px", fontVariationSettings: "'FILL' 1" }}>
+                            {isOnline ? "videocam" : "location_on"}
                           </span>
-                          {isOnline ? "Online" : "In-Person"}
-                        </span>
+                        </div>
+                      </div>
+
+                      <div className="at-doc-info">
+                        <div className="at-name-row">
+                          <h3 className="at-doc-name">{appointment.doctorName || "Doctor"}</h3>
+                          <span className="at-status-pill">{appointment.status}</span>
+                        </div>
+                        <p className="at-specialty">{appointment.specialty}</p>
+                        
+                        <div className="at-meta-row">
+                          <div className="at-meta-item">
+                            <span className="material-symbols-outlined">calendar_today</span>
+                            <span>{formatDate(appointment.date)}</span>
+                          </div>
+                          <div className="at-meta-item">
+                            <span className="material-symbols-outlined">schedule</span>
+                            <span>{appointment.time || "Time TBD"}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="aura-appointment-details">
-                      <div className="aura-appointment-datetime">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                        </svg>
-                        <span>{formatDate(appointment.date)}</span>
-                      </div>
-                      <div className="aura-appointment-datetime">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        <span>{appointment.time || "Time TBD"}</span>
-                      </div>
-                      <div className="aura-appointment-fee">
-                        <span>LKR {appointment.consultationFee?.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div className="aura-appointment-status">
-                      <span
-                        className="aura-status-badge"
-                        style={{ background: statusStyle.bg, color: statusStyle.color }}
-                      >
-                        {statusStyle.label}
-                      </span>
-                    </div>
-
-                    <div className="aura-appointment-actions">
-                      {/* ── Online + accepted → Join Video Call via Agora ── */}
+                    <div className="at-card-actions">
                       {isUpcoming && isOnline && isAcceptedOrConfirmed && (
                         <button
-                          className="aura-btn-join"
+                          className="at-btn-join"
                           onClick={() => handleJoinVideoCall(appointment)}
-                          style={{ background: "linear-gradient(135deg,#7c3aed,#5b21b6)", display: "flex", alignItems: "center", gap: "6px" }}
                         >
-                          <span className="material-symbols-outlined" style={{ fontSize: "17px", fontVariationSettings: "'FILL' 1" }}>videocam</span>
+                          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>videocam</span>
                           Join Video Call
                         </button>
                       )}
-
-                      {/* ── Physical + confirmed → legacy join flow ── */}
+                      
                       {isUpcoming && !isOnline && appointment.status === "confirmed" && (
                         <button
-                          className="aura-btn-join"
+                          className="at-btn-join"
                           onClick={() => handleJoinCall(appointment)}
                         >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polygon points="5 3 19 12 5 21 5 3"/>
-                          </svg>
+                          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>videocam</span>
                           Join Call
                         </button>
                       )}
-                      
+
                       {isUpcoming && (
-                        <>
+                        <div className="at-bottom-actions">
                           <button 
-                            className="aura-btn-reschedule"
+                            className="at-btn-reschedule"
                             onClick={() => {
                               setSelectedAppointment(appointment);
                               setShowRescheduleModal(true);
@@ -514,25 +466,19 @@ export default function PatientAppointmentsPage() {
                               setMessage("");
                             }}
                           >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                            </svg>
                             Reschedule
                           </button>
                           
                           <button 
-                            className="aura-btn-cancel"
+                            className="at-btn-cancel"
                             onClick={() => {
                               setSelectedAppointment(appointment);
                               setShowCancelModal(true);
                             }}
                           >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                            </svg>
                             Cancel
                           </button>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>
