@@ -52,7 +52,7 @@ MediFlow/
 - Notification Service
 - Payment Service
 - Telemedicine Service
-- AI Service (optional enhancement)
+- AI Service (Gemini 3 symptom checker — `GEMINI_API_KEY` / `GEMINI_MODEL` in `services/ai-service/.env`; see [Gemini 3 guide](https://ai.google.dev/gemini-api/docs/gemini-3))
 
 ## Implemented Module (Current)
 

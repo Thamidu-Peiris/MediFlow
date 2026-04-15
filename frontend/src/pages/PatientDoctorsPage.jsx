@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/client";
 import PatientShell from "../components/PatientShell";
 import { useAuth } from "../context/AuthContext";
@@ -60,7 +60,8 @@ export default function PatientDoctorsPage() {
   const DOCTORS_PER_PAGE = 12;
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+  const [searchParams] = useSearchParams();
+
   // Data states
   const [doctors, setDoctors] = useState([]);
   const [filteredDoctors, setFilteredDoctors] = useState([]);
@@ -75,6 +76,11 @@ export default function PatientDoctorsPage() {
   const [sortBy, setSortBy] = useState("rating");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const q = searchParams.get("search") || searchParams.get("q");
+    if (q) setSearchQuery(decodeURIComponent(q.trim()));
+  }, [searchParams]);
 
   // Fetch doctors
   useEffect(() => {
