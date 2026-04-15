@@ -33,6 +33,7 @@ import ContactUsPage from "./pages/ContactUsPage";
 import PatientDoctorsPage from "./pages/PatientDoctorsPage";
 import PatientDoctorBookingPage from "./pages/PatientDoctorBookingPage";
 import PatientPaymentPage from "./pages/PatientPaymentPage";
+import PatientPaymentHistoryPage from "./pages/PatientPaymentHistoryPage";
 import PatientTelemedicinePage from "./pages/PatientTelemedicinePage";
 
 // Doctor Portal Pages
@@ -157,6 +158,7 @@ export default function App() {
       <Route path="/patient/doctors" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientDoctorsPage /></ProtectedRoute>} />
       <Route path="/patient/doctors/booking" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientDoctorBookingPage /></ProtectedRoute>} />
       <Route path="/patient/payment" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientPaymentPage /></ProtectedRoute>} />
+      <Route path="/patient/payment-history" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientPaymentHistoryPage /></ProtectedRoute>} />
       <Route path="/patient/appointments" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientAppointmentsPage /></ProtectedRoute>} />
       <Route path="/patient/telemedicine" element={<ProtectedRoute allowedRoles={["patient", "doctor", "admin"]}><PatientTelemedicinePage /></ProtectedRoute>} />
       <Route path="/patient/profile" element={<ProtectedRoute allowedRoles={["patient", "admin"]}><PatientProfilePage /></ProtectedRoute>} />

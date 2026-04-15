@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const axios = require("axios");
 const PendingBooking = require("../models/PendingBooking.model");
+const PaymentHistory = require("../models/PaymentHistory.model");
 const stripeService = require("../services/stripe.service");
 const payhereService = require("../services/payhere.service");
 
@@ -51,6 +52,41 @@ function slotContainsMinutes(slot, mins) {
   const start = sh * 60 + sm;
   const end = eh * 60 + em;
   return mins >= start && mins < end;
+}
+
+async function upsertPaymentHistory({ doc, reqUser, appointmentId = "" }) {
+  const totalCents = Number(doc.consultationFeeCents || 0) + Number(doc.serviceFeeCents || 0);
+  const paymentMethod = doc.stripePaymentIntentId
+    ? "stripe"
+    : doc.payherePaymentId
+      ? "helakuru"
+      : "unknown";
+  const paymentRef = doc.stripePaymentIntentId || doc.payherePaymentId || "";
+
+  await PaymentHistory.findOneAndUpdate(
+    { orderId: doc.orderId },
+    {
+      $set: {
+        patientSub: doc.patientSub || reqUser?.sub || "",
+        pendingBookingId: doc._id,
+        appointmentId: appointmentId || "",
+        doctorUserId: doc.doctorUserId || "",
+        doctorName: doc.doctorName || "",
+        specialization: doc.specialization || "",
+        date: doc.date || "",
+        time: doc.time || "",
+        appointmentType: doc.appointmentType || "physical",
+        currency: doc.currency || "LKR",
+        consultationFeeCents: Number(doc.consultationFeeCents || 0),
+        serviceFeeCents: Number(doc.serviceFeeCents || 0),
+        totalCents,
+        paymentMethod,
+        paymentRef,
+        status: "paid"
+      }
+    },
+    { upsert: true, new: true }
+  );
 }
 
 exports.createPendingBooking = async (req, res) => {
@@ -385,6 +421,7 @@ exports.completeBookingAfterPayment = async (req, res) => {
     }
 
     if (doc.appointmentCreated) {
+      await upsertPaymentHistory({ doc, reqUser: req.user });
       return res.status(200).json({
         message: "Appointment already created",
         orderId: doc.orderId,
@@ -468,6 +505,11 @@ exports.completeBookingAfterPayment = async (req, res) => {
       });
       doc.appointmentCreated = true;
       await doc.save();
+      await upsertPaymentHistory({
+        doc,
+        reqUser: req.user,
+        appointmentId: aptRes.data?.appointment?._id || ""
+      });
       return res.status(201).json({
         message: "Appointment booked",
         appointment: aptRes.data?.appointment,
@@ -487,6 +529,17 @@ exports.completeBookingAfterPayment = async (req, res) => {
   } catch (e) {
     console.error(e);
     return res.status(500).json({ message: "Failed to complete booking" });
+  }
+};
+
+exports.getMyPaymentHistory = async (req, res) => {
+  try {
+    const rows = await PaymentHistory.find({ patientSub: req.user.sub })
+      .sort({ createdAt: -1 })
+      .lean();
+    return res.json({ payments: rows });
+  } catch (e) {
+    return res.status(500).json({ message: "Failed to load payment history" });
   }
 };
 
