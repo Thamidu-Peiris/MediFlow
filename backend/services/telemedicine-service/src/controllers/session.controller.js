@@ -1,6 +1,10 @@
 const { randomUUID } = require("crypto");
 const Session = require("../models/session.model");
 const { RtcTokenBuilder, RtcRole } = require("agora-token");
+const axios = require("axios");
+
+const DOCTOR_SERVICE_URL = process.env.DOCTOR_SERVICE_URL || "http://doctor-service:8003/api/doctors";
+const APPOINTMENT_SERVICE_URL = process.env.APPOINTMENT_SERVICE_URL || "http://appointment-service:8002/api/appointments";
 
 exports.getAgoraConfig = (req, res) => {
     const appId = process.env.AGORA_APP_ID || "";
@@ -88,9 +92,95 @@ exports.listMySessions = async (req, res) => {
                 ? { doctorId: req.user.sub }
                 : { patientId: req.user.sub };
 
-        const sessions = await Session.find(filter).sort({ createdAt: -1 });
+        const sessions = await Session.find(filter).sort({ createdAt: -1 }).lean();
+
+        // ── Enrichment ──────────────────────────────────────────────────────────
+        // Fetch doctor info and appointment details to show real names, specialties, images, and times
+        let doctorMap = {};
+        let appointmentMap = {};
+
+        // 1. Fetch all doctors to map info
+        try {
+            const doctorsRes = await axios.get(`${DOCTOR_SERVICE_URL}/public`, { timeout: 5000 });
+            const doctors = Array.isArray(doctorsRes.data?.doctors) ? doctorsRes.data.doctors : [];
+            doctors.forEach(d => {
+                if (d.userId) doctorMap[String(d.userId)] = d;
+            });
+            console.log(`[Telemedicine] Fetched ${doctors.length} doctors for enrichment`);
+        } catch (docError) {
+            console.error("[Telemedicine] Failed to fetch doctors:", docError.message);
+        }
+
+        // 2. Fetch patient's appointments to get times/dates
+        if (req.user.role === "patient") {
+            try {
+                const appointmentsRes = await axios.get(`${APPOINTMENT_SERVICE_URL}/my`, {
+                    headers: { Authorization: req.headers.authorization },
+                    timeout: 5000
+                });
+                const appointments = Array.isArray(appointmentsRes.data?.appointments) ? appointmentsRes.data.appointments : [];
+                appointments.forEach(a => {
+                    if (a._id) appointmentMap[String(a._id)] = a;
+                    // Also map by doctorId for sessions without appointmentId
+                    if (a.doctorId) appointmentMap[`doc_${String(a.doctorId)}`] = a;
+                });
+                console.log(`[Telemedicine] Fetched ${appointments.length} appointments for enrichment`);
+            } catch (apptError) {
+                console.error("[Telemedicine] Failed to fetch appointments:", apptError.message);
+            }
+        }
+
+        // 3. Apply enrichment to each session
+        for (const s of sessions) {
+            // Enrich doctor info
+            const doc = doctorMap[String(s.doctorId)];
+            if (doc) {
+                s.doctorName = doc.fullName || s.doctorName || "Doctor";
+                s.doctorImage = doc.image || "";
+                s.specialty = doc.specialization || "General Practitioner";
+            } else {
+                // Fallback: try to fetch individual doctor
+                try {
+                    const singleDocRes = await axios.get(`${DOCTOR_SERVICE_URL}/public/${s.doctorId}`, { timeout: 3000 });
+                    if (singleDocRes.data?.doctor) {
+                        const d = singleDocRes.data.doctor;
+                        s.doctorName = d.fullName || s.doctorName || "Doctor";
+                        s.doctorImage = d.image || "";
+                        s.specialty = d.specialization || "General Practitioner";
+                        console.log(`[Telemedicine] Fetched individual doctor for session ${s._id}`);
+                    }
+                } catch (e) {
+                    // Keep existing values as fallback
+                    s.doctorName = s.doctorName || "Doctor";
+                    s.specialty = s.specialty || "General Practitioner";
+                }
+            }
+
+            // Enrich appointment date/time
+            if (s.appointmentId && appointmentMap[String(s.appointmentId)]) {
+                const appt = appointmentMap[String(s.appointmentId)];
+                s.date = appt.date;
+                s.time = appt.time;
+                s.appointmentType = appt.type || "online";
+            } else if (appointmentMap[`doc_${String(s.doctorId)}`]) {
+                // Fallback: use appointment by same doctor
+                const appt = appointmentMap[`doc_${String(s.doctorId)}`];
+                s.date = s.date || appt.date;
+                s.time = s.time || appt.time;
+            }
+
+            // Final fallbacks
+            if (!s.date && s.createdAt) {
+                s.date = new Date(s.createdAt).toISOString().split('T')[0];
+            }
+            if (!s.time && s.createdAt) {
+                s.time = new Date(s.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+        }
+
         return res.status(200).json({ sessions });
     } catch (error) {
+        console.error("[Telemedicine] listMySessions error:", error);
         return res.status(500).json({ message: "Failed to fetch sessions" });
     }
 };

@@ -5768,7 +5768,7 @@ button, .btn-primary {
 .at-card-premium {
   background-color: var(--at-surface-container-lowest);
   padding: 2.5rem;
-  border-radius: 4rem; /* Restored to 4rem for a fully rounded 'big box' feel */
+  border-radius: 2.5rem; /* Increased to 4rem for a fully rounded 'big box' feel */
   display: flex;
   flex-wrap: wrap;
   gap: 2rem;
@@ -5931,19 +5931,343 @@ button, .btn-primary {
 
 .at-btn-cancel {
   color: #ba1a1a;
-  background-color: #ffdad6; /* Added light red background */
   font-weight: 800;
   font-size: 0.8rem;
   border: none;
-  border-radius: 0.8rem;
+  background: transparent;
   cursor: pointer;
-  padding: 0.8rem 1.25rem;
-  transition: all 0.2s ease;
+  padding: 0.8rem;
+}
+
+.at-btn-cancel:hover {
+  text-decoration: underline;
 }
 
 .at-btn-cancel:hover {
   background-color: #ffb4ab; /* Slightly darker light red on hover */
   transform: translateY(-1px);
+}
+
+/* ── Atelier Telemedicine Page Styles (Exact Visual Match) ── */
+
+.at-tele-page {
+  background-color: var(--at-background);
+  min-height: 100vh;
+  padding: 3rem 2rem;
+}
+
+.at-tele-header-hero {
+  margin-bottom: 3.5rem;
+  max-width: 52rem;
+}
+
+.at-tele-page-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--at-on-surface);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 1.25rem;
+}
+
+.at-tele-page-lead {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--at-on-surface-variant);
+  line-height: 1.6;
+}
+
+.at-tele-layout {
+  display: flex;
+  gap: 3rem;
+  align-items: flex-start;
+}
+
+@media (max-width: 1024px) {
+  .at-tele-layout {
+    flex-direction: column;
+    gap: 2rem;
+  }
+}
+
+/* Left Sidebar Info Card */
+.at-tele-info-card {
+  flex: 0 0 320px;
+  background-color: var(--at-surface-container-lowest);
+  padding: 2.5rem 2rem;
+  border-radius: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 77, 77, 0.03);
+}
+
+.at-tele-graphic {
+  background-color: #3e4e50;
+  height: 180px;
+  border-radius: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.at-tele-graphic-circle {
+  width: 64px;
+  height: 64px;
+  background-color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #004d4d;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.at-tele-side-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--at-on-surface);
+  line-height: 1.2;
+}
+
+.at-tele-side-desc {
+  font-size: 0.9375rem;
+  color: var(--at-on-surface-variant);
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.at-btn-refresh-tele {
+  margin-top: 1rem;
+  background-color: transparent;
+  border: 2px solid #004d4d;
+  color: #004d4d;
+  padding: 1.125rem;
+  border-radius: 1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9375rem;
+}
+
+.at-btn-refresh-tele:hover {
+  background-color: rgba(0, 77, 77, 0.05);
+}
+
+/* Main Sessions List */
+.at-tele-main {
+  flex: 1;
+}
+
+.at-tele-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.at-tele-list-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--at-on-surface);
+}
+
+.at-live-sync-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #006766;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.at-pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #33b1b1;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #33b1b1;
+}
+
+/* Session Cards */
+.at-session-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.at-session-bento {
+  background-color: var(--at-surface-container-lowest);
+  padding: 1.5rem 2.5rem;
+  border-radius: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.5);
+}
+
+.at-session-bento:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 77, 77, 0.04);
+}
+
+.at-session-left-area {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.at-session-doc-img {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 1.25rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.at-session-details-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.at-session-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.at-session-doctor-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--at-on-surface);
+}
+
+.at-session-specialty {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--at-on-surface-variant);
+  margin: 0.25rem 0;
+}
+
+.at-status-pill-tele {
+  font-size: 0.625rem;
+  font-weight: 800;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.at-status-pill-tele.active { background: #dcfce7; color: #166534; }
+.at-status-pill-tele.waiting { background: #fef3c7; color: #92400e; }
+.at-status-pill-tele.ended { background: #f1f5f9; color: #475569; }
+
+.at-session-meta-row {
+  display: flex;
+  gap: 1.5rem;
+  color: var(--at-on-surface-variant);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.at-session-meta-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.at-session-meta-pill .material-symbols-outlined {
+  font-size: 20px;
+  color: #94a3b8;
+}
+
+.at-session-action-area {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* Specific Buttons from Image */
+.at-btn-call-active {
+  background-color: #004d4d;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  box-shadow: 0 8px 16px rgba(0, 77, 77, 0.2);
+  transition: all 0.2s;
+}
+
+.at-btn-call-active:hover {
+  background-color: #003d3d;
+  transform: translateY(-1px);
+}
+
+.at-btn-room-waiting {
+  background-color: transparent;
+  border: 1.5px solid #ccfbf1;
+  color: #004d4d;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.2s;
+}
+
+.at-btn-room-waiting:hover {
+  background-color: rgba(0, 103, 102, 0.03);
+}
+
+.at-btn-notes-ended {
+  background-color: #e8e8e8;
+  color: #1e293b;
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.at-btn-dots-more {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background-color: #f1f5f9;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
 }
 
 .aura-nav-label {
