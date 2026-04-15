@@ -464,9 +464,18 @@ exports.streamAvatar = async (req, res) => {
 };
 
 exports.listReports = async (req, res) => {
-  console.log("[DEBUG] listReports entry. User:", req.user?.sub);
+  const { patientId } = req.query;
+  const targetUserId = patientId || req.user.sub;
+
+  console.log("[DEBUG] listReports entry. Target User:", targetUserId, "Requesting User:", req.user?.sub);
+  
   try {
-    const patient = await Patient.findOne({ userId: req.user.sub }).select("reports");
+    // Authorization: Allow the patient to see their own reports, or allow doctors/admins
+    if (patientId && req.user.sub !== patientId && req.user.role !== "doctor" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const patient = await Patient.findOne({ userId: targetUserId }).select("reports");
     console.log("[DEBUG] listReports patient found:", !!patient);
     if (!patient) {
       console.log("[DEBUG] listReports: No patient record. Returning empty reports array.");

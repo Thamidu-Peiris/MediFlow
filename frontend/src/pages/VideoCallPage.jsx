@@ -27,6 +27,7 @@ export default function VideoCallPage() {
   const [observationNotes, setObservationNotes] = useState("");
   const [sessionData, setSessionData] = useState(null);
   const [patientHealthInfo, setPatientHealthInfo] = useState(null);
+  const [patientReports, setPatientReports] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   
   // New Prescription Form State
@@ -53,29 +54,38 @@ export default function VideoCallPage() {
   useEffect(() => {
     // Auto-refresh prescriptions for patient
     let pollInterval;
-    if (role === "patient" && sessionData?.patientId) {
-      const fetchPrescriptions = async () => {
+    if (role === "patient") {
+      const fetchPatientData = async () => {
         try {
-          const res = await api.get("/patients/prescriptions", authHeaders);
-          // Filter prescriptions for this specific session/appointment if ID exists
-          const sessionPrescs = res.data.prescriptions.filter(p => 
-            p.appointmentId === sessionData.appointmentId || 
-            (new Date(p.createdAt) > new Date(Date.now() - 3600000)) // Fallback: last 1 hour
-          );
-          if (sessionPrescs.length > 0) {
-            setPrescriptions(sessionPrescs);
-            // Also update observation notes from the latest prescription if empty
-            if (!observationNotes && sessionPrescs[0].notes) {
-              setObservationNotes(sessionPrescs[0].notes);
+          // Fetch prescriptions
+          const presRes = await api.get("/patients/prescriptions", authHeaders);
+          if (sessionData?.appointmentId) {
+            const sessionPrescs = presRes.data.prescriptions.filter(p => 
+              p.appointmentId === sessionData.appointmentId || 
+              (new Date(p.createdAt) > new Date(Date.now() - 3600000))
+            );
+            if (sessionPrescs.length > 0) {
+              setPrescriptions(sessionPrescs);
+              if (!observationNotes && sessionPrescs[0].notes) {
+                setObservationNotes(sessionPrescs[0].notes);
+              }
             }
+          } else {
+            setPrescriptions(presRes.data.prescriptions || []);
+          }
+
+          // Fetch patient's own reports for the call
+          const reportsRes = await api.get("/patients/reports", authHeaders);
+          if (reportsRes.data?.reports) {
+            setPatientReports(reportsRes.data.reports);
           }
         } catch (err) {
-          console.error("Failed to fetch prescriptions for patient:", err);
+          console.error("Failed to fetch patient data during call:", err);
         }
       };
 
-      pollInterval = setInterval(fetchPrescriptions, 5000); // Poll every 5 seconds
-      fetchPrescriptions(); // Initial fetch
+      pollInterval = setInterval(fetchPatientData, 5000);
+      fetchPatientData();
     }
 
     if (!channel) {
@@ -99,15 +109,23 @@ export default function VideoCallPage() {
               setObservationNotes(session.doctorNotes);
             }
 
-            // If doctor, fetch patient health info
+            // If doctor, fetch patient health info and reports
             if (role === "doctor" && session.patientId) {
               try {
-                const pRes = await api.get(`/patients/${session.patientId}`, authHeaders);
+                const [pRes, rRes] = await Promise.all([
+                  api.get(`/patients/${session.patientId}`, authHeaders),
+                  api.get(`/patients/reports?patientId=${session.patientId}`, authHeaders)
+                ]);
+                
                 if (pRes.data?.patient) {
                   setPatientHealthInfo(pRes.data.patient);
                 }
+                
+                if (rRes.data?.reports) {
+                  setPatientReports(rRes.data.reports);
+                }
               } catch (pErr) {
-                console.error("Failed to fetch patient health info:", pErr);
+                console.error("Failed to fetch patient data:", pErr);
               }
             }
           }
@@ -861,38 +879,54 @@ export default function VideoCallPage() {
 
             {activeTab === "reports" && (
               <section className="space-y-4">
-                <h3 className="text-sm font-bold text-slate-800 px-1">Shared Files (2)</h3>
+                <h3 className="text-sm font-bold text-slate-800 px-1">
+                  {role === "doctor" ? "Patient Reports" : "My Reports"} ({patientReports.length})
+                </h3>
+                
                 <div className="space-y-3">
-                  <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm group cursor-pointer hover:border-teal-200 transition-all">
-                    <div className="w-10 h-10 bg-red-50 flex items-center justify-center rounded-xl text-red-500">
-                      <span className="material-symbols-outlined">picture_as_pdf</span>
+                  {patientReports.length > 0 ? (
+                    patientReports.map((report) => (
+                      <div 
+                        key={report._id || report.id} 
+                        className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm group cursor-pointer hover:border-teal-200 transition-all"
+                        onClick={() => window.open(report.filePath, '_blank')}
+                      >
+                        <div className={`w-10 h-10 flex items-center justify-center rounded-xl ${
+                          report.fileType?.includes('pdf') || report.fileName?.endsWith('.pdf') 
+                            ? "bg-red-50 text-red-500" 
+                            : "bg-blue-50 text-blue-500"
+                        }`}>
+                          <span className="material-symbols-outlined">
+                            {report.fileType?.includes('pdf') || report.fileName?.endsWith('.pdf') ? "picture_as_pdf" : "image"}
+                          </span>
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                          <p className="text-xs font-bold text-slate-700 truncate">{report.title || report.fileName}</p>
+                          <p className="text-[10px] text-slate-400 font-medium">
+                            {report.category} • {new Date(report.uploadedAt || report.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span className="material-symbols-outlined text-slate-300 text-lg group-hover:text-teal-500">visibility</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                      <span className="material-symbols-outlined text-4xl opacity-20 mb-2">folder_off</span>
+                      <p className="text-xs font-medium">No reports shared yet</p>
                     </div>
-                    <div className="flex-1 overflow-hidden">
-                      <p className="text-xs font-bold text-slate-700 truncate">Blood_Test_Result_Oct.pdf</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Shared 5m ago • 1.2 MB</p>
-                    </div>
-                    <span className="material-symbols-outlined text-slate-300 text-lg group-hover:text-teal-500">visibility</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm group cursor-pointer hover:border-teal-200 transition-all">
-                    <div className="w-10 h-10 bg-blue-50 flex items-center justify-center rounded-xl text-blue-500">
-                      <span className="material-symbols-outlined">description</span>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <p className="text-xs font-bold text-slate-700 truncate">Patient_History_Summary.docx</p>
-                      <p className="text-[10px] text-slate-400 font-medium">System generated • 840 KB</p>
-                    </div>
-                    <span className="material-symbols-outlined text-slate-300 text-lg group-hover:text-teal-500">download</span>
-                  </div>
+                  )}
                 </div>
 
-                <div className="mt-6 border-2 border-dashed border-slate-100 rounded-3xl p-8 flex flex-col items-center justify-center text-center hover:bg-slate-50 hover:border-teal-200 transition-all cursor-pointer group">
-                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-teal-50 transition-all">
-                    <span className="material-symbols-outlined text-slate-400 group-hover:text-teal-600">upload_file</span>
+                {role === "patient" && (
+                  <div className="mt-6 border-2 border-dashed border-slate-100 rounded-3xl p-8 flex flex-col items-center justify-center text-center hover:bg-slate-50 hover:border-teal-200 transition-all cursor-pointer group"
+                       onClick={() => window.open('/patient/reports', '_blank')}>
+                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-teal-50 transition-all">
+                      <span className="material-symbols-outlined text-slate-400 group-hover:text-teal-600">upload_file</span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-600">Go to Reports Page</p>
+                    <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">To upload new files</p>
                   </div>
-                  <p className="text-xs font-bold text-slate-600">Drag or click to upload report</p>
-                  <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">PDF, JPG up to 10MB</p>
-                </div>
+                )}
               </section>
             )}
           </div>
