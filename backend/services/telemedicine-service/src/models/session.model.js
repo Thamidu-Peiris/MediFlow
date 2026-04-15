@@ -15,7 +15,16 @@ const sessionSchema = new mongoose.Schema(
         },
         startedAt: { type: Date, default: null },
         endedAt: { type: Date, default: null },
-        doctorNotes: { type: String, default: "" }
+        doctorNotes: { type: String, default: "" },
+        chatMessages: [
+            {
+                text: String,
+                role: String,
+                senderId: String,
+                senderName: String,
+                time: { type: Date, default: Date.now }
+            }
+        ]
     },
     { timestamps: true }
 );

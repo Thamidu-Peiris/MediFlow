@@ -2,16 +2,15 @@ const axios = require("axios");
 const cloudinaryCfg = require("../config/cloudinary");
 const Doctor = require("../models/doctor.model");
 
-function cloudinaryHttpStatus(error) {
-  const code = Number(error?.http_code);
-  if (code === 401 || code === 403) return 502;
-  if (code >= 400 && code < 500) return 502;
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function cloudinaryHttpStatus(err) {
+  if (err?.http_code) return err.http_code;
   return 500;
 }
 
-function cloudinaryErrorDetail(error) {
-  const msg = error?.message && error.message !== "undefined" ? error.message : "";
-  return msg.length > 280 ? `${msg.slice(0, 280)}…` : msg || "Unknown error";
+function cloudinaryErrorDetail(err) {
+  return err?.message || "Cloudinary failure";
 }
 
 // ── Profile ──────────────────────────────────────────────────────────────────
@@ -295,6 +294,24 @@ exports.issuePrescription = async (req, res) => {
 
         if (!doctor) {
             return res.status(404).json({ message: "Create your profile first" });
+        }
+
+        // Synchronize with Patient Service
+        try {
+            const patientServiceUrl = process.env.PATIENT_SERVICE_URL || "http://localhost:8002";
+            await axios.post(`${patientServiceUrl}/prescriptions/sync`, {
+                patientId,
+                doctorId: req.user.sub,
+                doctorName: doctor.fullName, // Include doctor name
+                appointmentId,
+                medicines,
+                notes
+            }, {
+                headers: { Authorization: req.headers.authorization }
+            });
+        } catch (syncError) {
+            console.error("Failed to sync prescription with Patient Service:", syncError.message);
+            // We don't fail the whole request if sync fails, but we log it
         }
 
         const issued = doctor.prescriptions[doctor.prescriptions.length - 1];

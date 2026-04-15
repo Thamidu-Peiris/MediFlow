@@ -138,11 +138,32 @@ exports.getMyProfile = async (req, res) => {
   try {
     const patient = await Patient.findOne({ userId: req.user.sub });
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      // Return null profile instead of 404 to allow frontend to handle "create profile" state
+      return res.status(200).json({ patient: null });
     }
     return res.status(200).json({ patient: serializePatientForClient(patient) });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch profile" });
+  }
+};
+
+exports.getPatientProfile = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const patient = await Patient.findOne({ userId: patientId });
+    if (!patient) {
+      return res.status(404).json({ message: "Patient profile not found" });
+    }
+    
+    // Authorization: Allow the patient themselves or a doctor
+    if (req.user.sub !== patientId && req.user.role !== "doctor" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    return res.status(200).json({ patient: serializePatientForClient(patient) });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to fetch patient profile" });
   }
 };
 
@@ -176,12 +197,16 @@ exports.uploadReport = async (req, res) => {
       );
     }
 
-    const patient = await Patient.findOne({ userId: req.user.sub });
+    let patient = await Patient.findOne({ userId: req.user.sub });
     if (!patient) {
-      req._uploadStep?.("05_reject_no_patient_profile", { userId: req.user.sub });
-      return res
-        .status(404)
-        .json(attachTraceToJsonPayload(req, { message: "Create profile before uploading reports" }));
+      req._uploadStep?.("05_auto_create_patient", { userId: req.user.sub });
+      // Create a basic patient profile automatically if it doesn't exist
+      patient = new Patient({
+        userId: req.user.sub,
+        fullName: req.user.name || "Patient",
+        email: req.user.email || ""
+      });
+      await patient.save();
     }
 
     req._uploadStep?.("05_patient_found", { patientId: String(patient._id) });
@@ -439,10 +464,22 @@ exports.streamAvatar = async (req, res) => {
 };
 
 exports.listReports = async (req, res) => {
+  const { patientId } = req.query;
+  const targetUserId = patientId || req.user.sub;
+
+  console.log("[DEBUG] listReports entry. Target User:", targetUserId, "Requesting User:", req.user?.sub);
+  
   try {
-    const patient = await Patient.findOne({ userId: req.user.sub }).select("reports");
+    // Authorization: Allow the patient to see their own reports, or allow doctors/admins
+    if (patientId && req.user.sub !== patientId && req.user.role !== "doctor" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const patient = await Patient.findOne({ userId: targetUserId }).select("reports");
+    console.log("[DEBUG] listReports patient found:", !!patient);
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      console.log("[DEBUG] listReports: No patient record. Returning empty reports array.");
+      return res.status(200).json({ reports: [] });
     }
 
     res.setHeader("X-MediFlow-Upload-Engine", preferredUploadEngine());
@@ -552,7 +589,12 @@ exports.getHistory = async (req, res) => {
       "medicalHistory appointments prescriptions"
     );
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      return res.status(200).json({
+        medicalHistory: [],
+        diagnoses: [],
+        prescriptions: [],
+        appointments: []
+      });
     }
     const diagnoses = (patient.appointments || [])
       .map((item) => item.diagnosis)
@@ -570,14 +612,52 @@ exports.getHistory = async (req, res) => {
 };
 
 exports.getPrescriptions = async (req, res) => {
+  console.log("[DEBUG] getPrescriptions entry. User:", req.user?.sub);
   try {
     const patient = await Patient.findOne({ userId: req.user.sub }).select("prescriptions");
+    console.log("[DEBUG] getPrescriptions patient found:", !!patient);
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      console.log("[DEBUG] getPrescriptions: No patient record. Returning empty prescriptions array.");
+      return res.status(200).json({ prescriptions: [] });
     }
     return res.status(200).json({ prescriptions: patient.prescriptions || [] });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch prescriptions" });
+  }
+};
+
+exports.syncPrescription = async (req, res) => {
+  try {
+    const { patientId, doctorId, doctorName, appointmentId, medicines = [], notes = "" } = req.body;
+    
+    if (!patientId) {
+      return res.status(400).json({ message: "patientId is required" });
+    }
+
+    const patient = await Patient.findOneAndUpdate(
+      { userId: patientId },
+      { 
+        $push: { 
+          prescriptions: { 
+            doctorId, 
+            doctorName,
+            appointmentId, 
+            medicines, 
+            notes 
+          } 
+        } 
+      },
+      { new: true }
+    );
+
+    if (!patient) {
+      return res.status(404).json({ message: "Patient profile not found" });
+    }
+
+    return res.status(200).json({ message: "Prescription synced successfully" });
+  } catch (error) {
+    console.error("syncPrescription error:", error);
+    return res.status(500).json({ message: "Failed to sync prescription" });
   }
 };
 
@@ -710,7 +790,7 @@ exports.setEmergencyContact = async (req, res) => {
     const phone = String(req.body.phone || "").trim();
     const patient = await Patient.findOne({ userId: req.user.sub });
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      return res.status(200).json({ patient: null });
     }
     patient.emergencyContact = { name, relationship, phone };
     await patient.save();
@@ -725,7 +805,7 @@ exports.clearEmergencyContact = async (req, res) => {
   try {
     const patient = await Patient.findOne({ userId: req.user.sub });
     if (!patient) {
-      return res.status(404).json({ message: "Profile not found" });
+      return res.status(200).json({ patient: null });
     }
     patient.emergencyContact = { name: "", relationship: "", phone: "" };
     await patient.save();
