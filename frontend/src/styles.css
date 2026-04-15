@@ -4940,12 +4940,12 @@ button, .btn-primary {
   gap: 24px;
 }
 
-.aura-col-8 {
-  grid-column: span 8;
+.aura-col-9 {
+  grid-column: span 9;
 }
 
-.aura-col-4 {
-  grid-column: span 4;
+.aura-col-3 {
+  grid-column: span 3;
 }
 
 .aura-col-7 {
@@ -6503,7 +6503,7 @@ button, .btn-primary {
 }
 
 .aura-col-right {
-  grid-column: 9 / span 4;
+  grid-column: 10 / span 3;
 }
 
 .aura-quick-side {
@@ -6684,7 +6684,7 @@ button, .btn-primary {
   border: 1px solid #e5e7eb;
   border-radius: 20px;
   padding: 20px;
-  height: 280px;
+  height: 320px; /* Increased to match Quick Actions sidebar */
 }
 
 .aura-chart-title {
@@ -6696,7 +6696,7 @@ button, .btn-primary {
 
 .aura-report-left-grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.6fr 1.2fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin-bottom: 24px;
 }

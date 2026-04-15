@@ -217,11 +217,11 @@ export default function PatientDashboardPage() {
             </div>
           </section>
 
-          <section className="aura-col-8">
+          <section className="aura-col-9">
             <div className="aura-report-left-grid">
               <div className="aura-chart-card">
                 <h3 className="aura-chart-title">Reports Upload Trend</h3>
-                <ResponsiveContainer width="100%" height={180}>
+                <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={reportsData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                     <XAxis dataKey="month" tick={{fontSize: 10}} stroke="#9ca3af" />
@@ -234,14 +234,14 @@ export default function PatientDashboardPage() {
 
               <div className="aura-chart-card">
                 <h3 className="aura-chart-title">Reports by Category</h3>
-                <ResponsiveContainer width="100%" height={180}>
+                <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie
                       data={reportsByCategory}
                       cx="50%"
                       cy="45%"
-                      innerRadius={40}
-                      outerRadius={60}
+                      innerRadius={45}
+                      outerRadius={70}
                       paddingAngle={5}
                       dataKey="value"
                     >
@@ -257,7 +257,7 @@ export default function PatientDashboardPage() {
 
               <div className="aura-chart-card">
                 <h3 className="aura-chart-title">Appointment Activity</h3>
-                <ResponsiveContainer width="100%" height={180}>
+                <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={appointmentData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="month" tick={{fontSize: 10}} stroke="#9ca3af" />
@@ -271,7 +271,7 @@ export default function PatientDashboardPage() {
           </section>
 
           {/* Right Side Quick Actions */}
-          <section className="aura-col-4 aura-col-right">
+          <section className="aura-col-3 aura-col-right">
             <div className="aura-quick-side">
               <h3 className="aura-quick-side__title">Quick Actions</h3>
               <div className="aura-quick-side__list">
