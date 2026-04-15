@@ -645,42 +645,44 @@ export default function VideoCallPage() {
                 )}
 
                 {/* E-Prescription Section */}
-                <section className="bg-teal-50/30 p-5 rounded-3xl border border-teal-100/50 space-y-4">
+                <section className="p-5 rounded-3xl border border-[#8BF79D]/30 space-y-4" style={{ backgroundColor: '#8BF79D' }}>
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-teal-600" style={{ fontVariationSettings: "'FILL' 1" }}>medication</span>
-                    <h3 className="text-base font-bold text-teal-900">E-Prescription</h3>
+                    <span className="material-symbols-outlined text-emerald-900" style={{ fontVariationSettings: "'FILL' 1" }}>medication</span>
+                    <h3 className="text-base font-bold text-emerald-900">E-Prescription</h3>
                   </div>
                   
                   <div className="space-y-4">
-                    {(role === "doctor" ? prescriptions : prescriptions).map((p, idx) => (
-                      <div key={p.id || idx} className="relative bg-white border border-teal-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 group">
+                    {prescriptions.map((p, idx) => (
+                      <div key={p.id || idx} className="relative bg-white/95 border border-white/20 rounded-xl px-4 py-3 shadow-md group">
                         {role === "doctor" && (
                           <button 
                             onClick={() => setPrescriptions(prescriptions.filter(x => (x.id || x._id) !== (p.id || p._id)))}
-                            className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10 shadow-sm"
                           >
                             <span className="material-symbols-outlined text-xs">close</span>
                           </button>
                         )}
-                        <p className="font-bold text-teal-900">
+                        <p className="font-bold text-black text-sm">
                           {p.name || (p.medicines && p.medicines[0]?.name) || "Prescription Item"}
                         </p>
                         {p.medicines ? (
                           <div className="space-y-1 mt-1">
                             {p.medicines.map((m, mIdx) => (
-                              <p key={mIdx} className="text-xs text-slate-500">
-                                {m.name}: {m.dosage} • {m.frequency} • {m.duration}
+                              <p key={mIdx} className="text-[11px] font-bold text-emerald-900">
+                                {m.name}: <span className="text-slate-600 font-medium">{m.dosage} • {m.frequency} • {m.duration}</span>
                               </p>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-slate-500">{p.dosage} • {p.frequency} • {p.duration}</p>
+                          <p className="text-[11px] font-bold text-emerald-900">
+                            {p.dosage} • <span className="text-slate-600 font-medium">{p.frequency} • {p.duration}</span>
+                          </p>
                         )}
                       </div>
                     ))}
                     
                     {role === "doctor" && (
-                      <div className="space-y-4 pt-3 border-t border-teal-100/50">
+                      <div className="space-y-4 pt-3 border-t border-emerald-900/20">
                         {/* Medicine name with suggestions */}
                         <div className="relative">
                           <input
@@ -688,7 +690,7 @@ export default function VideoCallPage() {
                             placeholder="Medicine Name (e.g. Paracetamol)"
                             value={newMed.name}
                             onChange={(e) => setNewMed({ ...newMed, name: e.target.value })}
-                            className="w-full text-xs px-3 py-2 border border-teal-100 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20 font-bold selection:bg-teal-100"
+                            className="w-full text-xs px-3 py-2 bg-white/90 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-900/30 font-bold text-black placeholder:text-slate-500"
                           />
                           {newMed.name.length >= 2 && MEDICINE_SUGGESTIONS.filter(m => m.toLowerCase().includes(newMed.name.toLowerCase()) && m !== newMed.name).length > 0 && (
                             <div 
@@ -788,7 +790,7 @@ export default function VideoCallPage() {
                         <button 
                           onClick={handleAddMed}
                           disabled={!newMed.name || !newMed.dosage}
-                          className="w-full py-3 bg-teal-600 text-white rounded-xl text-xs font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-900/10 disabled:opacity-50 disabled:shadow-none"
+                          className="w-full py-3 bg-black text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-all flex items-center justify-center gap-2 shadow-lg shadow-black/20 disabled:opacity-50 disabled:shadow-none border border-white/10"
                         >
                           <span className="material-symbols-outlined text-sm">add_circle</span>
                           Add to Prescription
@@ -901,13 +903,14 @@ export default function VideoCallPage() {
               <button 
                 onClick={handleFinalize}
                 disabled={isSaving}
-                className="w-full py-4 bg-teal-100/50 text-teal-800 font-bold rounded-2xl hover:bg-teal-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-4 text-black font-black rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-black/10 shadow-lg shadow-[#78F1FF]/20"
+                style={{ backgroundColor: '#78F1FF' }}
               >
                 {isSaving ? (
-                  <div className="spinner-small" />
+                  <div className="spinner-small border-black" />
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-lg">assignment_turned_in</span>
+                    <span className="material-symbols-outlined text-lg font-bold">verified</span>
                     Finalize & Send Summary
                   </>
                 )}
