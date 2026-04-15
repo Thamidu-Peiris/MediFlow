@@ -146,6 +146,26 @@ exports.getMyProfile = async (req, res) => {
   }
 };
 
+exports.getPatientProfile = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const patient = await Patient.findOne({ userId: patientId });
+    if (!patient) {
+      return res.status(404).json({ message: "Patient profile not found" });
+    }
+    
+    // Authorization: Allow the patient themselves or a doctor
+    if (req.user.sub !== patientId && req.user.role !== "doctor" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    return res.status(200).json({ patient: serializePatientForClient(patient) });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to fetch patient profile" });
+  }
+};
+
 exports.uploadReport = async (req, res) => {
   try {
     req._uploadStep?.("03_controller_enter", {

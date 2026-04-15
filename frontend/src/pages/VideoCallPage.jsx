@@ -26,6 +26,7 @@ export default function VideoCallPage() {
   const [prescriptions, setPrescriptions] = useState([]);
   const [observationNotes, setObservationNotes] = useState("");
   const [sessionData, setSessionData] = useState(null);
+  const [patientHealthInfo, setPatientHealthInfo] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   
   // New Prescription Form State
@@ -92,9 +93,22 @@ export default function VideoCallPage() {
         try {
           const sRes = await api.get(`/telemedicine/room/${channel}`, authHeaders);
           if (sRes.data?.session) {
-            setSessionData(sRes.data.session);
-            if (sRes.data.session.doctorNotes) {
-              setObservationNotes(sRes.data.session.doctorNotes);
+            const session = sRes.data.session;
+            setSessionData(session);
+            if (session.doctorNotes) {
+              setObservationNotes(session.doctorNotes);
+            }
+
+            // If doctor, fetch patient health info
+            if (role === "doctor" && session.patientId) {
+              try {
+                const pRes = await api.get(`/patients/${session.patientId}`, authHeaders);
+                if (pRes.data?.patient) {
+                  setPatientHealthInfo(pRes.data.patient);
+                }
+              } catch (pErr) {
+                console.error("Failed to fetch patient health info:", pErr);
+              }
             }
           }
         } catch (sErr) {
@@ -542,7 +556,7 @@ export default function VideoCallPage() {
                     {role === "doctor" && (
                       <div className="flex items-center gap-1.5 text-[10px] text-teal-600 font-bold bg-teal-50 px-2 py-1 rounded-full">
                         <span className="material-symbols-outlined text-sm">cloud_done</span>
-                        Auto-saved 14:22
+                        Auto-saved
                       </div>
                     )}
                   </div>
@@ -567,6 +581,68 @@ export default function VideoCallPage() {
                     )}
                   </div>
                 </section>
+
+                {/* Patient Health Profile (Visible only to Doctor) */}
+                {role === "doctor" && patientHealthInfo && (
+                  <section className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-blue-600">contact_page</span>
+                      <h3 className="text-base font-bold text-slate-800">Patient Health Profile</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-3">
+                      {/* Allergies */}
+                      <div className="bg-red-50/50 p-3 rounded-xl border border-red-100">
+                        <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1">Allergies</p>
+                        {patientHealthInfo.allergies?.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {patientHealthInfo.allergies.map((a, i) => (
+                              <span key={i} className="text-xs bg-white text-red-700 px-2 py-0.5 rounded-md border border-red-200 font-semibold">
+                                {a.label}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-red-400 italic">No allergies reported</p>
+                        )}
+                      </div>
+
+                      {/* Medical Conditions */}
+                      <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-100">
+                        <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">Conditions</p>
+                        {patientHealthInfo.medicalConditions?.length > 0 ? (
+                          <div className="space-y-1">
+                            {patientHealthInfo.medicalConditions.map((c, i) => (
+                              <div key={i} className="text-xs text-amber-900 font-semibold flex items-center gap-1.5">
+                                <span className="w-1 h-1 bg-amber-400 rounded-full"></span>
+                                {c.label}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-amber-400 italic">No conditions reported</p>
+                        )}
+                      </div>
+
+                      {/* Current Medications */}
+                      <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Current Medications</p>
+                        {patientHealthInfo.currentMedications?.length > 0 ? (
+                          <div className="space-y-1">
+                            {patientHealthInfo.currentMedications.map((m, i) => (
+                              <div key={i} className="text-xs text-blue-900 font-semibold flex items-center gap-1.5">
+                                <span className="w-1 h-1 bg-blue-400 rounded-full"></span>
+                                {m.label}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-blue-400 italic">No medications reported</p>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                )}
 
                 {/* E-Prescription Section */}
                 <section className="bg-teal-50/30 p-5 rounded-3xl border border-teal-100/50 space-y-4">

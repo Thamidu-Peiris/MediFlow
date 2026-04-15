@@ -4,6 +4,7 @@ const multer = require("multer");
 const {
   upsertProfile,
   getMyProfile,
+  getPatientProfile, // Add this
   uploadReport,
   uploadAvatar,
   streamReportFile,
@@ -84,6 +85,7 @@ function handleMulter(mw) {
 }
 
 router.get("/me", verifyAuth, requirePatientRole, getMyProfile);
+router.get("/:patientId", verifyAuth, getPatientProfile); // Add this for doctor access
 /* Prefer /me/health/... through the gateway — avoids any clash with service GET /health (diagnostics). */
 router.put("/me/health/emergency-contact", verifyAuth, requirePatientRole, setEmergencyContact);
 router.delete("/me/health/emergency-contact", verifyAuth, requirePatientRole, clearEmergencyContact);
