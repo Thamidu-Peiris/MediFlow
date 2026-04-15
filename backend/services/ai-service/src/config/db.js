@@ -7,7 +7,9 @@ const connectDB = async () => {
     return;
   }
   try {
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 8000
+    });
     console.log("AI service connected to MongoDB Atlas");
   } catch (error) {
     console.error("AI service MongoDB connection failed:", error.message);

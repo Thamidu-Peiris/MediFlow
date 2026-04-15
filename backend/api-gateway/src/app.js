@@ -33,7 +33,10 @@ proxyRoutes.forEach(([path, target]) => {
   const opts = {
     target,
     changeOrigin: true,
-    pathRewrite: (pathName) => pathName.replace(path, "")
+    pathRewrite: (pathName) => pathName.replace(path, ""),
+    // Avoid premature 504 when the target is slow to accept (e.g. cold start); LLM routes set their own timeouts.
+    proxyTimeout: Number(process.env.PROXY_TIMEOUT_MS) || 120000,
+    timeout: Number(process.env.PROXY_TIMEOUT_MS) || 120000
   };
   if (path === "/api/patients") {
     opts.onProxyRes = (proxyRes, req, res) => {
