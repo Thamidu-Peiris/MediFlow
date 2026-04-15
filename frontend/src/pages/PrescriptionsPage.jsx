@@ -41,8 +41,9 @@ export default function PrescriptionsPage() {
 
   const getMedicineSummary = (medicines) => {
     if (!medicines || medicines.length === 0) return "No medicines";
-    if (medicines.length === 1) return medicines[0].name || medicines[0];
-    return `${medicines[0].name || medicines[0]} +${medicines.length - 1} more`;
+    const firstMed = medicines[0].name || (typeof medicines[0] === 'string' ? medicines[0] : "Unnamed Medicine");
+    if (medicines.length === 1) return firstMed;
+    return `${firstMed} +${medicines.length - 1} more`;
   };
 
   const handleDownloadPDF = async (prescription) => {

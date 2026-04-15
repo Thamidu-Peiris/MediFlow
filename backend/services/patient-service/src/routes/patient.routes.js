@@ -13,6 +13,7 @@ const {
   deleteAccount,
   getHistory,
   getPrescriptions,
+  syncPrescription,
   getAppointments,
   addHealthItem,
   updateHealthItem,
@@ -119,6 +120,7 @@ router.get("/reports", verifyAuth, requirePatientRole, listReports);
 router.delete("/reports/:id", verifyAuth, requirePatientRole, deleteReport);
 router.get("/history", verifyAuth, requirePatientRole, getHistory);
 router.get("/prescriptions", verifyAuth, requirePatientRole, getPrescriptions);
+router.post("/prescriptions/sync", verifyAuth, syncPrescription);
 router.get("/appointments", verifyAuth, requirePatientRole, getAppointments);
 
 router.get("/profiles/me", verifyAuth, requirePatientRole, getMyProfile);

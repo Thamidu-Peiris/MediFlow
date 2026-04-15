@@ -581,6 +581,41 @@ exports.getPrescriptions = async (req, res) => {
   }
 };
 
+exports.syncPrescription = async (req, res) => {
+  try {
+    const { patientId, doctorId, doctorName, appointmentId, medicines = [], notes = "" } = req.body;
+    
+    if (!patientId) {
+      return res.status(400).json({ message: "patientId is required" });
+    }
+
+    const patient = await Patient.findOneAndUpdate(
+      { userId: patientId },
+      { 
+        $push: { 
+          prescriptions: { 
+            doctorId, 
+            doctorName,
+            appointmentId, 
+            medicines, 
+            notes 
+          } 
+        } 
+      },
+      { new: true }
+    );
+
+    if (!patient) {
+      return res.status(404).json({ message: "Patient profile not found" });
+    }
+
+    return res.status(200).json({ message: "Prescription synced successfully" });
+  } catch (error) {
+    console.error("syncPrescription error:", error);
+    return res.status(500).json({ message: "Failed to sync prescription" });
+  }
+};
+
 exports.getAppointments = async (req, res) => {
   try {
     const patient = await Patient.findOne({ userId: req.user.sub }).select("appointments");
