@@ -302,7 +302,7 @@ exports.issuePrescription = async (req, res) => {
             await axios.post(`${patientServiceUrl}/prescriptions/sync`, {
                 patientId,
                 doctorId: req.user.sub,
-                doctorName: doctor.fullName,
+                doctorName: doctor.fullName, // Include doctor name
                 appointmentId,
                 medicines,
                 notes

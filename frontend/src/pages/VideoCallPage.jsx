@@ -49,6 +49,33 @@ export default function VideoCallPage() {
 
   /* ── init call ─────────────────────────────────────────────────── */
   useEffect(() => {
+    // Auto-refresh prescriptions for patient
+    let pollInterval;
+    if (role === "patient" && sessionData?.patientId) {
+      const fetchPrescriptions = async () => {
+        try {
+          const res = await api.get("/patients/prescriptions", authHeaders);
+          // Filter prescriptions for this specific session/appointment if ID exists
+          const sessionPrescs = res.data.prescriptions.filter(p => 
+            p.appointmentId === sessionData.appointmentId || 
+            (new Date(p.createdAt) > new Date(Date.now() - 3600000)) // Fallback: last 1 hour
+          );
+          if (sessionPrescs.length > 0) {
+            setPrescriptions(sessionPrescs);
+            // Also update observation notes from the latest prescription if empty
+            if (!observationNotes && sessionPrescs[0].notes) {
+              setObservationNotes(sessionPrescs[0].notes);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch prescriptions for patient:", err);
+        }
+      };
+
+      pollInterval = setInterval(fetchPrescriptions, 5000); // Poll every 5 seconds
+      fetchPrescriptions(); // Initial fetch
+    }
+
     if (!channel) {
       setErrorMsg("No call channel specified.");
       setPhase("error");
@@ -140,13 +167,14 @@ export default function VideoCallPage() {
 
     return () => {
       cancelled = true;
+      if (pollInterval) clearInterval(pollInterval);
       clearInterval(timerRef.current);
       audioTrackRef.current?.close();
       videoTrackRef.current?.close();
       clientRef.current?.leave().catch(() => {});
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel]);
+  }, [channel, role, sessionData?.patientId, sessionData?.appointmentId, authHeaders]);
 
   /* ── controls ──────────────────────────────────────────────────── */
   const toggleMic = async () => {
@@ -504,18 +532,30 @@ export default function VideoCallPage() {
                   </div>
                   
                   <div className="space-y-4">
-                    {prescriptions.map((p) => (
-                      <div key={p.id} className="relative bg-white border border-teal-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 group">
+                    {(role === "doctor" ? prescriptions : prescriptions).map((p, idx) => (
+                      <div key={p.id || idx} className="relative bg-white border border-teal-100 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 group">
                         {role === "doctor" && (
                           <button 
-                            onClick={() => setPrescriptions(prescriptions.filter(x => x.id !== p.id))}
+                            onClick={() => setPrescriptions(prescriptions.filter(x => (x.id || x._id) !== (p.id || p._id)))}
                             className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                           >
                             <span className="material-symbols-outlined text-xs">close</span>
                           </button>
                         )}
-                        <p className="font-bold text-teal-900">{p.name}</p>
-                        <p className="text-xs text-slate-500">{p.dosage} • {p.frequency} • {p.duration}</p>
+                        <p className="font-bold text-teal-900">
+                          {p.name || (p.medicines && p.medicines[0]?.name) || "Prescription Item"}
+                        </p>
+                        {p.medicines ? (
+                          <div className="space-y-1 mt-1">
+                            {p.medicines.map((m, mIdx) => (
+                              <p key={mIdx} className="text-xs text-slate-500">
+                                {m.name}: {m.dosage} • {m.frequency} • {m.duration}
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-500">{p.dosage} • {p.frequency} • {p.duration}</p>
+                        )}
                       </div>
                     ))}
                     
