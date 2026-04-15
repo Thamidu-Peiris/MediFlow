@@ -4496,7 +4496,7 @@ button, .btn-primary {
   transition: color 0.2s;
 }
 .ap-eye-btn:hover { color: #2563eb; }
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
 
 .ap-forgot {
   text-align: right;
