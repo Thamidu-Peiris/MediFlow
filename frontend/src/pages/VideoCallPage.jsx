@@ -7,6 +7,9 @@ import { useAuth } from "../context/AuthContext";
 /* Silence Agora's verbose console output in production */
 AgoraRTC.setLogLevel(4);
 
+/* Agora Configuration */
+const AGORA_APP_ID = "813878b01fed414a85775bdf1796deb6";
+
 export default function VideoCallPage() {
   const [searchParams] = useSearchParams();
   const channel  = searchParams.get("channel")  || "";
@@ -44,10 +47,9 @@ export default function VideoCallPage() {
 
     (async () => {
       try {
-        /* 1 — fetch Agora App ID from backend */
-        const cfg = await api.get("/telemedicine/agora-config", authHeaders);
-        const appId = cfg.data?.appId;
-        if (!appId) throw new Error("Agora App ID not configured on the server.");
+        /* 1 — use Agora App ID directly */
+        const appId = AGORA_APP_ID;
+        if (!appId) throw new Error("Agora App ID not configured.");
 
         /* 2 — create Agora client */
         const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
@@ -73,11 +75,16 @@ export default function VideoCallPage() {
 
         client.on("user-left", () => setHasRemote(false));
 
-        /* 4 — join channel (no token = App ID only mode) */
+        /* 4 — fetch token for secure authentication */
         const uid = Math.floor(Math.random() * 99000) + 1000;
-        await client.join(appId, channel, null, uid);
+        const tokenRes = await api.get(`/telemedicine/token?channelName=${channel}&uid=${uid}&role=publisher`, authHeaders);
+        const token = tokenRes.data?.token;
+        if (!token) throw new Error("Failed to generate authentication token.");
+        
+        /* 5 — join channel with token */
+        await client.join(appId, channel, token, uid);
 
-        /* 5 — create local audio + video tracks */
+        /* 6 — create local audio + video tracks */
         const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
           {},
           { encoderConfig: "720p_1" }
@@ -90,12 +97,12 @@ export default function VideoCallPage() {
         if (cancelled) return;
         setPhase("live");
 
-        /* 6 — play local video in PiP */
+        /* 7 — play local video in PiP */
         if (localDivRef.current) {
           videoTrack.play(localDivRef.current);
         }
 
-        /* 7 — start elapsed timer */
+        /* 8 — start elapsed timer */
         timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
       } catch (err) {
         if (!cancelled) {
