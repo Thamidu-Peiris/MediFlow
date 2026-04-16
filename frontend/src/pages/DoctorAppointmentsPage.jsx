@@ -119,6 +119,15 @@ function estimateEndTime(timeStr, durationMins) {
     return `${h12}:${String(nm).padStart(2, "0")} ${ampm}`;
 }
 
+function getStatusBadgeClass(status) {
+    const s = String(status || "").toLowerCase();
+    if (s === "pending") return "bg-amber-100 text-amber-900 border-amber-200";
+    if (s === "accepted" || s === "confirmed" || s === "active") return "bg-[#CBF79D] text-[#043927] border-[#043927]/10";
+    if (s === "completed") return "bg-emerald-100 text-emerald-900 border-emerald-200";
+    if (s === "cancelled" || s === "rejected") return "bg-red-100 text-red-900 border-red-200";
+    return "bg-slate-100 text-slate-900 border-slate-200";
+}
+
 export default function DoctorAppointmentsPage() {
     const { authHeaders, user } = useAuth();
     const [appointments, setAppointments] = useState([]);
@@ -126,10 +135,8 @@ export default function DoctorAppointmentsPage() {
     const [activeTab, setActiveTab] = useState("upcoming");
     const [searchQuery, setSearchQuery] = useState("");
     const [page, setPage] = useState(1);
-    /** Inclusive YYYY-MM-DD; empty string = no bound on that side */
     const [filterDateFrom, setFilterDateFrom] = useState("");
     const [filterDateTo, setFilterDateTo] = useState("");
-    const dateRangeInitializedRef = useRef(false);
     const [statusError, setStatusError] = useState(null);
 
     const fetchAppointments = () => {
@@ -147,16 +154,6 @@ export default function DoctorAppointmentsPage() {
     useEffect(() => {
         setPage(1);
     }, [activeTab, searchQuery, filterDateFrom, filterDateTo]);
-
-    /** Once real appointments load, default the calendar to the min–max dates in the dataset */
-    useEffect(() => {
-        if (loading || dateRangeInitializedRef.current) return;
-        const keys = appointmentDateKeys(appointments);
-        if (keys.length === 0) return;
-        dateRangeInitializedRef.current = true;
-        setFilterDateFrom(keys[0]);
-        setFilterDateTo(keys[keys.length - 1]);
-    }, [loading, appointments]);
 
     const handleStatusUpdate = async (id, action) => {
         try {
@@ -209,115 +206,94 @@ export default function DoctorAppointmentsPage() {
     );
 
     const dateRangeSummary = useMemo(() => {
-        if (filterDateFrom && filterDateTo) {
-            return `${formatShortDate(filterDateFrom)} - ${formatShortDate(filterDateTo)}`;
-        }
+        if (filterDateFrom && filterDateTo) return `${formatShortDate(filterDateFrom)} - ${formatShortDate(filterDateTo)}`;
         if (filterDateFrom) return `From ${formatShortDate(filterDateFrom)}`;
         if (filterDateTo) return `Until ${formatShortDate(filterDateTo)}`;
         return "All dates";
     }, [filterDateFrom, filterDateTo]);
 
-    const getStatusCounts = () => ({
-        upcoming: appointments.filter(
-            (a) => a.status === "pending" || a.status === "accepted" || a.status === "confirmed"
-        ).length,
-        pending: appointments.filter((a) => a.status === "pending").length,
-        completed: appointments.filter((a) => a.status === "completed").length,
-        cancelled: appointments.filter((a) => a.status === "cancelled" || a.status === "rejected")
-            .length,
-    });
-
-    const counts = getStatusCounts();
+    const counts = {
+        upcoming: appointments.filter(a => ["pending", "accepted", "confirmed"].includes(a.status?.toLowerCase())).length,
+        pending: appointments.filter(a => a.status === "pending").length,
+        completed: appointments.filter(a => a.status === "completed").length,
+        cancelled: appointments.filter(a => ["cancelled", "rejected"].includes(a.status?.toLowerCase())).length,
+    };
 
     const appointmentFilterTabs = [
-        {
-            id: "upcoming",
-            label: "Upcoming",
-            count: counts.upcoming,
-            active: "bg-blue-600 text-white shadow-md shadow-blue-600/25",
-            idle: "bg-blue-50 text-blue-800 hover:bg-blue-100",
-        },
-        {
-            id: "pending",
-            label: "Pending Requests",
-            count: counts.pending,
-            active: "bg-amber-500 text-white shadow-md shadow-amber-500/35",
-            idle: "bg-amber-50 text-amber-900 hover:bg-amber-100",
-        },
-        {
-            id: "completed",
-            label: "Completed",
-            count: counts.completed,
-            active: "bg-emerald-600 text-white shadow-md shadow-emerald-600/30",
-            idle: "bg-emerald-50 text-emerald-800 hover:bg-emerald-100",
-        },
-        {
-            id: "cancelled",
-            label: "Cancelled",
-            count: counts.cancelled,
-            active: "bg-rose-600 text-white shadow-md shadow-rose-600/30",
-            idle: "bg-rose-50 text-rose-800 hover:bg-rose-100",
-        },
+        { id: "upcoming", label: "Active Schedule", count: counts.upcoming, active: "bg-[#043927] text-white shadow-xl shadow-[#043927]/20", idle: "bg-white text-[#043927]/60 hover:bg-[#CBF79D]/10" },
+        { id: "pending", label: "Patient Requests", count: counts.pending, active: "bg-amber-500 text-white shadow-xl shadow-amber-500/20", idle: "bg-white text-[#043927]/60 hover:bg-amber-50" },
+        { id: "completed", label: "Clinical History", count: counts.completed, active: "bg-[#437A00] text-white shadow-xl shadow-[#437A00]/20", idle: "bg-white text-[#043927]/60 hover:bg-[#CBF79D]/10" },
+        { id: "cancelled", label: "Archived", count: counts.cancelled, active: "bg-red-600 text-white shadow-xl shadow-red-600/20", idle: "bg-white text-[#043927]/60 hover:bg-red-50" },
     ];
 
     return (
         <DoctorShell>
-            <div className="relative mx-auto w-full max-w-7xl space-y-6 p-8">
+            <div className="max-w-6xl mx-auto space-y-10 p-2 md:p-4">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+                    <div className="space-y-2">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#CBF79D]/20 text-[#437A00] text-[10px] font-bold uppercase tracking-widest border border-[#CBF79D]/30">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#437A00] opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#437A00]"></span>
+                            </span>
+                            Clinical Operations
+                        </div>
+                        <h1 className="text-4xl font-headline font-black text-[#043927]">Appointment Center</h1>
+                        <p className="text-[#043927]/50 font-medium text-lg">Manage your clinical sessions and virtual consultations.</p>
+                    </div>
+                </div>
+
                 {statusError && (
-                    <div
-                        className="flex items-start justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
-                        role="alert"
-                    >
-                        <span>{statusError}</span>
-                        <button
-                            type="button"
-                            className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-rose-800 hover:bg-rose-100"
-                            onClick={() => setStatusError(null)}
-                        >
-                            Dismiss
+                    <div className="mx-4 flex items-center gap-3 bg-red-50 text-red-600 px-6 py-4 rounded-2xl border border-red-100 animate-in fade-in slide-in-from-top-4">
+                        <span className="material-symbols-outlined text-xl">error_outline</span>
+                        <span className="text-sm font-bold flex-1">{statusError}</span>
+                        <button onClick={() => setStatusError(null)} className="p-2 hover:bg-red-100 rounded-lg transition-colors">
+                            <span className="material-symbols-outlined text-lg">close</span>
                         </button>
                     </div>
                 )}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-                    <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="Filter appointments">
-                        {appointmentFilterTabs.map((tab) => {
-                            const isActive = activeTab === tab.id;
-                            const suffix = tab.count > 0 ? ` (${tab.count})` : "";
-                            return (
-                                <button
-                                    key={tab.id}
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={isActive}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
-                                        isActive ? tab.active : tab.idle
-                                    }`}
-                                >
-                                    {tab.label}
-                                    {suffix}
-                                </button>
-                            );
-                        })}
+
+                <div className="bg-white p-8 md:p-10 rounded-[3rem] shadow-2xl shadow-[#043927]/5 border border-[#356600]/5 space-y-8">
+                    <div className="flex flex-wrap gap-3 p-1.5 bg-[#fcfdfa] border border-[#356600]/10 rounded-[2.5rem]">
+                        {appointmentFilterTabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex-1 flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+                                    activeTab === tab.id ? tab.active : tab.idle
+                                }`}
+                            >
+                                {tab.label}
+                                {tab.count > 0 && (
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-[#043927]/10 text-[#043927]'}`}>
+                                        {tab.count}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
                     </div>
 
-                    <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-12 md:gap-4">
-                        <div className="md:col-span-5">
-                            <label className="mb-1 block text-xs font-medium text-slate-500">Search</label>
-                            <div className="relative">
-                            <span className="material-symbols-outlined absolute left-4 top-1/2 z-10 -translate-y-1/2 text-slate-400">
-                                search
-                            </span>
-                            <input
-                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-800 shadow-sm transition-all placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400/25"
-                                placeholder="Search patient name, ID, or phone..."
-                                type="search"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+                        <div className="lg:col-span-5 space-y-3">
+                            <label className="text-xs font-black text-[#043927]/60 uppercase tracking-[0.15em] ml-1">Search Directory</label>
+                            <div className="relative group">
+                                <div className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#CBF79D]/10 rounded-xl flex items-center justify-center text-[#437A00] transition-colors group-focus-within:bg-[#CBF79D]/30">
+                                    <span className="material-symbols-outlined text-2xl">search</span>
+                                </div>
+                                <input
+                                    type="search"
+                                    placeholder="Patient name, ID, or phone..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full bg-[#fcfdfa] border border-[#356600]/10 rounded-2xl pl-20 pr-8 py-5 text-[#043927] font-bold focus:ring-4 focus:ring-[#CBF79D]/30 focus:border-[#437A00]/40 focus:outline-none transition-all shadow-sm placeholder-[#043927]/30"
+                                />
                             </div>
                         </div>
-                        <div className="md:col-span-7">
+                        <div className="lg:col-span-7 space-y-3">
+                            <label className="text-xs font-black text-[#043927]/60 uppercase tracking-[0.15em] ml-1 flex justify-between items-center">
+                                Date Parameters
+                                <span className="text-[10px] lowercase font-bold italic opacity-60">Filtered: {dateRangeSummary}</span>
+                            </label>
                             <AppointmentDateRangePicker
                                 fromYmd={filterDateFrom}
                                 toYmd={filterDateTo}
@@ -326,92 +302,77 @@ export default function DoctorAppointmentsPage() {
                                     setFilterDateTo(to);
                                 }}
                             />
-                            <p className="mt-1 truncate text-xs text-slate-500" title={dateRangeSummary}>
-                                Showing: {dateRangeSummary}
-                            </p>
                         </div>
                     </div>
 
-                    {loading && (
-                        <div className="mt-6 flex items-center justify-center border-t border-slate-100 py-14">
-                            <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-600" />
-                            <span className="ml-3 text-sm font-medium text-slate-600">Loading appointments...</span>
-                        </div>
-                    )}
-
-                    {!loading && filteredAppointments.length === 0 && (
-                        <div className="mt-6 border-t border-slate-100 py-14 text-center">
-                            <span className="material-symbols-outlined mb-4 block text-7xl font-light text-slate-200">
-                                calendar_today
-                            </span>
-                            <p className="text-lg font-medium text-slate-500">No appointments found.</p>
-                        </div>
-                    )}
-
-                    {!loading && filteredAppointments.length > 0 && (
-                        <div className="mt-6 space-y-5 border-t border-slate-100 pt-6">
-                            {paginatedAppointments.map((appt) => (
-                                        <AppointmentRow
-                                    key={appt._id}
-                                    appt={appt}
-                                    onStatusUpdate={handleStatusUpdate}
-                                    authHeaders={authHeaders}
-                                    user={user}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {!loading && filteredAppointments.length > 0 && (
-                        <div className="mt-6 flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                            <span className="text-sm font-medium text-slate-500">
-                                Showing {(safePage - 1) * PAGE_SIZE + 1}-
-                                {Math.min(safePage * PAGE_SIZE, filteredAppointments.length)} of{" "}
-                                {filteredAppointments.length} appointments
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    disabled={safePage <= 1}
-                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                    className="rounded-xl border border-slate-200/80 bg-white p-2 text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-40"
-                                >
-                                    <span className="material-symbols-outlined text-[22px]">chevron_left</span>
-                                </button>
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                                    <button
-                                        key={n}
-                                        type="button"
-                                        onClick={() => setPage(n)}
-                                        className={`min-h-10 min-w-10 px-3 text-sm font-bold transition-all ${
-                                            n === safePage
-                                                ? "rounded-full bg-slate-800 text-white shadow-md shadow-slate-900/20"
-                                                : "rounded-xl border border-slate-200/80 bg-white font-semibold text-slate-600 shadow-sm hover:border-slate-300 hover:text-slate-900"
-                                        }`}
-                                    >
-                                        {n}
-                                    </button>
-                                ))}
-                                <button
-                                    type="button"
-                                    disabled={safePage >= totalPages}
-                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                    className="rounded-xl border border-slate-200/80 bg-white p-2 text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-800 disabled:opacity-40"
-                                >
-                                    <span className="material-symbols-outlined text-[22px]">chevron_right</span>
-                                </button>
+                    <div className="space-y-6">
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center p-20 bg-white rounded-[3rem] border border-[#356600]/5">
+                                <div className="animate-spin rounded-full h-12 w-12 border-[3px] border-[#CBF79D]/30 border-t-[#437A00]"></div>
+                                <p className="mt-4 text-[#043927]/40 font-bold uppercase tracking-widest text-xs">Accessing clinical database...</p>
                             </div>
-                        </div>
-                    )}
+                        ) : filteredAppointments.length === 0 ? (
+                            <div className="bg-white p-20 rounded-[3rem] text-center border border-[#356600]/5 shadow-xl shadow-[#043927]/5">
+                                <div className="w-24 h-24 bg-[#fcfdfa] rounded-[2.5rem] flex items-center justify-center text-[#043927]/10 mx-auto mb-8">
+                                    <span className="material-symbols-outlined text-6xl text-slate-200">event_busy</span>
+                                </div>
+                                <h4 className="text-2xl font-headline font-black text-[#043927]">No records match</h4>
+                                <p className="text-[#043927]/40 font-medium max-w-sm mx-auto mt-2 italic">Adjust your filters or search parameters to locate specific clinical sessions.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-6">
+                                {paginatedAppointments.map((appt) => (
+                                    <AppointmentRow
+                                        key={appt._id}
+                                        appt={appt}
+                                        onStatusUpdate={handleStatusUpdate}
+                                        authHeaders={authHeaders}
+                                        user={user}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {!loading && filteredAppointments.length > PAGE_SIZE && (
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] border border-[#356600]/5 shadow-lg shadow-[#043927]/5 mx-2">
+                                <span className="text-sm font-black text-[#043927]/40 uppercase tracking-widest">
+                                    Records {(safePage - 1) * PAGE_SIZE + 1} - {Math.min(safePage * PAGE_SIZE, filteredAppointments.length)} of {filteredAppointments.length}
+                                </span>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        disabled={safePage <= 1}
+                                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                                        className="w-12 h-12 rounded-xl border border-[#356600]/10 flex items-center justify-center text-[#043927] hover:bg-[#CBF79D] transition-all disabled:opacity-30"
+                                    >
+                                        <span className="material-symbols-outlined">chevron_left</span>
+                                    </button>
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                                        <button
+                                            key={n}
+                                            onClick={() => setPage(n)}
+                                            className={`w-12 h-12 rounded-xl text-xs font-black transition-all ${
+                                                n === safePage ? 'bg-[#043927] text-white shadow-lg' : 'bg-[#fcfdfa] text-[#043927] border border-[#356600]/10 hover:bg-[#CBF79D]/30'
+                                            }`}
+                                        >
+                                            {n}
+                                        </button>
+                                    ))}
+                                    <button
+                                        disabled={safePage >= totalPages}
+                                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                        className="w-12 h-12 rounded-xl border border-[#356600]/10 flex items-center justify-center text-[#043927] hover:bg-[#CBF79D] transition-all disabled:opacity-30"
+                                    >
+                                        <span className="material-symbols-outlined">chevron_right</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="fixed bottom-8 right-8 z-[100] flex flex-col gap-4">
-                    <button
-                        type="button"
-                        className="rounded-full bg-teal-800 p-4 text-white shadow-xl shadow-teal-900/35 transition-all hover:bg-teal-900 hover:scale-105 active:scale-95"
-                        aria-label="Quick task"
-                    >
-                        <span className="material-symbols-outlined text-[26px]">add_task</span>
+                <div className="fixed bottom-10 right-10 z-50">
+                    <button className="group w-16 h-16 rounded-[1.5rem] bg-[#043927] text-white flex items-center justify-center shadow-2xl shadow-[#043927]/40 hover:bg-[#437A00] transition-all hover:scale-110 active:scale-90">
+                        <span className="material-symbols-outlined text-3xl group-hover:rotate-90 transition-transform duration-500">add_task</span>
                     </button>
                 </div>
             </div>
@@ -424,9 +385,9 @@ function AppointmentRow({ appt, onStatusUpdate, authHeaders, user }) {
     const [reasonDialogOpen, setReasonDialogOpen] = useState(false);
     const [videoLoading, setVideoLoading] = useState(false);
     const status = String(appt.status || "").toLowerCase();
-    const isCancelled = status === "cancelled" || status === "rejected";
+    const isCancelled = ["cancelled", "rejected"].includes(status);
     const isPending = status === "pending";
-    const isAccepted = status === "accepted" || status === "confirmed";
+    const isAccepted = ["accepted", "confirmed", "active"].includes(status);
     const isCompleted = status === "completed";
     const isOnline = String(appt.appointmentType || "").toLowerCase() === "online";
 
@@ -435,273 +396,96 @@ function AppointmentRow({ appt, onStatusUpdate, authHeaders, user }) {
         await openVideoCall({ appt, authHeaders, user });
         setVideoLoading(false);
     };
-    const rawDur = appt.durationMins ?? appt.duration;
-    const durationMinsNum =
-        typeof rawDur === "number" && !Number.isNaN(rawDur)
-            ? rawDur
-            : parseInt(String(rawDur).replace(/\D/g, ""), 10) || 30;
-    const durationLabel =
-        typeof appt.duration === "string" && /mins?/i.test(appt.duration)
-            ? appt.duration
-            : `${durationMinsNum} mins`;
-    const endDisplay =
-        appt.endTime || estimateEndTime(appt.time, durationMinsNum) || "—";
 
-    const iconOutlineClass =
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-none transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300/60";
-    const iconMutedClass =
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-none transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300/60";
-
-    const patientLabel = appt.patientName?.trim() || "this patient";
-    const hasBloodType = String(appt.bloodType || "").trim().length > 0;
-    const visitReasonText =
-        String(appt.reason || "").trim() || String(appt.notes || "").trim() || "";
-
-    const submitConfirm = () => {
-        if (!confirmDialog) return;
-        onStatusUpdate(appt._id, confirmDialog.action);
-        setConfirmDialog(null);
-    };
+    const durationMinsNum = typeof appt.durationMins === "number" ? appt.durationMins : parseInt(String(appt.duration).replace(/\D/g, ""), 10) || 30;
+    const endDisplay = appt.endTime || estimateEndTime(appt.time, durationMinsNum) || "—";
+    const visitReasonText = String(appt.reason || "").trim() || String(appt.notes || "").trim() || "";
 
     return (
         <Fragment>
-        <div
-            className={`group relative flex flex-col items-center gap-6 rounded-3xl border border-slate-200/70 bg-white p-5 shadow-none transition-all duration-300 md:flex-row ${
-                isCancelled ? "opacity-[0.72]" : ""
-            }`}
-        >
-            <div className="absolute left-3 cursor-grab text-slate-300 opacity-0 transition-opacity group-hover:opacity-100">
-                <span className="material-symbols-outlined">drag_indicator</span>
-            </div>
-
-            <div className="flex min-w-[280px] items-center gap-4">
-                <div
-                    className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-xl ${isCancelled ? "bg-slate-200" : "bg-teal-50 ring-2 ring-teal-100"}`}
-                >
-                    <img
-                        alt=""
-                        className={`h-full w-full object-cover ${isCancelled ? "grayscale" : ""}`}
-                        src={
-                            appt.patientImage ||
-                            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"
-                        }
-                    />
-                </div>
-                <div>
-                    <h4 className="font-headline text-lg font-bold text-slate-800">
-                        {appt.patientName || "Patient"}
-                    </h4>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
-                        <span>{appt.patientAge != null ? `${appt.patientAge} Years` : "—"}</span>
-                        <span className="text-slate-300">•</span>
-                        <span>{appt.patientGender || "—"}</span>
-                        {hasBloodType && (
-                            <>
-                                <span className="text-slate-300">•</span>
-                                <span className="font-bold text-teal-700">
-                                    {formatBloodType(appt.bloodType)}
-                                </span>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex w-full flex-1 items-center justify-between gap-6 md:gap-8">
-                <div className="flex items-center gap-4">
-                    <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
-                            isCancelled ? "bg-slate-100" : "bg-teal-50"
-                        }`}
-                    >
-                        <span
-                            className={`material-symbols-outlined text-[22px] ${isCancelled ? "text-slate-400" : "text-teal-700"}`}
-                        >
-                            {isCancelled ? "event_busy" : "schedule"}
-                        </span>
-                    </div>
-                    <div>
-                        <div
-                            className={`text-base font-bold ${isCancelled ? "text-slate-400 line-through" : "text-slate-800"}`}
-                        >
-                            {appt.time || "—"} - {endDisplay}
+            <article className={`bg-white p-8 rounded-[3rem] shadow-xl shadow-[#043927]/5 border border-[#356600]/5 transition-all duration-300 hover:shadow-2xl hover:shadow-[#043927]/10 ${isCancelled ? 'opacity-60' : ''}`}>
+                <div className="flex flex-col lg:flex-row gap-10 items-center">
+                    <div className="flex-1 flex items-center gap-6 min-w-[300px]">
+                        <div className="relative group">
+                            <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden border-4 border-[#CBF79D]/30 shadow-inner">
+                                <img
+                                    src={appt.patientImage || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"}
+                                    alt="Patient"
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                />
+                            </div>
+                            <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-white border-2 border-white shadow-lg flex items-center justify-center ${isOnline ? 'text-violet-600' : 'text-[#437A00]'}`}>
+                                <span className="material-symbols-outlined text-lg">{isOnline ? 'videocam' : 'local_hospital'}</span>
+                            </div>
                         </div>
-                        <div className="text-xs font-medium text-slate-500">
-                            {formatDisplayDate(appt.date)}
-                            {isCancelled ? " • Cancelled" : ` • ${durationLabel}`}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                                <h4 className="text-xl font-headline font-black text-[#043927]">{appt.patientName || "Anonymous Patient"}</h4>
+                                {isOnline && <span className="px-2 py-0.5 bg-violet-100 text-violet-700 text-[9px] font-black uppercase tracking-widest rounded-lg border border-violet-200">Digital</span>}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-4 text-[10px] font-black text-[#043927]/40 uppercase tracking-widest">
+                                <div className="flex items-center gap-1.5 bg-[#fcfdfa] px-3 py-1 rounded-lg border border-[#356600]/5">
+                                    <span className="material-symbols-outlined text-[14px]">person</span> {appt.patientAge || "—"} Years
+                                </div>
+                                <div className="flex items-center gap-1.5 bg-[#fcfdfa] px-3 py-1 rounded-lg border border-[#356600]/5">
+                                    <span className="material-symbols-outlined text-[14px]">family_restroom</span> {appt.patientGender || "—" }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 flex items-center gap-8 px-10 border-x border-[#356600]/5">
+                        <div className="w-14 h-14 rounded-2xl bg-[#CBF79D] flex items-center justify-center text-[#043927] shadow-sm">
+                            <span className="material-symbols-outlined text-3xl">{isCancelled ? 'event_busy' : 'schedule'}</span>
+                        </div>
+                        <div>
+                            <p className={`text-xl font-black ${isCancelled ? 'text-[#043927]/30 line-through' : 'text-[#043927]'}`}>{appt.time || "—"} - {endDisplay}</p>
+                            <p className="text-[11px] font-bold text-[#437A00] uppercase tracking-widest mt-1">{formatDisplayDate(appt.date)}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex-shrink-0 flex items-center gap-4 min-w-[280px] justify-end">
+                        <button onClick={() => setReasonDialogOpen(true)} className="w-12 h-12 rounded-2xl border border-[#356600]/10 flex items-center justify-center text-[#043927]/60 hover:bg-[#CBF79D]/30 transition-colors shadow-sm"><span className="material-symbols-outlined">description</span></button>
+                        <div className="flex flex-col items-end gap-3">
+                            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border ${getStatusBadgeClass(status)}`}>{formatStatusLabel(status)}</div>
+                            <div className="flex items-center gap-2">
+                                {isAccepted && !isCompleted && (
+                                    isOnline ? (
+                                        <button onClick={handleStartVideoCall} disabled={videoLoading} className="inline-flex items-center justify-center gap-2.5 bg-[#437A00] text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#043927] transition-all shadow-lg shadow-[#437A00]/20 disabled:opacity-50">
+                                            <span className="material-symbols-outlined text-lg">{videoLoading ? 'hourglass_top' : 'sensors'}</span> {videoLoading ? 'Connecting...' : 'Join'}
+                                        </button>
+                                    ) : (
+                                        <button onClick={() => setConfirmDialog({ title: "Clinical Completion", message: `Verify session completion for ${appt.patientName || "this patient"}?`, action: "complete", confirmLabel: "Complete Visit", variant: "primary" })} className="bg-[#043927] text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#437A00] transition-all shadow-lg shadow-[#043927]/20">Verify Visit</button>
+                                    )
+                                )}
+                                {isPending && (
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setConfirmDialog({ title: "Accept Appointment", message: `Add ${appt.patientName || "this patient"} to your schedule?`, action: "accept", confirmLabel: "Confirm Session", variant: "primary" })} className="bg-[#CBF79D] text-[#043927] px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:shadow-lg transition-all">Confirm</button>
+                                        <button onClick={() => setConfirmDialog({ title: "Decline Session", message: `Reject appointment request from ${appt.patientName || "this patient"}?`, action: "reject", confirmLabel: "Decline", variant: "danger" })} className="w-12 h-12 rounded-2xl border border-red-100 flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors"><span className="material-symbols-outlined">close</span></button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="flex w-[260px] shrink-0 items-center justify-end gap-2">
-                    {/* Appointment type badge */}
-                    <span
-                        className="inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-[10px] font-bold uppercase tracking-wide"
-                        style={
-                            isOnline
-                                ? { background: "rgba(124,58,237,0.1)", color: "#7c3aed", border: "1px solid rgba(124,58,237,0.2)" }
-                                : { background: "rgba(0,106,97,0.08)", color: "#006a61", border: "1px solid rgba(0,106,97,0.15)" }
-                        }
-                    >
-                        <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                            {isOnline ? "videocam" : "local_hospital"}
-                        </span>
-                        {isOnline ? "Online" : "In-Person"}
-                    </span>
-                    <button
-                        type="button"
-                        className={iconOutlineClass}
-                        aria-label="Reason for visit"
-                        onClick={() => setReasonDialogOpen(true)}
-                    >
-                        <span className="material-symbols-outlined text-[20px]">description</span>
-                    </button>
-                    <span
-                        className={`inline-flex h-6 w-[108px] items-center justify-center rounded-full px-3 text-[10px] font-black uppercase tracking-wider ${getStatusBadgeClass(status)}`}
-                    >
-                        {formatStatusLabel(status)}
-                    </span>
-                </div>
-            </div>
+            </article>
 
-            <div className="flex items-center gap-3 border-l border-slate-200 pl-6">
-                {isAccepted && !isCompleted && (
-                    <>
-                        {isOnline ? (
-                            /* ── Online appointment: Start Video Call via Agora ── */
-                            <button
-                                type="button"
-                                onClick={handleStartVideoCall}
-                                disabled={videoLoading}
-                                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full px-5 py-0 font-headline text-sm font-bold text-white transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-violet-400/40 disabled:opacity-60"
-                                style={{ background: "linear-gradient(135deg,#7c3aed,#5b21b6)" }}
-                            >
-                                <span className="material-symbols-outlined text-[17px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                                    {videoLoading ? "hourglass_top" : "videocam"}
-                                </span>
-                                {videoLoading ? "Starting…" : "Start Video Call"}
-                            </button>
-                        ) : (
-                            /* ── Physical appointment: mark complete ── */
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setConfirmDialog({
-                                        title: "Complete visit?",
-                                        message: `Mark this visit as completed for ${patientLabel}?`,
-                                        action: "complete",
-                                        confirmLabel: "Complete",
-                                        variant: "primary",
-                                    })
-                                }
-                                className="inline-flex h-10 items-center justify-center rounded-full bg-black px-6 py-0 font-headline text-sm font-bold text-white transition-colors hover:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-400/40"
-                            >
-                                Complete Visit
-                            </button>
-                        )}
-                    </>
-                )}
-                {isPending && (
-                    <>
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setConfirmDialog({
-                                    title: "Confirm appointment",
-                                    message: `Confirm appointment with ${patientLabel}?`,
-                                    action: "accept",
-                                    confirmLabel: "Confirm",
-                                    variant: "primary",
-                                })
-                            }
-                            className="inline-flex h-10 items-center justify-center rounded-full bg-amber-400 px-6 py-0 font-headline text-sm font-bold text-black transition-colors hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                        >
-                            Confirm
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setConfirmDialog({
-                                    title: "Decline appointment",
-                                    message: `Decline the appointment with ${patientLabel}?`,
-                                    action: "reject",
-                                    confirmLabel: "Decline",
-                                    variant: "danger",
-                                })
-                            }
-                            className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-red-600 px-6 py-0 font-headline text-sm font-bold text-white transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
-                        >
-                            Decline
-                        </button>
-                    </>
-                )}
-                {isCompleted && (
-                    <>
-                        <span className="rounded-full bg-emerald-50 px-6 py-2.5 font-headline text-sm font-bold text-emerald-800 ring-1 ring-emerald-100">
-                            Completed
-                        </span>
-                    </>
-                )}
-                {isCancelled && (
-                    <>
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setConfirmDialog({
-                                    title: "Restore appointment",
-                                    message: `Restore appointment for ${patientLabel}?`,
-                                    action: "accept",
-                                    confirmLabel: "Restore",
-                                    variant: "primary",
-                                })
-                            }
-                            className="inline-flex h-10 items-center justify-center rounded-full bg-slate-100 px-6 py-0 font-headline text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300"
-                        >
-                            Restore
-                        </button>
-                        <button type="button" className={iconMutedClass} aria-label="Delete">
-                            <span className="material-symbols-outlined text-[20px]">delete</span>
-                        </button>
-                    </>
-                )}
-            </div>
-        </div>
-        <InfoDialog
-            open={reasonDialogOpen}
-            title="Reason for visit"
-            onClose={() => setReasonDialogOpen(false)}
-        >
-            <p className="whitespace-pre-wrap">
-                {visitReasonText || "No reason provided."}
-            </p>
-        </InfoDialog>
-        <ConfirmDialog
-            open={!!confirmDialog}
-            title={confirmDialog?.title}
-            message={confirmDialog?.message}
-            confirmLabel={confirmDialog?.confirmLabel ?? "Confirm"}
-            cancelLabel="Cancel"
-            variant={confirmDialog?.variant ?? "primary"}
-            onConfirm={submitConfirm}
-            onCancel={() => setConfirmDialog(null)}
-        />
+            <InfoDialog open={reasonDialogOpen} title="Clinical Presentation" onClose={() => setReasonDialogOpen(false)}>
+                <div className="p-6 bg-[#fcfdfa] rounded-[2rem] border border-[#356600]/10">
+                    <p className="text-[#043927] font-medium leading-relaxed whitespace-pre-wrap">{visitReasonText || "No session reason provided."}</p>
+                </div>
+            </InfoDialog>
+
+            <ConfirmDialog
+                open={!!confirmDialog}
+                title={confirmDialog?.title}
+                message={confirmDialog?.message}
+                confirmLabel={confirmDialog?.confirmLabel ?? "Confirm"}
+                cancelLabel="Cancel"
+                variant={confirmDialog?.variant ?? "primary"}
+                onConfirm={() => { onStatusUpdate(appt._id, confirmDialog.action); setConfirmDialog(null); }}
+                onCancel={() => setConfirmDialog(null)}
+            />
         </Fragment>
     );
-}
-
-function getStatusBadgeClass(status) {
-    const s = String(status || "").toLowerCase();
-    switch (s) {
-        case "pending":
-            return "bg-amber-400 text-black";
-        case "accepted":
-        case "confirmed":
-            return "bg-green-600 text-white";
-        case "completed":
-            return "bg-slate-100 text-slate-600";
-        case "cancelled":
-        case "rejected":
-            return "bg-rose-50 text-rose-800 ring-1 ring-rose-100";
-        default:
-            return "bg-slate-100 text-slate-600";
-    }
 }
