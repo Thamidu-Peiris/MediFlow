@@ -172,6 +172,9 @@ export default function MedicalReportsPage() {
   const [category, setCategory] = useState("Lab Results");
   const [relatedDoctor, setRelatedDoctor] = useState("");
 
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState({ open: false, reportId: null, reportTitle: "" });
+
   const loadReports = async () => {
     try {
       const res = await api.get("/patients/reports", authHeaders);
@@ -333,13 +336,30 @@ export default function MedicalReportsPage() {
     }
   };
 
-  const onDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this report?")) return;
+  const openDeleteModal = (report) => {
+    setDeleteModal({
+      open: true,
+      reportId: report._id,
+      reportTitle: report.title || report.fileName || "Untitled Report"
+    });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ open: false, reportId: null, reportTitle: "" });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.reportId) return;
     try {
-      await api.delete(`/patients/reports/${id}`, authHeaders);
+      await api.delete(`/patients/reports/${deleteModal.reportId}`, authHeaders);
+      setMessage("Report deleted successfully");
+      setTimeout(() => setMessage(""), 3000);
       loadReports();
     } catch (err) {
       setMessage(err?.response?.data?.message || "Delete failed");
+      setTimeout(() => setMessage(""), 3000);
+    } finally {
+      closeDeleteModal();
     }
   };
 
@@ -356,9 +376,12 @@ export default function MedicalReportsPage() {
 
   return (
     <PatientShell>
-      <div className="medical-reports-page">
+      <div className="at-reports-page">
         {message && (
-          <div className={`message-toast ${message.includes("success") ? "success" : "error"}`}>
+          <div className={`at-toast ${message.includes("success") ? "at-toast-success" : "at-toast-error"}`}>
+            <span className="material-symbols-outlined" style={{fontSize: "20px"}}>
+              {message.includes("success") ? "check_circle" : "error"}
+            </span>
             {message}
           </div>
         )}
@@ -403,29 +426,32 @@ export default function MedicalReportsPage() {
           </div>
         )}
 
+        {/* Header */}
+        <header className="at-reports-header">
+          <h1 className="at-reports-title">Medical Reports</h1>
+          <p className="at-reports-subtitle">
+            Securely store, view, and manage your health records in one place.
+          </p>
+        </header>
+
         {/* Main Content Grid */}
-        <div className="reports-grid">
+        <div className="at-reports-layout">
           {/* Left Column - Upload */}
-          <div className="upload-section">
-            <div className="profile-section reports-upload-panel">
-              <div className="section-header reports-upload-header">
-                <span className="reports-upload-header-icon" aria-hidden>
-                  <ReportIcon size={22}>
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </ReportIcon>
-                </span>
-                <div>
-                  <h3>Upload New Report</h3>
-                  <p className="reports-upload-subtitle">PDF, scans, or images — stored securely</p>
-                </div>
+          <aside className="at-reports-upload-card">
+            <div className="at-reports-upload-header">
+              <div className="at-reports-icon-circle">
+                <span className="material-symbols-outlined" style={{fontSize: "28px", fontVariationSettings: "'FILL' 1"}}>upload_file</span>
               </div>
+              <div>
+                <h3 className="at-reports-card-title">Upload Report</h3>
+                <p className="at-reports-card-subtitle">PDF, scans, or DICOM</p>
+              </div>
+            </div>
               
               <form onSubmit={onUpload}>
                 {/* Drop Zone */}
                 <div 
-                  className={`drop-zone ${isDragging ? "dragging" : ""} ${file ? "has-file" : ""}`}
+                  className={`at-drop-zone ${isDragging ? "at-drop-zone-dragging" : ""} ${file ? "at-drop-zone-has-file" : ""}`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
@@ -441,76 +467,66 @@ export default function MedicalReportsPage() {
                   />
                   
                   {/* File Type Icons */}
-                  <div className="file-type-icons">
-                    <div className="file-icon pdf">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <path d="M9 13h6"/><path d="M9 17h3"/>
-                      </svg>
+                  <div className="at-file-icons">
+                    <div className="at-file-icon at-file-icon-pdf">
+                      <span className="material-symbols-outlined" style={{fontSize: "24px"}}>picture_as_pdf</span>
                     </div>
-                    <div className="file-icon image">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <path d="m21 15-5-5L5 21"/>
-                      </svg>
+                    <div className="at-file-icon at-file-icon-img">
+                      <span className="material-symbols-outlined" style={{fontSize: "24px"}}>image</span>
                     </div>
-                    <div className="file-icon dicom">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2">
-                        <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/>
-                        <path d="M8.5 8.5A2.5 2.5 0 0 0 11 11"/>
-                        <path d="M15.5 8.5A2.5 2.5 0 0 1 13 11"/>
-                      </svg>
+                    <div className="at-file-icon at-file-icon-dcm">
+                      <span className="material-symbols-outlined" style={{fontSize: "24px"}}>medical_services</span>
                     </div>
                   </div>
                   
-                  <p className="drop-zone-text">
+                  <p className="at-drop-zone-text">
                     {file ? file.name : "Drop files here or click to browse"}
                   </p>
-                  <p className="drop-zone-hint">
+                  <p className="at-drop-zone-hint">
                     PDF, JPG, PNG, DICOM up to 20MB
                   </p>
                   
                   {/* Upload Progress Bar */}
                   {isUploading && (
-                    <div className="upload-progress-container">
-                      <div className="upload-progress-bar">
+                    <div className="at-upload-progress">
+                      <div className="at-progress-bar">
                         <div 
-                          className="upload-progress-fill" 
+                          className="at-progress-fill" 
                           style={{ width: `${uploadProgress}%` }}
                         ></div>
                       </div>
-                      <span className="upload-progress-text">{uploadProgress}%</span>
+                      <span className="at-progress-text">{uploadProgress}%</span>
                     </div>
                   )}
                 </div>
 
                 {/* Form Fields */}
-                <div className="upload-form-fields">
-                  <div className="form-field">
+                <div className="at-form-fields">
+                  <div className="at-form-field">
                     <label>Report Title</label>
                     <input 
                       type="text" 
+                      className="at-input"
                       placeholder="e.g. Blood Test Results - March 2026"
                       value={reportTitle}
                       onChange={(e) => setReportTitle(e.target.value)}
                     />
                   </div>
 
-                  <div className="form-field">
+                  <div className="at-form-field">
                     <label>Category</label>
-                    <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                    <select className="at-select" value={category} onChange={(e) => setCategory(e.target.value)}>
                       {CATEGORIES.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>
                   </div>
 
-                  <div className="form-field">
+                  <div className="at-form-field">
                     <label>Related Doctor</label>
                     <input 
                       type="text" 
+                      className="at-input"
                       placeholder="Doctor name (optional)"
                       value={relatedDoctor}
                       onChange={(e) => setRelatedDoctor(e.target.value)}
@@ -518,24 +534,22 @@ export default function MedicalReportsPage() {
                   </div>
                 </div>
 
-                <button type="submit" className="upload-report-btn" disabled={!file}>
-                  <IconUploadCloud size={18} />
-                  Upload Report
+                <button type="submit" className="at-btn-upload" disabled={!file || isUploading}>
+                  <span className="material-symbols-outlined" style={{fontSize: "20px"}}>cloud_upload</span>
+                  {isUploading ? "Uploading..." : "Upload Report"}
                 </button>
               </form>
-            </div>
-          </div>
+          </aside>
 
           {/* Right Column - Reports List */}
-          <div className="reports-list-section">
+          <main className="at-reports-main">
             {/* Search & Filters */}
-            <div className="reports-toolbar">
-              <div className="search-reports">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                </svg>
+            <div className="at-reports-toolbar">
+              <div className="at-search-box">
+                <span className="material-symbols-outlined" style={{fontSize: "20px", color: "#94a3b8"}}>search</span>
                 <input 
                   type="text" 
+                  className="at-search-input"
                   placeholder="Search reports..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -543,72 +557,70 @@ export default function MedicalReportsPage() {
               </div>
               
               {/* Date Range Filter */}
-              <div className="date-range-filter">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
+              <div className="at-date-filter">
+                <span className="material-symbols-outlined" style={{fontSize: "18px", color: "#64748b"}}>calendar_month</span>
                 <input 
                   type="date" 
+                  className="at-date-input"
                   value={dateRange.start}
                   onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
                   placeholder="From"
                 />
-                <span className="date-separator">to</span>
+                <span className="at-date-separator">to</span>
                 <input 
                   type="date" 
+                  className="at-date-input"
                   value={dateRange.end}
                   onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
                   placeholder="To"
                 />
                 {(dateRange.start || dateRange.end) && (
                   <button 
-                    className="clear-date-filter"
+                    className="at-btn-clear-date"
                     onClick={() => setDateRange({ start: "", end: "" })}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
+                    <span className="material-symbols-outlined" style={{fontSize: "16px"}}>close</span>
                   </button>
                 )}
               </div>
             </div>
 
             {/* Category Tabs */}
-            <div className="category-tabs">
+            <div className="at-category-tabs">
               <button 
-                className={`category-tab ${activeCategory === "All" ? "active" : ""}`}
+                className={`at-category-tab ${activeCategory === "All" ? "at-tab-active" : ""}`}
                 onClick={() => setActiveCategory("All")}
               >
-                <span className="tab-badge all">All</span>
+                All <span className="at-tab-count">{reports.length}</span>
               </button>
               {CATEGORIES.map(cat => (
                 <button 
                   key={cat}
-                  className={`category-tab ${activeCategory === cat ? "active" : ""}`}
+                  className={`at-category-tab ${activeCategory === cat ? "at-tab-active" : ""}`}
                   onClick={() => setActiveCategory(cat)}
                 >
-                  {cat} <span className="tab-count">({categoryCounts[cat] || 0})</span>
+                  {cat} <span className="at-tab-count">{categoryCounts[cat] || 0}</span>
                 </button>
               ))}
             </div>
 
             {/* Reports Grid */}
-            <div className="reports-cards-grid">
+            <div className="at-reports-grid">
               {filteredReports.length === 0 ? (
-                <div className="no-reports">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                  </svg>
-                  <p>No reports found</p>
-                  <span>Upload your first medical report to get started</span>
+                <div className="at-empty-state">
+                  <div className="at-empty-icon">
+                    <span className="material-symbols-outlined" style={{fontSize: "48px", color: "#94a3b8"}}>folder_open</span>
+                  </div>
+                  <h3 className="at-empty-title">No reports found</h3>
+                  <p className="at-empty-text">Upload your first medical report to get started</p>
                 </div>
               ) : (
                 filteredReports.map((report) => (
-                  <article className="report-card report-card-pro" key={report._id || report.filePath}>
-                    <div className="report-card-media">
-                      <div className="report-thumbnail report-thumbnail-square">
+                  <article className="at-report-card" key={report._id || report.filePath}>
+                    <div className="at-report-media">
+                      <div className="at-report-thumbnail">
                         <ReportCardThumbnail report={report} token={token} />
-                        <span className="report-file-kind-badge" aria-hidden>
+                        <span className={`at-file-badge ${report.needsReupload ? "at-badge-error" : reportLooksLikeImage(report) ? "at-badge-img" : "at-badge-pdf"}`} aria-hidden>
                           {report.needsReupload
                             ? "!"
                             : reportLooksLikeImage(report)
@@ -618,71 +630,64 @@ export default function MedicalReportsPage() {
                                 : "FILE"}
                         </span>
                       </div>
-                      <div className="report-overlay report-overlay-pro">
+                      <div className="at-report-overlay">
                         <button
                           type="button"
-                          className="report-overlay-open"
+                          className="at-btn-overlay"
                           disabled={!report.filePath || report.needsReupload}
                           onClick={() => openProtectedFile(report.filePath, token)}
                           title="Open report"
                         >
-                          <IconOpenReport size={22} />
+                          <span className="material-symbols-outlined" style={{fontSize: "20px"}}>open_in_new</span>
                           <span>Open</span>
                         </button>
                       </div>
                     </div>
 
-                    <div className="report-info report-info-pro">
-                      <div className="report-header">
-                        <h4>{report.title || report.fileName || "Untitled Report"}</h4>
-                        <span className={`category-badge ${(report.category || "lab-results").toLowerCase().replace(" ", "-")}`}>
+                    <div className="at-report-info">
+                      <div className="at-report-header">
+                        <h4 className="at-report-title">{report.title || report.fileName || "Untitled Report"}</h4>
+                        <span className={`at-category-badge at-cat-${(report.category || "Lab Results").toLowerCase().replace(" ", "-")}`}>
                           {report.category || "Lab Results"}
                         </span>
                       </div>
 
                       {report.needsReupload && (
-                        <p className="report-legacy-hint">
-                          No working file link. Delete this entry, then upload again — new files are stored on Cloudinary.
+                        <p className="at-report-warning">
+                          <span className="material-symbols-outlined" style={{fontSize: "16px"}}>warning</span>
+                          No working file link. Delete this entry, then upload again.
                         </p>
                       )}
 
                       {report.doctor && (
-                        <div className="report-doctor">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2" aria-hidden>
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                          </svg>
+                        <div className="at-report-doctor">
+                          <span className="material-symbols-outlined" style={{fontSize: "16px", color: "#0d9488"}}>person</span>
                           <span>Dr. {report.doctor}</span>
                         </div>
                       )}
 
-                      <div className="report-meta-row">
-                        <span className="report-date">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                            <line x1="16" y1="2" x2="16" y2="6" />
-                            <line x1="8" y1="2" x2="8" y2="6" />
-                            <line x1="3" y1="10" x2="21" y2="10" />
-                          </svg>
+                      <div className="at-report-meta">
+                        <span className="at-report-date">
+                          <span className="material-symbols-outlined" style={{fontSize: "16px"}}>event</span>
                           {formatDate(report.uploadedAt || report.createdAt)}
                         </span>
-                        <span className="report-size-pill">{reportFooterTypeLabel(report)}</span>
+                        <span className="at-report-size">{reportFooterTypeLabel(report)}</span>
                       </div>
 
-                      <div className="report-actions-pro" role="group" aria-label="Report actions">
+                      <div className="at-report-actions" role="group" aria-label="Report actions">
                         <button
                           type="button"
-                          className="report-action-tile report-action-open"
+                          className="at-btn-report at-btn-report-open"
                           title="Open report"
                           disabled={!report.filePath || report.needsReupload}
                           onClick={() => openProtectedFile(report.filePath, token)}
                         >
-                          <IconOpenReport size={20} />
+                          <span className="material-symbols-outlined" style={{fontSize: "18px"}}>visibility</span>
                           <span>Open</span>
                         </button>
                         <button
                           type="button"
-                          className="report-action-tile report-action-download"
+                          className="at-btn-report at-btn-report-download"
                           title="Download"
                           disabled={!report.filePath || report.needsReupload}
                           onClick={() =>
@@ -693,17 +698,17 @@ export default function MedicalReportsPage() {
                             )
                           }
                         >
-                          <IconDownloadReport size={20} />
+                          <span className="material-symbols-outlined" style={{fontSize: "18px"}}>download</span>
                           <span>Download</span>
                         </button>
                         {report._id && (
                           <button
                             type="button"
-                            className="report-action-tile report-action-delete"
-                            onClick={() => onDelete(report._id)}
+                            className="at-btn-report at-btn-report-delete"
+                            onClick={() => openDeleteModal(report)}
                             title="Delete report"
                           >
-                            <IconDeleteReport size={20} />
+                            <span className="material-symbols-outlined" style={{fontSize: "18px"}}>delete</span>
                             <span>Delete</span>
                           </button>
                         )}
@@ -713,8 +718,31 @@ export default function MedicalReportsPage() {
                 ))
               )}
             </div>
-          </div>
+          </main>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {deleteModal.open && (
+          <div className="at-modal-overlay" onClick={closeDeleteModal}>
+            <div className="at-modal at-modal-delete" onClick={(e) => e.stopPropagation()}>
+              <div className="at-modal-icon at-modal-icon-delete">
+                <span className="material-symbols-outlined" style={{fontSize: "32px"}}>delete_forever</span>
+              </div>
+              <h3 className="at-modal-title">Delete Report?</h3>
+              <p className="at-modal-text">
+                Are you sure you want to delete <strong>"{deleteModal.reportTitle}"</strong>? This action cannot be undone.
+              </p>
+              <div className="at-modal-actions">
+                <button className="at-btn-modal at-btn-modal-cancel" onClick={closeDeleteModal}>
+                  Cancel
+                </button>
+                <button className="at-btn-modal at-btn-modal-delete" onClick={confirmDelete}>
+                  Delete Report
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PatientShell>
   );
