@@ -33,6 +33,16 @@ export default function VideoCallPage() {
   // New Prescription Form State
   const [newMed, setNewMed] = useState({ name: "", dosage: "", frequency: "", duration: "" });
 
+  const buildReportOpenUrl = (report) => {
+    const raw = String(report?.filePath || "").trim();
+    if (!raw) return "";
+    if (role !== "doctor" || !sessionData?.patientId) return raw;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (!/\/patients\/reports\/[^/]+\/download/i.test(raw)) return raw;
+    const join = raw.includes("?") ? "&" : "?";
+    return `${raw}${join}patientId=${encodeURIComponent(sessionData.patientId)}`;
+  };
+
   /* ── state ─────────────────────────────────────────────────────── */
   const [phase,      setPhase]      = useState("idle");   // idle | joining | live | ended | error
   const [errorMsg,   setErrorMsg]   = useState("");
@@ -886,10 +896,13 @@ export default function VideoCallPage() {
                 <div className="space-y-3">
                   {patientReports.length > 0 ? (
                     patientReports.map((report) => (
-                      <div 
+                      <div
                         key={report._id || report.id} 
                         className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm group cursor-pointer hover:border-teal-200 transition-all"
-                        onClick={() => window.open(report.filePath, '_blank')}
+                        onClick={() => {
+                          const openUrl = buildReportOpenUrl(report);
+                          if (openUrl) window.open(openUrl, "_blank");
+                        }}
                       >
                         <div className={`w-10 h-10 flex items-center justify-center rounded-xl ${
                           report.fileType?.includes('pdf') || report.fileName?.endsWith('.pdf') 

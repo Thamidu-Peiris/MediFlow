@@ -13,6 +13,21 @@ export default function PrescriptionsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
+  const toSearchableText = (value) => {
+    if (typeof value === "string") return value.toLowerCase();
+    if (typeof value === "number") return String(value).toLowerCase();
+    return "";
+  };
+
+  const getMedicineName = (medicine) => {
+    if (typeof medicine === "string") return medicine;
+    if (typeof medicine === "number") return String(medicine);
+    if (medicine && typeof medicine === "object") {
+      return medicine.name || medicine.genericName || medicine.brandName || "";
+    }
+    return "";
+  };
+
   useEffect(() => {
     loadPrescriptions();
   }, [authHeaders]);
@@ -109,11 +124,12 @@ This prescription was generated from MediFlow Health System.
     let filtered = prescriptions;
     
     if (searchQuery.trim()) {
+      const normalizedQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(p => 
-        (p.doctorName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.diagnosis || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        toSearchableText(p.doctorName).includes(normalizedQuery) ||
+        toSearchableText(p.diagnosis).includes(normalizedQuery) ||
         (p.medicines || []).some(m => 
-          (m.name || m || "").toLowerCase().includes(searchQuery.toLowerCase())
+          toSearchableText(getMedicineName(m)).includes(normalizedQuery)
         )
       );
     }
