@@ -183,11 +183,12 @@ export default function DoctorDashboardPage() {
 
               <div className="space-y-4">
                 {todayAppointments.length === 0 && (
-                  <div className="group flex gap-6 p-10 bg-[#fcfdfa] border border-dashed border-[#356600]/10 rounded-[2rem] items-center opacity-60">
-                    <div className="flex-1 text-center text-[#043927]/40">
-                      <span className="material-symbols-outlined text-4xl mb-2">event_busy</span>
-                      <p className="text-sm font-body font-bold italic">No appointments scheduled for today</p>
+                  <div className="group flex flex-col items-center justify-center p-12 bg-[#fcfdfa] border border-dashed border-[#356600]/20 rounded-[2.5rem] transition-all duration-300 hover:border-[#437A00]/40">
+                    <div className="w-16 h-16 bg-[#CBF79D]/30 rounded-full flex items-center justify-center text-[#437A00] mb-4">
+                      <span className="material-symbols-outlined text-3xl">event_busy</span>
                     </div>
+                    <h4 className="text-lg font-headline font-extrabold text-[#043927] mb-1 text-center">Clear Schedule</h4>
+                    <p className="text-sm font-medium text-[#043927]/40 italic text-center">No clinical appointments scheduled for today.</p>
                   </div>
                 )}
 
@@ -276,14 +277,20 @@ export default function DoctorDashboardPage() {
 
                 {/* Available Slot placeholder */}
                 {todayAppointments.length < 3 && (
-                  <div className="group flex gap-6 p-6 bg-[#fcfdfa]/50 border border-dashed border-[#356600]/10 rounded-[2rem] items-center opacity-40">
-                    <div className="w-20 shrink-0">
-                      <p className="text-lg font-headline font-bold text-slate-400">--:--</p>
-                      <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">--</p>
+                  <div className="group flex gap-6 p-6 bg-[#fcfdfa] border border-dashed border-[#356600]/10 rounded-[2rem] items-center transition-all duration-300 hover:border-[#437A00]/40">
+                    <div className="w-20 shrink-0 text-center">
+                      <p className="text-lg font-headline font-extrabold text-[#043927]/20">--:--</p>
+                      <p className="text-[10px] text-[#043927]/20 font-bold uppercase tracking-tighter">Slot</p>
                     </div>
-                    <div className="w-px h-12 bg-slate-200"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-body text-slate-400 font-bold italic">Available for Appointment Slot</p>
+                    <div className="w-px h-12 bg-[#356600]/10"></div>
+                    <div className="flex-1 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-[#CBF79D]/10 flex items-center justify-center text-[#437A00]/30">
+                        <span className="material-symbols-outlined text-2xl">event_available</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-body font-bold text-[#043927]/30 italic tracking-tight">Available Appointment Slot</p>
+                        <p className="text-[10px] font-bold text-[#437A00]/30 uppercase tracking-widest mt-0.5 text-left">Clinical Practice Open</p>
+                      </div>
                     </div>
                   </div>
                 )}
