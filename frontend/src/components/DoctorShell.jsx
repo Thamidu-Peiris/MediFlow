@@ -8,7 +8,6 @@ const navItems = [
   { to: "/doctor/availability", label: "Availability", icon: "calendar_month" },
   { to: "/doctor/appointments", label: "Appointments", icon: "calendar_today" },
   { to: "/doctor/patients", label: "Patients", icon: "group" },
-  { to: "/doctor/prescriptions", label: "Messages", icon: "mail" },
   { to: "/doctor/telemedicine", label: "Billing", icon: "payments" },
   { to: "/doctor/profile", label: "Settings", icon: "settings" },
 ];
