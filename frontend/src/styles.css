@@ -3145,7 +3145,7 @@ button, .btn-primary {
 
 /* Symptom Checker Card */
 .symptom-checker-card {
-  background: linear-gradient(135deg, #2ed428 0%, #22b322 100%);
+  background: linear-gradient(135deg, #09a303 0%, #078202 100%);
   border-radius: 16px;
   padding: 12px;
   color: #ffffff;
@@ -9898,8 +9898,8 @@ button, .btn-primary {
 }
 
 .symptom-checker-card.clickable:hover {
-  border-color: #2ed428;
-  box-shadow: 0 4px 16px rgba(46, 212, 40, 0.25);
+  border-color: #09a303;
+  box-shadow: 0 4px 16px rgba(9, 163, 3, 0.25);
   transform: translateY(-2px);
 }
 
