@@ -4,6 +4,8 @@ const axios = require("axios");
 
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || "http://localhost:8006";
 const DOCTOR_SERVICE_URL = process.env.DOCTOR_SERVICE_URL || "http://localhost:8003";
+const NOTIFICATION_SERVICE_URL =
+    process.env.NOTIFICATION_SERVICE_URL || "http://notification-service:8005";
 
 // Minimal reference model to fetch patient names from the same MongoDB cluster.
 // patient-service stores documents in the `patients` collection with fields:
@@ -17,6 +19,8 @@ const PatientRef =
             {
                 userId: { type: String, index: true },
                 fullName: { type: String },
+                email: { type: String, default: "" },
+                phone: { type: String, default: "" },
                 avatar: { type: String, default: "" },
                 dob: { type: Date, default: null },
                 gender: { type: String, default: "" },
@@ -26,6 +30,59 @@ const PatientRef =
             { collection: "patients" }
         )
     );
+
+const DoctorRef =
+    mongoose.models.DoctorRefAppointment ||
+    mongoose.model(
+        "DoctorRefAppointment",
+        new mongoose.Schema(
+            {
+                userId: { type: String, index: true },
+                fullName: { type: String, default: "" },
+                email: { type: String, default: "" },
+                phone: { type: String, default: "" },
+            },
+            { collection: "doctors" }
+        )
+    );
+
+async function notifyParticipants(type, appointment, extraPayload = {}) {
+    try {
+        const [patient, doctor] = await Promise.all([
+            PatientRef.findOne({ userId: appointment.patientId })
+                .select("fullName email phone")
+                .lean(),
+            DoctorRef.findOne({ userId: appointment.doctorId })
+                .select("fullName email phone")
+                .lean(),
+        ]);
+
+        const payload = {
+            appointmentId: appointment._id,
+            date: appointment.date,
+            time: appointment.time,
+            appointmentType: appointment.appointmentType || "physical",
+            doctorName: appointment.doctorName || doctor?.fullName || "",
+            patientName: appointment.patientName || patient?.fullName || "",
+            ...extraPayload,
+        };
+
+        await axios.post(
+            `${NOTIFICATION_SERVICE_URL}/api/notifications/send`,
+            {
+                type,
+                doctorEmail: doctor?.email || "",
+                doctorPhone: doctor?.phone || "",
+                patientEmail: patient?.email || "",
+                patientPhone: patient?.phone || "",
+                payload,
+            },
+            { timeout: 8000 }
+        );
+    } catch (err) {
+        console.error(`[Appointment] ${type} notification trigger failed:`, err.message);
+    }
+}
 
 function calcAge(dob) {
     if (!dob) return null;
@@ -156,6 +213,8 @@ exports.requestAppointment = async (req, res) => {
             notes,
             status: "pending"
         });
+
+        notifyParticipants("APPOINTMENT_BOOKED", appointment);
 
         return res.status(201).json({ appointment });
     } catch (error) {
@@ -393,20 +452,6 @@ exports.acceptAppointment = async (req, res) => {
             return res.status(404).json({ message: "Appointment not found or already processed" });
         }
 
-        // Trigger Notification Service asynchronously
-        axios.post("http://notification-service:8005/api/notifications/send", {
-            type: "APPOINTMENT_BOOKED",
-            doctorEmail: req.user?.email || "doc@example.com",
-            doctorPhone: "+11234567890", // Defaulting to mock formatted phone
-            patientEmail: `patient_${appointment.patientId || "000"}@example.com`,
-            patientPhone: "+10987654321",
-            payload: {
-                appointmentId: appointment._id,
-                date: appointment.date,
-                time: appointment.time
-            }
-        }).catch(err => console.error("[Appointment] Notification trigger failed:", err.message));
-
         return res.status(200).json({ appointment });
     } catch (error) {
         return res.status(500).json({ message: "Failed to accept appointment" });
@@ -443,6 +488,8 @@ exports.completeAppointment = async (req, res) => {
         if (!appointment) {
             return res.status(404).json({ message: "Appointment not found or not accepted" });
         }
+
+        notifyParticipants("CONSULTATION_COMPLETED", appointment, { notes });
 
         return res.status(200).json({ appointment });
     } catch (error) {
