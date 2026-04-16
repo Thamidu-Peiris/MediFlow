@@ -246,22 +246,28 @@ exports.listMyAppointments = async (req, res) => {
             );
         }
 
-        // Enrich appointments that have no stored consultationFee from doctor service
-        const needsEnrichment = appointments.filter((a) => !a.consultationFee);
-        if (needsEnrichment.length) {
-            try {
-                const doctorsRes = await axios.get(`${DOCTOR_SERVICE_URL}/public`, { timeout: 3000 });
-                const doctors = Array.isArray(doctorsRes.data?.doctors) ? doctorsRes.data.doctors : [];
-                const feeById = {};
-                for (const d of doctors) {
-                    if (d.userId) feeById[String(d.userId)] = d.consultationFee ?? 0;
+        // Enrich appointments that have no stored consultationFee or image from doctor service
+        try {
+            const doctorsRes = await axios.get(`${DOCTOR_SERVICE_URL}/public`, { timeout: 3000 });
+            const doctors = Array.isArray(doctorsRes.data?.doctors) ? doctorsRes.data.doctors : [];
+            const doctorDataById = {};
+            for (const d of doctors) {
+                if (d.userId) {
+                    doctorDataById[String(d.userId)] = {
+                        fee: d.consultationFee ?? 0,
+                        image: d.image || ""
+                    };
                 }
-                for (const a of needsEnrichment) {
-                    a.consultationFee = feeById[String(a.doctorId)] ?? 0;
-                }
-            } catch {
-                // doctor service unavailable — proceed without fees
             }
+            for (const a of appointments) {
+                const docData = doctorDataById[String(a.doctorId)];
+                if (docData) {
+                    if (!a.consultationFee) a.consultationFee = docData.fee;
+                    a.doctorImage = docData.image; // Dynamically add image from doctor profile
+                }
+            }
+        } catch {
+            // doctor service unavailable — proceed without enrichment
         }
 
         return res.status(200).json({ appointments });

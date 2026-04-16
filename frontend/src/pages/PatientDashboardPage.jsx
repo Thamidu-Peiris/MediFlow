@@ -136,6 +136,18 @@ export default function PatientDashboardPage() {
     });
   }, [reports]);
 
+  // Reports Category Data
+  const reportsByCategory = useMemo(() => {
+    const categories = {};
+    reports.forEach(r => {
+      const cat = r.category || "Other";
+      categories[cat] = (categories[cat] || 0) + 1;
+    });
+    return Object.entries(categories).map(([name, value]) => ({ name, value }));
+  }, [reports]);
+
+  const CATEGORY_COLORS = [COLORS.teal, COLORS.indigo, COLORS.amber, COLORS.rose, COLORS.tealLight];
+
   // Summary stats
   const totalVisits = appointments.length;
   const totalReports = reports.length;
@@ -205,37 +217,53 @@ export default function PatientDashboardPage() {
             </div>
           </section>
 
-          <section className="aura-col-8">
+          <section className="aura-col-9">
             <div className="aura-report-left-grid">
               <div className="aura-chart-card">
                 <h3 className="aura-chart-title">Reports Upload Trend</h3>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={reportsData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                    <XAxis dataKey="month" tick={{fontSize: 12}} stroke="#9ca3af" />
-                    <YAxis tick={{fontSize: 12}} stroke="#9ca3af" />
+                    <XAxis dataKey="month" tick={{fontSize: 10}} stroke="#9ca3af" />
+                    <YAxis tick={{fontSize: 10}} stroke="#9ca3af" />
                     <Tooltip contentStyle={{borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                    <Bar dataKey="reports" fill={COLORS.indigo} radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="reports" fill={COLORS.indigo} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="aura-chart-card">
-                <h3 className="aura-chart-title">Report Activity</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={reportsData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" tick={{fontSize: 12}} stroke="#9ca3af" />
-                    <YAxis tick={{fontSize: 12}} stroke="#9ca3af" />
+                <h3 className="aura-chart-title">Reports by Category</h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={reportsByCategory}
+                      cx="50%"
+                      cy="45%"
+                      innerRadius={45}
+                      outerRadius={70}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {reportsByCategory.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                      ))}
+                    </Pie>
                     <Tooltip contentStyle={{borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                    <Line
-                      type="monotone"
-                      dataKey="reports"
-                      stroke={COLORS.teal}
-                      strokeWidth={3}
-                      dot={{fill: COLORS.teal, strokeWidth: 2, r: 4}}
-                      activeDot={{r: 6}}
-                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="aura-chart-card">
+                <h3 className="aura-chart-title">Appointment Activity</h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={appointmentData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="month" tick={{fontSize: 10}} stroke="#9ca3af" />
+                    <YAxis tick={{fontSize: 10}} stroke="#9ca3af" />
+                    <Tooltip contentStyle={{borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
+                    <Line type="monotone" dataKey="visits" stroke={COLORS.teal} strokeWidth={2} dot={{fill: COLORS.teal, strokeWidth: 1, r: 3}} activeDot={{r: 5}} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -243,7 +271,7 @@ export default function PatientDashboardPage() {
           </section>
 
           {/* Right Side Quick Actions */}
-          <section className="aura-col-4 aura-col-right">
+          <section className="aura-col-3 aura-col-right">
             <div className="aura-quick-side">
               <h3 className="aura-quick-side__title">Quick Actions</h3>
               <div className="aura-quick-side__list">
@@ -258,48 +286,6 @@ export default function PatientDashboardPage() {
             </div>
           </section>
 
-          {/* Charts Section */}
-          <section className="aura-col-4">
-            <div className="aura-chart-card">
-              <h3 className="aura-chart-title">Appointment Activity</h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={appointmentData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="month" tick={{fontSize: 12}} stroke="#9ca3af" />
-                  <YAxis tick={{fontSize: 12}} stroke="#9ca3af" />
-                  <Tooltip contentStyle={{borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                  <Line type="monotone" dataKey="visits" stroke={COLORS.teal} strokeWidth={3} dot={{fill: COLORS.teal, strokeWidth: 2, r: 4}} activeDot={{r: 6}} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </section>
-
-          <section className="aura-col-4">
-            <div className="aura-chart-card">
-              <h3 className="aura-chart-title">Prescription Status</h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={prescriptionData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {prescriptionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </section>
-
-          {/* Recent Documents */}
           <section className="aura-col-7">
             <div className="aura-card">
               <div className="aura-card-header">
@@ -335,7 +321,6 @@ export default function PatientDashboardPage() {
             </div>
           </section>
 
-          {/* Medical Team */}
           <section className="aura-col-5">
             <div className="aura-card">
               <h3 className="aura-card-title" style={{ marginBottom: '24px' }}>My Medical Team</h3>
