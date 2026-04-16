@@ -16,6 +16,10 @@ app.get("/health", (req, res) => {
   res.status(200).json({ service: "notification-service", status: "ok" });
 });
 
+// Support both:
+// 1) direct route: /api/notifications/send
+// 2) rewritten proxy fallback: /send
+app.use("/", notificationRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 connectDB().finally(() => {

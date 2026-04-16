@@ -33,7 +33,8 @@ proxyRoutes.forEach(([path, target]) => {
   const opts = {
     target,
     changeOrigin: true,
-    pathRewrite: (pathName) => pathName.replace(path, ""),
+    pathRewrite: (pathName) =>
+      path === "/api/notifications" ? pathName : pathName.replace(path, ""),
     // Avoid premature 504 when the target is slow to accept (e.g. cold start); LLM routes set their own timeouts.
     proxyTimeout: Number(process.env.PROXY_TIMEOUT_MS) || 120000,
     timeout: Number(process.env.PROXY_TIMEOUT_MS) || 120000
