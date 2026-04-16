@@ -64,11 +64,17 @@ export default function DoctorsPage() {
         const todayName = DAY_NAMES[new Date().getDay()];
         const enriched = uniqueDocs.map((doc) => {
           const seed = String(doc?._id || doc?.userId || "0");
-          const imagePick = seed.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 4;
+          const charSum = seed.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+          const imagePick = charSum % 4;
+          
+          // Generate fake rating (4.0 - 5.0) and review count (10 - 200) based on ID seed
+          const fakeRating = 4.0 + (charSum % 11) / 10;
+          const fakeReviews = 10 + (charSum % 191);
+
           return {
           ...doc,
-          rating: Number(doc.rating || 0),
-          reviewCount: Number(doc.reviewCount || 0),
+          rating: Number(doc.rating || fakeRating),
+          reviewCount: Number(doc.reviewCount || fakeReviews),
           consultationFeeUsd: Number(doc.consultationFee || 0),
           image: doc.image || `https://images.unsplash.com/photo-${[
             "1559839734-2b71ea197ec2",
