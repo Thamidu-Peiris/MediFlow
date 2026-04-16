@@ -3,6 +3,7 @@ import PatientShell from "../components/PatientShell";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
+import { resolveApiFileUrl } from "../utils/mediaUrl";
 
 export default function PatientTelemedicinePage() {
   const { authHeaders } = useAuth();
@@ -15,8 +16,31 @@ export default function PatientTelemedicinePage() {
     setMessage("");
     try {
       // Backend should return sessions with doctor info enriched
-      const res = await api.get("/telemedicine/my", authHeaders);
-      setSessions(res.data.sessions || []);
+      const [sessionsRes, doctorsRes] = await Promise.all([
+        api.get("/telemedicine/my", authHeaders),
+        api.get("/doctors/public").catch(() => ({ data: { doctors: [] } }))
+      ]);
+      const rawSessions = sessionsRes.data?.sessions || [];
+      const doctors = Array.isArray(doctorsRes.data?.doctors) ? doctorsRes.data.doctors : [];
+      const doctorByUserId = doctors.reduce((acc, doctor) => {
+        if (doctor?.userId) acc[String(doctor.userId)] = doctor;
+        return acc;
+      }, {});
+
+      const enrichedSessions = rawSessions.map((session) => {
+        const matchedDoctor =
+          doctorByUserId[String(session.doctorId)] ||
+          doctorByUserId[String(session.doctorUserId)] ||
+          null;
+        return {
+          ...session,
+          doctorImage: session.doctorImage || matchedDoctor?.image || "",
+          doctorName: session.doctorName || matchedDoctor?.fullName || "Doctor",
+          specialty: session.specialty || matchedDoctor?.specialization || "General Practitioner"
+        };
+      });
+
+      setSessions(enrichedSessions);
     } catch (err) {
       console.error("Failed to fetch sessions:", err);
       setMessage("Failed to load video consultations. Please try again.");
@@ -106,12 +130,13 @@ export default function PatientTelemedicinePage() {
                   const isEnded = status === 'completed' || status === 'cancelled' || status === 'ended';
                   const isWaiting = status === 'pending' || status === 'waiting';
                   const isActive = status === 'accepted' || status === 'confirmed' || status === 'active';
+                  const doctorImageSrc = session.doctorImage ? resolveApiFileUrl(session.doctorImage) : "/default-profile-avatar.png";
 
                   return (
                     <div key={session._id} className="at-session-bento">
                       <div className="at-session-left-area">
                         <img 
-                          src={session.doctorImage || "/default-profile-avatar.png"} 
+                          src={doctorImageSrc}
                           alt={session.doctorName || "Doctor"} 
                           className="at-session-doc-img"
                           onError={(e) => { e.target.src = "/default-profile-avatar.png"; }}
