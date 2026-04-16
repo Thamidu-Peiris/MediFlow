@@ -82,6 +82,7 @@ export default function PatientAppointmentsPage() {
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [joiningAppointmentId, setJoiningAppointmentId] = useState("");
   const [paymentSuccessBanner, setPaymentSuccessBanner] = useState("");
 
   // Reschedule form state
@@ -208,6 +209,8 @@ export default function PatientAppointmentsPage() {
   };
 
   const handleJoinVideoCall = async (appointment) => {
+    setJoiningAppointmentId(String(appointment?._id || ""));
+    setMessage("");
     try {
       const res = await api.get(
         `/telemedicine/by-appointment/${appointment._id}`,
@@ -220,8 +223,17 @@ export default function PatientAppointmentsPage() {
       }
       const peer = encodeURIComponent(appointment.doctorName || "Doctor");
       window.open(`/video-call?channel=${roomId}&role=patient&peer=${peer}`, "_blank");
-    } catch {
-      setMessage("The doctor hasn't started the video call yet. Please try again shortly.");
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 404) {
+        setMessage("The doctor hasn't started this video session yet. Please try again shortly.");
+      } else if (status === 401 || status === 403) {
+        setMessage("Your session has expired or access was denied. Please log in again.");
+      } else {
+        setMessage("Unable to join video call right now. Please try again.");
+      }
+    } finally {
+      setJoiningAppointmentId("");
     }
   };
 
@@ -339,6 +351,17 @@ export default function PatientAppointmentsPage() {
           </div>
         )}
 
+        {message && (
+          <div
+            className="aura-alert error"
+            style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "10px" }}
+            role="alert"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>info</span>
+            <span>{message}</span>
+          </div>
+        )}
+
         {/* Navigation Filters */}
         <section className="at-filter-section">
           <div className="at-tabs-container">
@@ -438,9 +461,12 @@ export default function PatientAppointmentsPage() {
                         <button
                           className="at-btn-join"
                           onClick={() => handleJoinVideoCall(appointment)}
+                          disabled={joiningAppointmentId === String(appointment._id)}
                         >
-                          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>videocam</span>
-                          Join Video Call
+                          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+                            {joiningAppointmentId === String(appointment._id) ? "hourglass_top" : "videocam"}
+                          </span>
+                          {joiningAppointmentId === String(appointment._id) ? "Joining..." : "Join Video Call"}
                         </button>
                       )}
                       

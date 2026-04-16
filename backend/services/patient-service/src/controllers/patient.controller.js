@@ -395,11 +395,18 @@ exports.uploadAvatar = async (req, res) => {
 exports.streamReportFile = async (req, res) => {
   try {
     const { id } = req.params;
+    const { patientId } = req.query;
+    const targetUserId = patientId || req.user.sub;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid report id" });
     }
 
-    const patient = await Patient.findOne({ userId: req.user.sub });
+    // Allow patient self-access; allow doctor/admin access when patientId is provided.
+    if (patientId && req.user.sub !== patientId && req.user.role !== "doctor" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const patient = await Patient.findOne({ userId: targetUserId });
     if (!patient) {
       return res.status(404).json({ message: "Not found" });
     }
