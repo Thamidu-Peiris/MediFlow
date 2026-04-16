@@ -1,5 +1,70 @@
 const { randomUUID } = require("crypto");
 const Session = require("../models/session.model");
+const mongoose = require("mongoose");
+const axios = require("axios");
+
+const NOTIFICATION_SERVICE_URL =
+    process.env.NOTIFICATION_SERVICE_URL || "http://notification-service:8005";
+
+const PatientRef =
+    mongoose.models.PatientRefTelemedicine ||
+    mongoose.model(
+        "PatientRefTelemedicine",
+        new mongoose.Schema(
+            {
+                userId: { type: String, index: true },
+                fullName: { type: String, default: "" },
+                email: { type: String, default: "" },
+                phone: { type: String, default: "" },
+            },
+            { collection: "patients" }
+        )
+    );
+
+const DoctorRef =
+    mongoose.models.DoctorRefTelemedicine ||
+    mongoose.model(
+        "DoctorRefTelemedicine",
+        new mongoose.Schema(
+            {
+                userId: { type: String, index: true },
+                fullName: { type: String, default: "" },
+                email: { type: String, default: "" },
+                phone: { type: String, default: "" },
+            },
+            { collection: "doctors" }
+        )
+    );
+
+async function notifyConsultationCompleted(session) {
+    try {
+        const [patient, doctor] = await Promise.all([
+            PatientRef.findOne({ userId: session.patientId }).select("fullName email phone").lean(),
+            DoctorRef.findOne({ userId: session.doctorId }).select("fullName email phone").lean(),
+        ]);
+
+        await axios.post(
+            `${NOTIFICATION_SERVICE_URL}/api/notifications/send`,
+            {
+                type: "CONSULTATION_COMPLETED",
+                doctorEmail: doctor?.email || "",
+                doctorPhone: doctor?.phone || "",
+                patientEmail: patient?.email || "",
+                patientPhone: patient?.phone || "",
+                payload: {
+                    sessionId: session._id,
+                    appointmentId: session.appointmentId || "",
+                    date: new Date().toISOString().slice(0, 10),
+                    doctorName: session.doctorName || doctor?.fullName || "",
+                    patientName: session.patientName || patient?.fullName || "",
+                }
+            },
+            { timeout: 8000 }
+        );
+    } catch (err) {
+        console.error("[Telemedicine] CONSULTATION_COMPLETED notification failed:", err.message);
+    }
+}
 const { RtcTokenBuilder, RtcRole } = require("agora-token");
 const axios = require("axios");
 
@@ -212,19 +277,7 @@ exports.endSession = async (req, res) => {
             return res.status(404).json({ message: "Session not found or not active" });
         }
 
-        // Trigger Notification Service asynchronously
-        const axios = require("axios");
-        axios.post("http://notification-service:8005/api/notifications/send", {
-            type: "CONSULTATION_COMPLETED",
-            doctorEmail: req.user?.email || "doc@example.com",
-            doctorPhone: "+11234567890", // Mock formatted phone
-            patientEmail: `patient_${session.patientId || "000"}@example.com`,
-            patientPhone: "+10987654321",
-            payload: {
-                sessionId: session._id,
-                date: new Date().toLocaleDateString()
-            }
-        }).catch(err => console.error("[Telemedicine] Notification trigger failed:", err.message));
+        notifyConsultationCompleted(session);
 
         return res.status(200).json({ session });
     } catch (error) {
