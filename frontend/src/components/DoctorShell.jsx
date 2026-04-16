@@ -86,9 +86,9 @@ export default function DoctorShell({ children }) {
       <main className="aura-main">
         <header className="aura-topbar aura-topbar-admin">
           <div className="aura-topbar-left">
-            <span className="aura-logo truncate max-w-[200px]">Dr. {doctorInfo?.fullName || "Doctor"}</span>
+            <span className="aura-logo whitespace-nowrap">Dr. {doctorInfo?.fullName || "Doctor"}</span>
             {doctorInfo?.specialization && (
-              <span className="ml-3 hidden sm:inline-block px-3 py-1 rounded-full bg-[#CBF79D]/20 text-[#CBF79D] text-[10px] font-bold uppercase tracking-widest border border-[#CBF79D]/10">
+              <span className="ml-4 inline-flex items-center px-4 py-1.5 rounded-full bg-[#CBF79D] text-[#043927] text-[10px] font-black uppercase tracking-[0.15em] border border-[#043927]/10 whitespace-nowrap shadow-sm">
                 {doctorInfo.specialization}
               </span>
             )}
