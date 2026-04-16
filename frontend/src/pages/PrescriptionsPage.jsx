@@ -167,81 +167,81 @@ This prescription was generated from MediFlow Health System.
 
   return (
     <PatientShell>
-      <div className="prescriptions-page">
+      <div className="at-rx-page">
         {message && (
-          <div className={`message-toast ${message.includes("success") ? "success" : "error"}`}>
+          <div className={`at-toast ${message.includes("success") ? "at-toast-success" : "at-toast-error"}`}>
+            <span className="material-symbols-outlined" style={{fontSize: "20px"}}>
+              {message.includes("success") ? "check_circle" : "error"}
+            </span>
             {message}
-            <button className="close-message" onClick={() => setMessage("")}>×</button>
           </div>
         )}
 
-        <div className="prescriptions-container">
+        <div className="at-rx-container">
           {/* Header with Stats */}
-          <div className="prescriptions-header-bar">
-            <div className="prescriptions-title-section">
-              <h2>My Prescriptions</h2>
-              <p className="prescriptions-subtitle">Manage your medications and treatment plans</p>
+          <header className="at-rx-header">
+            <div className="at-rx-header-text">
+              <h1 className="at-rx-title">My Prescriptions</h1>
+              <p className="at-rx-subtitle">Manage your medications and treatment plans</p>
             </div>
-            <div className="prescriptions-stats">
-              <div className="stat-pill active">
-                <span className="stat-number">{prescriptions.filter(p => !p.endDate || new Date(p.endDate) > new Date()).length}</span>
-                <span className="stat-label">Active</span>
+            <div className="at-rx-stats">
+              <div className="at-stat-pill at-stat-active">
+                <span className="at-stat-number">{prescriptions.filter(p => !p.endDate || new Date(p.endDate) > new Date()).length}</span>
+                <span className="at-stat-label">Active</span>
               </div>
-              <div className="stat-pill total">
-                <span className="stat-number">{prescriptions.length}</span>
-                <span className="stat-label">Total</span>
+              <div className="at-stat-pill at-stat-total">
+                <span className="at-stat-number">{prescriptions.length}</span>
+                <span className="at-stat-label">Total</span>
               </div>
             </div>
-          </div>
+          </header>
 
           {/* Filters Toolbar */}
-          <div className="prescriptions-toolbar">
-            <div className="search-prescriptions">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
-              </svg>
+          <div className="at-rx-toolbar">
+            <div className="at-search-box">
+              <span className="material-symbols-outlined" style={{fontSize: "20px", color: "#94a3b8"}}>search</span>
               <input 
                 type="text" 
+                className="at-search-input"
                 placeholder="Search by doctor, diagnosis, or medicine..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             
-            <div className="filter-group">
+            <div className="at-filter-group">
               <select 
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="filter-select"
+                className="at-select at-select-filter"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
                 <option value="completed">Completed</option>
               </select>
               
-              <div className="date-range-prescription">
+              <div className="at-date-filter">
                 <input 
                   type="date" 
+                  className="at-date-input"
                   value={dateRange.start}
                   onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
                   placeholder="From"
                 />
-                <span>to</span>
+                <span className="at-date-separator">to</span>
                 <input 
                   type="date" 
+                  className="at-date-input"
                   value={dateRange.end}
                   onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
                   placeholder="To"
                 />
                 {(dateRange.start || dateRange.end) && (
                   <button 
-                    className="clear-filter-btn"
+                    className="at-btn-clear-date"
                     onClick={() => setDateRange({ start: "", end: "" })}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
+                    <span className="material-symbols-outlined" style={{fontSize: "16px"}}>close</span>
                   </button>
                 )}
               </div>
@@ -250,129 +250,103 @@ This prescription was generated from MediFlow Health System.
 
           {/* Results Count */}
           {(searchQuery || statusFilter !== 'all' || dateRange.start || dateRange.end) && (
-            <div className="results-info">
-              Showing {filteredPrescriptions.length} of {prescriptions.length} prescriptions
-              {(searchQuery || statusFilter !== 'all' || dateRange.start || dateRange.end) && (
-                <button 
-                  className="clear-all-filters"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setStatusFilter('all');
-                    setDateRange({ start: '', end: '' });
-                  }}
-                >
-                  Clear all filters
-                </button>
-              )}
+            <div className="at-results-info">
+              Showing <strong>{filteredPrescriptions.length}</strong> of {prescriptions.length} prescriptions
+              <button 
+                className="at-btn-clear-all"
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setDateRange({ start: '', end: '' });
+                }}
+              >
+                Clear all
+              </button>
             </div>
           )}
 
           {loading ? (
-            <div className="loading-state prescriptions-loading">
-              <div className="spinner"></div>
+            <div className="at-loading-state">
+              <div className="at-spinner"></div>
               <p>Loading prescriptions...</p>
             </div>
           ) : filteredPrescriptions.length === 0 ? (
-            <div className="no-prescriptions">
-              <div className="no-prescriptions-icon">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5">
-                  <path d="M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/>
-                  <path d="m8.5 8.5 7 7"/>
-                </svg>
+            <div className="at-empty-state">
+              <div className="at-empty-icon at-empty-icon-rx">
+                <span className="material-symbols-outlined" style={{fontSize: "48px", color: "#94a3b8"}}>vaccines</span>
               </div>
-              <h4>{prescriptions.length === 0 ? "No prescriptions found" : "No matching prescriptions"}</h4>
-              <p>{prescriptions.length === 0 
+              <h3 className="at-empty-title">{prescriptions.length === 0 ? "No prescriptions found" : "No matching prescriptions"}</h3>
+              <p className="at-empty-text">{prescriptions.length === 0 
                 ? "Your doctor-issued prescriptions will appear here" 
                 : "Try adjusting your search or filters"}</p>
               {prescriptions.length === 0 && (
                 <button 
-                  className="browse-doctors-btn"
+                  className="at-btn-find-doctor"
                   onClick={() => window.location.href = '/patient/doctors'}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
+                  <span className="material-symbols-outlined" style={{fontSize: "18px"}}>person_search</span>
                   Find a Doctor
                 </button>
               )}
             </div>
           ) : (
-            <div className="prescriptions-grid-modern">
+            <div className="at-rx-grid">
               {filteredPrescriptions.map((prescription) => {
                 const status = getStatusBadge(prescription);
                 return (
                   <div 
-                    className="prescription-card-modern" 
+                    className="at-rx-card" 
                     key={prescription._id || prescription.createdAt}
                     onClick={() => setSelectedPrescription(prescription)}
                   >
-                    <div className="prescription-card-top">
-                      <div className={`status-indicator ${status.class}`}>
-                        <span className="status-dot"></span>
+                    <div className="at-rx-card-top">
+                      <span className={`at-rx-status at-rx-status-${status.class.replace('status-', '')}`}>
+                        <span className="at-rx-status-dot"></span>
                         {status.label}
-                      </div>
-                      <span className="prescription-date">{formatDate(prescription.createdAt || prescription.date)}</span>
+                      </span>
+                      <span className="at-rx-date">{formatDate(prescription.createdAt || prescription.date)}</span>
                     </div>
 
-                    <div className="prescription-card-doctor">
-                      <div className="doctor-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                          <circle cx="12" cy="7" r="4"/>
-                        </svg>
+                    <div className="at-rx-doctor">
+                      <div className="at-rx-doctor-icon">
+                        <span className="material-symbols-outlined" style={{fontSize: "20px", color: "#0d9488"}}>stethoscope</span>
                       </div>
-                      <div className="doctor-info">
-                        <h4>Dr. {prescription.doctorName || prescription.doctorId || "Unknown"}</h4>
-                        {prescription.doctorSpecialty && (
-                          <span className="doctor-specialty">{prescription.doctorSpecialty}</span>
-                        )}
+                      <div className="at-rx-doctor-info">
+                        <h4>{prescription.doctorName || prescription.doctorId || "Unknown Doctor"}</h4>
+                        <span className="at-rx-date-small">
+                          {formatDate(prescription.createdAt || prescription.date)}
+                        </span>
                       </div>
                     </div>
 
-                    {prescription.diagnosis && (
-                      <div className="prescription-diagnosis">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                          <polyline points="14 2 14 8 20 8"/>
-                        </svg>
-                        <span>{prescription.diagnosis}</span>
+                    {prescription.notes && (
+                      <div className="at-rx-diagnosis">
+                        <span className="material-symbols-outlined" style={{fontSize: "16px", color: "#64748b"}}>description</span>
+                        <span>{prescription.notes}</span>
                       </div>
                     )}
 
-                    <div className="prescription-medicines-preview">
-                      <div className="medicine-icon-stack">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2">
-                          <path d="M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/>
-                          <path d="m8.5 8.5 7 7"/>
-                        </svg>
-                      </div>
-                      <span className="medicine-count">{getMedicineSummary(prescription.medicines)}</span>
+                    <div className="at-rx-medicines">
+                      <span className="material-symbols-outlined" style={{fontSize: "16px", color: "#0d9488"}}>medication</span>
+                      <span className="at-rx-medicine-count">{getMedicineSummary(prescription.medicines)}</span>
                     </div>
 
-                    <div className="prescription-card-actions">
+                    <div className="at-rx-actions">
                       <button 
-                        className="action-btn view"
+                        className="at-btn-rx at-btn-rx-view"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedPrescription(prescription);
                         }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                          <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        View Details
+                        <span className="material-symbols-outlined" style={{fontSize: "18px"}}>visibility</span>
+                        View
                       </button>
                       <button 
-                        className="action-btn download"
+                        className="at-btn-rx at-btn-rx-download"
                         onClick={(e) => handleDownloadPDF(prescription, e)}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                          <polyline points="7 10 12 15 17 10"/>
-                          <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
+                        <span className="material-symbols-outlined" style={{fontSize: "18px"}}>download</span>
                       </button>
                     </div>
                   </div>
@@ -383,128 +357,95 @@ This prescription was generated from MediFlow Health System.
         </div>
         {/* Detail Modal */}
         {selectedPrescription && (
-          <div className="prescription-modal-overlay" onClick={closeDetailModal}>
-            <div className="prescription-modal" onClick={(e) => e.stopPropagation()}>
-              <button className="prescription-modal-close" onClick={closeDetailModal}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
+          <div className="at-modal-overlay" onClick={closeDetailModal}>
+            <div className="at-modal at-modal-rx" onClick={(e) => e.stopPropagation()}>
+              <button className="at-modal-close" onClick={closeDetailModal}>
+                <span className="material-symbols-outlined" style={{fontSize: "24px"}}>close</span>
               </button>
 
-              <div className="prescription-modal-header">
-                <div className="prescription-doctor-avatar">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="1.5">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
+              <div className="at-modal-header">
+                <div className="at-modal-avatar">
+                  <span className="material-symbols-outlined" style={{fontSize: "32px", color: "#0d9488"}}>account_circle</span>
                 </div>
-                <div className="prescription-header-info">
+                <div className="at-modal-header-info">
                   <h3>Dr. {selectedPrescription.doctorName || selectedPrescription.doctorId || "Unknown Doctor"}</h3>
-                  <span className="prescription-date-badge">{formatDate(selectedPrescription.createdAt || selectedPrescription.date)}</span>
+                  <span className="at-modal-date">{formatDate(selectedPrescription.createdAt || selectedPrescription.date)}</span>
                 </div>
               </div>
 
-              <div className="prescription-modal-body">
-                {selectedPrescription.diagnosis && (
-                  <div className="prescription-detail-section">
-                    <h4>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                      </svg>
-                      Diagnosis
+              <div className="at-modal-body">
+                {selectedPrescription.notes && (
+                  <div className="at-rx-section">
+                    <h4 className="at-rx-section-title">
+                      <span className="material-symbols-outlined" style={{fontSize: "18px"}}>description</span>
+                      Notes
                     </h4>
-                    <p className="diagnosis-text">{selectedPrescription.diagnosis}</p>
+                    <p className="at-rx-diagnosis-text">{selectedPrescription.notes}</p>
                   </div>
                 )}
 
-                <div className="prescription-detail-section">
-                  <h4>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
-                      <path d="M10.5 20.5l10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/>
-                      <path d="m8.5 8.5 7 7"/>
-                    </svg>
+                <div className="at-rx-section">
+                  <h4 className="at-rx-section-title">
+                    <span className="material-symbols-outlined" style={{fontSize: "18px"}}>medication</span>
                     Medicines
                   </h4>
-                  <div className="medicines-list">
+                  <div className="at-medicine-list">
                     {(selectedPrescription.medicines || []).map((medicine, idx) => (
-                      <div key={idx} className="medicine-card">
-                        <div className="medicine-card-header">
-                          <span className="medicine-number">{idx + 1}</span>
-                          <span className="medicine-card-name">{medicine.name || medicine}</span>
+                      <div key={idx} className="at-medicine-card">
+                        <div className="at-medicine-header">
+                          <span className="at-medicine-number">{idx + 1}</span>
+                          <span className="at-medicine-name">{medicine.name || medicine}</span>
                         </div>
-                        <div className="medicine-card-details">
-                          <span className="medicine-tag dosage">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/>
-                            </svg>
+                        <div className="at-medicine-tags">
+                          <span className="at-medicine-tag at-tag-dosage">
+                            <span className="material-symbols-outlined" style={{fontSize: "12px"}}>medical_services</span>
                             {medicine.dosage || "As prescribed"}
                           </span>
-                          <span className="medicine-tag frequency">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                            </svg>
+                          <span className="at-medicine-tag at-tag-frequency">
+                            <span className="material-symbols-outlined" style={{fontSize: "12px"}}>schedule</span>
                             {medicine.frequency || "As needed"}
                           </span>
-                          <span className="medicine-tag duration">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <rect x="3" y="4" width="18" height="18" rx="2"/>
-                              <line x1="16" y1="2" x2="16" y2="6"/>
-                              <line x1="8" y1="2" x2="8" y2="6"/>
-                              <line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
+                          <span className="at-medicine-tag at-tag-duration">
+                            <span className="material-symbols-outlined" style={{fontSize: "12px"}}>event</span>
                             {medicine.duration || "Until complete"}
                           </span>
                         </div>
                       </div>
                     ))}
                     {(!selectedPrescription.medicines || selectedPrescription.medicines.length === 0) && (
-                      <div className="no-medicines">
+                      <div className="at-no-medicines">
                         <p>No medicines recorded for this prescription.</p>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="prescription-detail-section">
-                  <h4>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
-                      <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/>
-                      <path d="M8.5 8.5A2.5 2.5 0 0 0 11 11"/>
-                      <path d="M15.5 8.5A2.5 2.5 0 0 1 13 11"/>
-                      <path d="M12 16v4"/>
-                      <path d="M8 21h8"/>
-                    </svg>
+                <div className="at-rx-section">
+                  <h4 className="at-rx-section-title">
+                    <span className="material-symbols-outlined" style={{fontSize: "18px"}}>info</span>
                     Instructions
                   </h4>
-                  <div className="instructions-card">
-                    <p>{selectedPrescription.instructions || selectedPrescription.notes || "Take medicines as directed. Contact your doctor if symptoms worsen or persist."}</p>
+                  <div className="at-instructions-card">
+                    <p>Take medicines as directed. Contact your doctor if symptoms worsen or persist.</p>
                   </div>
                 </div>
               </div>
 
-              <div className="prescription-modal-footer">
-                <div className="prescription-meta-info">
-                  <span className="meta-badge">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12 6 12 12 16 14"/>
-                    </svg>
+              <div className="at-modal-footer">
+                <div className="at-rx-meta">
+                  <span className="at-meta-badge">
+                    <span className="material-symbols-outlined" style={{fontSize: "14px"}}>schedule</span>
                     Issued {formatDate(selectedPrescription.createdAt || selectedPrescription.date)}
                   </span>
-                  <span className="meta-badge id-badge">
+                  <span className="at-meta-badge at-meta-id">
                     ID: {selectedPrescription._id?.slice(-8) || 'N/A'}
                   </span>
                 </div>
                 <button 
-                  className="download-prescription-btn"
+                  className="at-btn-download-rx"
                   onClick={() => handleDownloadPDF(selectedPrescription)}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
+                  <span className="material-symbols-outlined" style={{fontSize: "18px"}}>download</span>
                   Download PDF
                 </button>
               </div>
