@@ -170,7 +170,7 @@ export default function DoctorsPage() {
   };
 
   return (
-    <div className="bg-[#f0fdf4] text-[#043927] selection:bg-[#CBF79D] selection:text-[#043927] font-sans">
+    <div className="bg-[#c0fc92] text-[#043927] selection:bg-[#CBF79D] selection:text-[#043927] font-sans">
       <LandingTopBar active="doctors" />
 
       <main className="mx-auto flex max-w-[1440px] gap-8 px-8 pb-24 pt-32">
@@ -270,7 +270,7 @@ export default function DoctorsPage() {
               <p className="text-[#043927]/50 font-medium">{filteredDoctors.length} qualified doctors found</p>
             </div>
             
-            <div className="flex bg-[#CBF79D]/20 p-1.5 rounded-2xl border border-[#356600]/5">
+            <div className="flex bg-[#043927]/5 p-1.5 rounded-full border border-[#043927]/10 backdrop-blur-md">
               {[
                 ["best", "Best Match"],
                 ["rating", "Rating"],
@@ -279,10 +279,10 @@ export default function DoctorsPage() {
                 <button
                   key={value}
                   onClick={() => setSortBy(value)}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-8 py-3 rounded-full text-xs font-bold transition-all duration-300 ${
                     sortBy === value 
-                    ? "bg-white text-[#437A00] shadow-sm" 
-                    : "text-[#043927]/60 hover:text-[#437A00]"
+                    ? "bg-white text-black shadow-lg shadow-[#043927]/10 scale-105" 
+                    : "text-black/60 hover:text-black hover:bg-white/30"
                   }`}
                 >
                   {label}
