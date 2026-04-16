@@ -51,6 +51,7 @@ export default function VideoCallPage() {
   const [camOff,     setCamOff]     = useState(false);
   const [elapsed,    setElapsed]    = useState(0);
   const [chatPollInterval, setChatPollInterval] = useState(null);
+  const [showLocalInMain, setShowLocalInMain] = useState(false);
 
   /* ── refs ──────────────────────────────────────────────────────── */
   const clientRef        = useRef(null);
@@ -59,6 +60,7 @@ export default function VideoCallPage() {
   const localDivRef      = useRef(null);
   const remoteDivRef     = useRef(null);
   const timerRef         = useRef(null);
+  const localUidRef      = useRef(null);
 
   /* ── init call ─────────────────────────────────────────────────── */
   useEffect(() => {
@@ -153,6 +155,8 @@ export default function VideoCallPage() {
 
         /* 3 — remote user events */
         client.on("user-published", async (remoteUser, mediaType) => {
+          // Never render local/self stream in the large remote view.
+          if (String(remoteUser?.uid) === String(localUidRef.current)) return;
           await client.subscribe(remoteUser, mediaType);
           if (mediaType === "video") {
             setHasRemote(true);
@@ -173,6 +177,7 @@ export default function VideoCallPage() {
 
         /* 4 — fetch token for secure authentication */
         const uid = Math.floor(Math.random() * 99000) + 1000;
+        localUidRef.current = uid;
         const tokenRes = await api.get(`/telemedicine/token?channelName=${channel}&uid=${uid}&role=publisher`, authHeaders);
         const token = tokenRes.data?.token;
         if (!token) throw new Error("Failed to generate authentication token.");
@@ -210,6 +215,7 @@ export default function VideoCallPage() {
 
     return () => {
       cancelled = true;
+      localUidRef.current = null;
       if (pollInterval) clearInterval(pollInterval);
       clearInterval(timerRef.current);
       audioTrackRef.current?.close();
@@ -254,6 +260,13 @@ export default function VideoCallPage() {
     "Amlodipine", "Omeprazole", "Losartan", "Albuterol", "Gabapentin",
     "Cetirizine", "Azithromycin", "Prednisone", "Pantoprazole", "Sertraline"
   ];
+  const mainViewLabel = role === "doctor" ? "Patient" : "Doctor";
+
+  useEffect(() => {
+    if (!hasRemote) {
+      setShowLocalInMain(false);
+    }
+  }, [hasRemote]);
 
   const handleSendMessage = async () => {
     const trimmed = newMessage.trim();
@@ -437,6 +450,16 @@ export default function VideoCallPage() {
 
         {phase === "live" && (
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowLocalInMain((prev) => !prev)}
+              disabled={!hasRemote}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
+              style={{ background: "rgba(255,255,255,0.12)" }}
+            >
+              <span className="material-symbols-outlined text-sm">swap_horiz</span>
+              Swap Screen
+            </button>
             <span className="flex items-center gap-1.5 text-sm text-white/70">
               <span
                 className="block h-2 w-2 rounded-full bg-green-400"
@@ -454,7 +477,7 @@ export default function VideoCallPage() {
         )}
       </div>
 
-      {/* ── Remote video (main area) ──────────────────────────────── */}
+      {/* ── Main video area ────────────────────────────────────────── */}
       <div className="absolute inset-0 z-0">
         {/* Joining spinner */}
         {phase === "joining" && (
@@ -475,7 +498,7 @@ export default function VideoCallPage() {
         )}
 
         {/* Waiting for peer */}
-        {phase === "live" && !hasRemote && (
+        {phase === "live" && !hasRemote && !showLocalInMain && (
           <div className="flex h-full flex-col items-center justify-center gap-4">
             <div
               className="flex h-24 w-24 items-center justify-center rounded-full"
@@ -485,7 +508,7 @@ export default function VideoCallPage() {
             </div>
             <div className="text-center">
               <p className="text-base font-semibold text-white/60">Waiting for {peerName}…</p>
-              <p className="mt-1 text-xs text-slate-600">They'll appear here when they join</p>
+              <p className="mt-1 text-xs text-slate-600">{mainViewLabel} video will appear on this main screen</p>
             </div>
           </div>
         )}
@@ -493,49 +516,35 @@ export default function VideoCallPage() {
         {/* Remote video stream */}
         <div
           ref={remoteDivRef}
-          className="h-full w-full"
-          style={{ display: hasRemote ? "block" : "none" }}
+          className="h-full w-full bg-black"
+          style={{ display: hasRemote && !showLocalInMain ? "block" : "none" }}
         />
+
+        {/* Local video stream (full screen when swapped) */}
+        <div
+          className="h-full w-full bg-slate-900"
+          ref={localDivRef}
+          style={{ display: phase === "live" && showLocalInMain ? "block" : "none" }}
+        >
+          {camOff ? (
+            <div className="flex h-full w-full items-center justify-center bg-slate-900">
+              <span className="material-symbols-outlined text-5xl text-slate-600">videocam_off</span>
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      {/* ── Local video (PiP) ────────────────────────────────────── */}
-      {phase === "live" && (
-        <div
-          className="absolute bottom-28 right-4 z-10 overflow-hidden rounded-2xl shadow-2xl"
-          style={{
-            width: "clamp(120px, 18vw, 200px)",
-            height: "clamp(80px, 13vw, 130px)",
-            border: "1.5px solid rgba(255,255,255,0.12)",
-          }}
-        >
-          <div
-            ref={localDivRef}
-            className="h-full w-full bg-slate-900"
-            style={{ display: camOff ? "none" : "block" }}
-          />
-          {camOff && (
-            <div className="flex h-full w-full items-center justify-center bg-slate-900">
-              <span className="material-symbols-outlined text-3xl text-slate-600">videocam_off</span>
-            </div>
-          )}
-          <div
-            className="absolute bottom-1.5 left-2 rounded-sm px-1 text-[9px] font-bold uppercase tracking-wide text-white/50"
-            style={{ background: "rgba(0,0,0,0.4)" }}
-          >
-            You
-          </div>
-        </div>
-      )}
-
-      {/* ── Peer name overlay (top of remote) ────────────────────── */}
-      {phase === "live" && hasRemote && (
+      {/* ── Main stream label ─────────────────────────────────────── */}
+      {phase === "live" && (hasRemote || showLocalInMain) && (
         <div className="absolute left-4 top-16 z-10">
           <div
             className="flex items-center gap-2 rounded-full px-3 py-1.5"
             style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)" }}
           >
-            <span className="h-2 w-2 rounded-full bg-green-400" />
-            <span className="text-sm font-semibold text-white/80">{peerName}</span>
+            <span className={`h-2 w-2 rounded-full ${showLocalInMain ? "bg-cyan-400" : "bg-green-400"}`} />
+            <span className="text-sm font-semibold text-white/80">
+              {showLocalInMain ? "You" : peerName}
+            </span>
           </div>
         </div>
       )}
