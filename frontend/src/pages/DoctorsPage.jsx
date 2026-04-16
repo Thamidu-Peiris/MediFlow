@@ -297,76 +297,82 @@ export default function DoctorsPage() {
               <p className="text-[#043927]/50 font-bold uppercase tracking-widest text-xs">Finding doctors...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {pagedDoctors.map((doctor) => (
                 <div key={doctor._id} className="group relative rounded-[2.5rem] bg-white border border-[#356600]/5 p-6 hover:shadow-2xl hover:shadow-[#043927]/10 transition-all duration-500 hover:-translate-y-1">
                   <div className="flex flex-col gap-6">
-                    <div className="relative h-64 overflow-hidden rounded-[2rem]">
-                      <img 
-                        src={doctor.image} 
-                        alt={doctor.fullName} 
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                      />
-                      <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-[#356600]/5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-amber-500 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                          <span className="text-sm font-extrabold text-[#043927]">{doctor.rating.toFixed(1)}</span>
-                          <span className="text-[11px] font-bold text-[#043927]/40">({doctor.reviewCount})</span>
+                    <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+                      <div className="relative h-64 w-full md:w-64 shrink-0 overflow-hidden rounded-3xl shadow-md">
+                        <img 
+                          src={doctor.image} 
+                          alt={doctor.fullName} 
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
+                        <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-[#356600]/5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-amber-500 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                            <span className="text-xs font-extrabold text-[#043927]">{doctor.rating.toFixed(1)}</span>
+                            <span className="text-[10px] font-bold text-[#043927]/40">({doctor.reviewCount})</span>
+                          </div>
+                        </div>
+                        <div className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-[#043927] px-3 py-1.5 text-[9px] font-bold text-white uppercase tracking-widest shadow-xl">
+                          <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                          Verified Specialist
                         </div>
                       </div>
-                      <div className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-[#043927] px-4 py-2 text-[10px] font-bold text-white uppercase tracking-widest shadow-xl">
-                        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                        Verified Specialist
+
+                      <div className="flex-1 flex flex-col justify-center space-y-4 min-w-0 w-full">
+                        <div>
+                          <h3 className="text-2xl md:text-3xl font-headline font-extrabold text-[#043927] group-hover:text-[#437A00] transition-colors">
+                            {doctor.fullName}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-2">
+                            <span className="text-xs md:text-sm font-bold text-[#437A00] bg-[#CBF79D]/30 px-3 py-1 rounded-full whitespace-nowrap">{doctor.specialization}</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#043927]/20 hidden sm:block"></span>
+                            <span className="text-xs md:text-sm font-medium text-[#043927]/50 whitespace-nowrap">{doctor.yearsExp} Years Experience</span>
+                          </div>
+                        </div>
+                        <p className="text-[#043927]/60 leading-relaxed line-clamp-3 font-medium text-sm">
+                          {doctor.bio || "Dedicated specialist providing personalized healthcare with modern clinical practices and a patient-centered approach."}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="space-y-4 px-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-2xl font-headline font-extrabold text-[#043927] group-hover:text-[#437A00] transition-colors">
-                            {doctor.fullName}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm font-bold text-[#437A00]">{doctor.specialization}</span>
-                            <span className="w-1 h-1 rounded-full bg-[#043927]/20"></span>
-                            <span className="text-sm font-medium text-[#043927]/50">{doctor.yearsExp} Years Exp.</span>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-6 border-y border-[#356600]/5">
+                        <div className="flex items-center gap-4 bg-[#fcfdfa] p-4 rounded-2xl border border-[#356600]/5">
+                          <div className="w-12 h-12 rounded-xl bg-[#CBF79D]/30 flex items-center justify-center text-[#437A00]">
+                            <span className="material-symbols-outlined text-2xl">calendar_today</span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-[#043927]/30 uppercase tracking-widest mb-0.5">Next Available</p>
+                            <p className="text-sm font-extrabold text-[#043927]">{nextAvailabilityLabel(doctor)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 bg-[#fcfdfa] p-4 rounded-2xl border border-[#356600]/5">
+                          <div className="w-12 h-12 rounded-xl bg-[#CBF79D]/30 flex items-center justify-center text-[#437A00]">
+                            <span className="material-symbols-outlined text-2xl">payments</span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-[#043927]/30 uppercase tracking-widest mb-0.5">Consultation Fee</p>
+                            <p className="text-sm font-extrabold text-[#043927]">LKR {Number(doctor.consultationFeeUsd).toLocaleString()}</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 py-4 border-y border-[#356600]/5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#CBF79D]/30 flex items-center justify-center text-[#437A00]">
-                            <span className="material-symbols-outlined text-xl">calendar_today</span>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-[#043927]/30 uppercase tracking-tighter">Available</p>
-                            <p className="text-xs font-extrabold text-[#043927]">{nextAvailabilityLabel(doctor).split(',')[0]}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#CBF79D]/30 flex items-center justify-center text-[#437A00]">
-                            <span className="material-symbols-outlined text-xl">payments</span>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-[#043927]/30 uppercase tracking-tighter">Consultation</p>
-                            <p className="text-xs font-extrabold text-[#043927]">LKR {Number(doctor.consultationFeeUsd).toLocaleString()}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3 pt-2">
+                      <div className="flex gap-4 pt-2">
                         <button 
                           onClick={() => handleBook(doctor)}
-                          className="flex-1 rounded-2xl bg-[#437A00] py-4 text-sm font-bold text-white shadow-lg shadow-[#437A00]/20 hover:bg-[#043927] transition-all active:scale-[0.98]"
+                          className="flex-1 rounded-2xl bg-[#437A00] py-5 text-base font-bold text-white shadow-lg shadow-[#437A00]/20 hover:bg-[#043927] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                         >
-                          Book Now
+                          <span className="material-symbols-outlined text-xl">event_upcoming</span>
+                          Book Appointment Now
                         </button>
                         <button 
                           onClick={() => navigate(`/doctors/${doctor._id}`)}
-                          className="px-6 rounded-2xl bg-[#CBF79D] text-[#043927] hover:bg-[#043927] hover:text-white transition-all duration-300"
+                          className="px-8 rounded-2xl bg-[#CBF79D] text-[#043927] hover:bg-[#043927] hover:text-white transition-all duration-300 flex items-center justify-center"
                         >
-                          <span className="material-symbols-outlined mt-1">arrow_forward</span>
+                          <span className="material-symbols-outlined">arrow_forward</span>
                         </button>
                       </div>
                     </div>
