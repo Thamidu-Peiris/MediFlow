@@ -4,6 +4,7 @@ const PendingBooking = require("../models/PendingBooking.model");
 const PaymentHistory = require("../models/PaymentHistory.model");
 const stripeService = require("../services/stripe.service");
 const payhereService = require("../services/payhere.service");
+const { fulfillBooking, upsertPaymentHistory } = require("../services/booking.service");
 
 const APPOINTMENT_URL = process.env.APPOINTMENT_SERVICE_URL || "http://localhost:8004";
 // Docker Compose service name is `doctor-service`; localhost only works when payment runs on the host.
@@ -54,41 +55,6 @@ function slotContainsMinutes(slot, mins) {
   return mins >= start && mins < end;
 }
 
-async function upsertPaymentHistory({ doc, reqUser, appointmentId = "" }) {
-  const totalCents = Number(doc.consultationFeeCents || 0) + Number(doc.serviceFeeCents || 0);
-  const paymentMethod = doc.stripePaymentIntentId
-    ? "stripe"
-    : doc.payherePaymentId
-      ? "helakuru"
-      : "unknown";
-  const paymentRef = doc.stripePaymentIntentId || doc.payherePaymentId || "";
-
-  await PaymentHistory.findOneAndUpdate(
-    { orderId: doc.orderId },
-    {
-      $set: {
-        patientSub: doc.patientSub || reqUser?.sub || "",
-        pendingBookingId: doc._id,
-        appointmentId: appointmentId || "",
-        doctorUserId: doc.doctorUserId || "",
-        doctorName: doc.doctorName || "",
-        specialization: doc.specialization || "",
-        date: doc.date || "",
-        time: doc.time || "",
-        appointmentType: doc.appointmentType || "physical",
-        currency: doc.currency || "LKR",
-        consultationFeeCents: Number(doc.consultationFeeCents || 0),
-        serviceFeeCents: Number(doc.serviceFeeCents || 0),
-        totalCents,
-        paymentMethod,
-        paymentRef,
-        status: "paid"
-      }
-    },
-    { upsert: true, new: true }
-  );
-}
-
 exports.createPendingBooking = async (req, res) => {
   try {
     const {
@@ -130,9 +96,8 @@ exports.createPendingBooking = async (req, res) => {
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found." });
     }
-    // Select the correct availability schedule based on appointment type.
-    // Online → onlineAvailability only.
-    // Physical → physicalAvailability, falling back to legacy availability field.
+    // Online -> onlineAvailability only.
+    // Physical -> physicalAvailability, falling back to legacy availability field.
     const typeSchedule =
       appointmentType === "online"
         ? (doctor.onlineAvailability || [])
@@ -410,7 +375,13 @@ exports.createHelaPayCheckout = async (req, res) => {
 };
 
 /**
- * After Stripe succeeds on client (or PayHere webhook marked paid), create appointment (idempotent).
+ * After Stripe succeeds on client (or PayHere webhook marked paid), create appointment.
+ * Idempotent: safe to call multiple times. fulfillBooking uses findOneAndUpdate with
+ * appointmentCreated:false so only one caller ever wins the race to create the appointment.
+ *
+ * New behaviour: the webhook handlers now call fulfillBooking immediately on payment success,
+ * so by the time the browser calls this endpoint the appointment is often already created.
+ * This function handles that fast path and also acts as a fallback if the webhook is slow.
  */
 exports.completeBookingAfterPayment = async (req, res) => {
   try {
@@ -420,8 +391,9 @@ exports.completeBookingAfterPayment = async (req, res) => {
       return res.status(404).json({ message: "Pending booking not found" });
     }
 
+    // Fast path: webhook already completed the booking before the browser arrived.
     if (doc.appointmentCreated) {
-      await upsertPaymentHistory({ doc, reqUser: req.user });
+      await upsertPaymentHistory({ doc }).catch(() => {});
       return res.status(200).json({
         message: "Appointment already created",
         orderId: doc.orderId,
@@ -431,6 +403,7 @@ exports.completeBookingAfterPayment = async (req, res) => {
 
     let paymentVerified = doc.status === "paid";
 
+    // ── Stripe: verify directly with Stripe API ──────────────────────────────
     if (paymentIntentId) {
       const pi = await stripeService.retrievePaymentIntent(paymentIntentId);
       if (!pi) {
@@ -443,17 +416,26 @@ exports.completeBookingAfterPayment = async (req, res) => {
         return res.status(400).json({ message: "Payment not completed", status: pi.status });
       }
       paymentVerified = true;
-      doc.status = "paid";
-      doc.stripePaymentIntentId = pi.id;
-      await doc.save();
+      await PendingBooking.findByIdAndUpdate(pendingId, {
+        $set: { status: "paid", stripePaymentIntentId: pi.id },
+      });
+      doc = await PendingBooking.findById(pendingId);
     }
 
-    // Helakuru / PayHere: status becomes "paid" only after notify_url webhook. The browser
-    // often hits return_url first — poll MongoDB so finalize succeeds once PayHere posts notify.
+    // ── PayHere: browser returns before webhook — poll until webhook marks paid ──
+    // Also watch appointmentCreated: the webhook may fulfill the booking while we wait.
     if (!paymentVerified && !paymentIntentId) {
       const deadline = Date.now() + 90000;
       while (Date.now() < deadline) {
         const fresh = await PendingBooking.findById(pendingId);
+        if (fresh?.appointmentCreated) {
+          await upsertPaymentHistory({ doc: fresh }).catch(() => {});
+          return res.status(200).json({
+            message: "Appointment already created",
+            orderId: fresh.orderId,
+            alreadyCompleted: true,
+          });
+        }
         if (fresh?.status === "paid") {
           paymentVerified = true;
           doc = fresh;
@@ -466,53 +448,47 @@ exports.completeBookingAfterPayment = async (req, res) => {
     if (!paymentVerified) {
       return res.status(400).json({
         message:
-          "Payment not verified yet. Complete card payment (Stripe) or wait for Helakuru (PayHere) confirmation. PayHere marks this booking paid only after your server receives notify_url — on localhost use “Simulate Helakuru success (dev)” or set API_PUBLIC_URL to a public HTTPS URL (e.g. ngrok) so PayHere can reach /api/payments/webhooks/payhere.",
-        code: "PAYMENT_PENDING_WEBHOOK"
+          "Payment not verified yet. Complete card payment (Stripe) or wait for Helakuru (PayHere) confirmation. " +
+          "PayHere marks this booking paid only after your server receives notify_url. " +
+          "On localhost use 'Simulate Helakuru success (dev)' or set API_PUBLIC_URL to a public HTTPS URL (e.g. ngrok) " +
+          "so PayHere can reach /api/payments/webhooks/payhere.",
+        code: "PAYMENT_PENDING_WEBHOOK",
       });
     }
 
+    // Re-read after polling in case the webhook fulfilled the booking while we waited.
     doc = await PendingBooking.findById(pendingId);
     if (!doc || doc.status !== "paid") {
       return res.status(409).json({ message: "Payment state changed; refresh and try again." });
     }
+    if (doc.appointmentCreated) {
+      await upsertPaymentHistory({ doc }).catch(() => {});
+      return res.status(200).json({
+        message: "Appointment already created",
+        orderId: doc.orderId,
+        alreadyCompleted: true,
+      });
+    }
 
+    // ── Create appointment using shared fulfillBooking (passes patient's real JWT) ─
     const authHeader = req.headers.authorization;
     const patientName =
       req.user?.name ||
       (req.user?.email ? String(req.user.email).split("@")[0] : "") ||
       "Patient";
-    const appointmentPayload = {
-      patientName,
-      // Used by some frontends as a stable identifier.
-      sessionId: doc._id.toString(),
-      doctorId: doc.doctorUserId,
-      doctorName: doc.doctorName,
-      specialization: doc.specialization,
-      date: doc.date,
-      time: doc.time,
-      reason: doc.reason || `Consultation paid. Order ${doc.orderId}`,
-      notes: doc.reason || `Consultation paid. Order ${doc.orderId}`,
-      appointmentType: doc.appointmentType || "physical",
-      consultationFee: Math.round(doc.consultationFeeCents) / 100,
-    };
 
     try {
-      // appointment-service mounts all routes at `/` (see appointment.routes.js)
-      // so creating an appointment is POST `${APPOINTMENT_URL}/`.
-      const aptRes = await axios.post(`${APPOINTMENT_URL}/`, appointmentPayload, {
-        headers: { Authorization: authHeader, "Content-Type": "application/json" },
-        timeout: 15000,
-      });
-      doc.appointmentCreated = true;
-      await doc.save();
-      await upsertPaymentHistory({
-        doc,
-        reqUser: req.user,
-        appointmentId: aptRes.data?.appointment?._id || ""
-      });
+      const result = await fulfillBooking(doc, { authHeader, patientName });
+      if (result.alreadyCreated) {
+        return res.status(200).json({
+          message: "Appointment already created",
+          orderId: doc.orderId,
+          alreadyCompleted: true,
+        });
+      }
       return res.status(201).json({
         message: "Appointment booked",
-        appointment: aptRes.data?.appointment,
+        appointment: result.appointment,
         orderId: doc.orderId,
       });
     } catch (aptErr) {
@@ -547,9 +523,9 @@ exports.getMyPaymentHistory = async (req, res) => {
  * Issue a refund for the PendingBooking linked to a cancelled appointment.
  * Called by the appointment service (with the patient's JWT forwarded).
  *
- * Stripe  → fully automated refund.
- * PayHere → not supported programmatically in sandbox; returns manual_required.
- * No payment record → returns no_payment_record (appointment was free / old flow).
+ * Stripe  -> fully automated refund.
+ * PayHere -> not supported programmatically in sandbox; returns manual_required.
+ * No payment record -> returns no_payment_record (appointment was free / old flow).
  */
 exports.refundBySession = async (req, res) => {
   try {
@@ -575,7 +551,6 @@ exports.refundBySession = async (req, res) => {
     if (doc.stripePaymentIntentId) {
       const result = await stripeService.createRefund(doc.stripePaymentIntentId);
       if (result.error) {
-        // Stripe already refunded, or another Stripe-side issue.
         return res.status(200).json({
           refunded: false,
           method: "stripe",
