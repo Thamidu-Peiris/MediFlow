@@ -12576,3 +12576,133 @@ button, .btn-primary {
   cursor: not-allowed;
 }
 
+/* ── Atelier Premium Modal Styles ── */
+
+.at-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1.5rem;
+  animation: at-overlay-in 0.2s ease;
+}
+
+@keyframes at-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.at-modal {
+  background: white;
+  border-radius: 2.5rem;
+  padding: 2.5rem;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+  animation: at-modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+@keyframes at-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.at-modal-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.at-modal-icon-delete {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.at-modal-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--at-on-surface);
+  margin: 0 0 0.75rem;
+}
+
+.at-modal-text {
+  font-size: 1rem;
+  color: var(--at-on-surface-variant);
+  line-height: 1.6;
+  margin: 0 0 2rem;
+}
+
+.at-modal-text strong {
+  color: var(--at-on-surface);
+  font-weight: 700;
+}
+
+.at-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.at-btn-modal {
+  padding: 1rem 1.75rem;
+  border-radius: 1rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.at-btn-modal-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.at-btn-modal-cancel:hover {
+  background: #e2e8f0;
+}
+
+.at-btn-modal-delete {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+}
+
+.at-btn-modal-delete:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);
+}
+
+@media (max-width: 480px) {
+  .at-modal {
+    padding: 2rem 1.5rem;
+    border-radius: 2rem;
+  }
+  
+  .at-modal-actions {
+    flex-direction: column;
+  }
+  
+  .at-btn-modal {
+    width: 100%;
+  }
+}
+

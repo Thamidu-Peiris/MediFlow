@@ -172,6 +172,9 @@ export default function MedicalReportsPage() {
   const [category, setCategory] = useState("Lab Results");
   const [relatedDoctor, setRelatedDoctor] = useState("");
 
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState({ open: false, reportId: null, reportTitle: "" });
+
   const loadReports = async () => {
     try {
       const res = await api.get("/patients/reports", authHeaders);
@@ -333,13 +336,30 @@ export default function MedicalReportsPage() {
     }
   };
 
-  const onDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this report?")) return;
+  const openDeleteModal = (report) => {
+    setDeleteModal({
+      open: true,
+      reportId: report._id,
+      reportTitle: report.title || report.fileName || "Untitled Report"
+    });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ open: false, reportId: null, reportTitle: "" });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.reportId) return;
     try {
-      await api.delete(`/patients/reports/${id}`, authHeaders);
+      await api.delete(`/patients/reports/${deleteModal.reportId}`, authHeaders);
+      setMessage("Report deleted successfully");
+      setTimeout(() => setMessage(""), 3000);
       loadReports();
     } catch (err) {
       setMessage(err?.response?.data?.message || "Delete failed");
+      setTimeout(() => setMessage(""), 3000);
+    } finally {
+      closeDeleteModal();
     }
   };
 
@@ -685,7 +705,7 @@ export default function MedicalReportsPage() {
                           <button
                             type="button"
                             className="at-btn-report at-btn-report-delete"
-                            onClick={() => onDelete(report._id)}
+                            onClick={() => openDeleteModal(report)}
                             title="Delete report"
                           >
                             <span className="material-symbols-outlined" style={{fontSize: "18px"}}>delete</span>
@@ -700,6 +720,29 @@ export default function MedicalReportsPage() {
             </div>
           </main>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {deleteModal.open && (
+          <div className="at-modal-overlay" onClick={closeDeleteModal}>
+            <div className="at-modal at-modal-delete" onClick={(e) => e.stopPropagation()}>
+              <div className="at-modal-icon at-modal-icon-delete">
+                <span className="material-symbols-outlined" style={{fontSize: "32px"}}>delete_forever</span>
+              </div>
+              <h3 className="at-modal-title">Delete Report?</h3>
+              <p className="at-modal-text">
+                Are you sure you want to delete <strong>"{deleteModal.reportTitle}"</strong>? This action cannot be undone.
+              </p>
+              <div className="at-modal-actions">
+                <button className="at-btn-modal at-btn-modal-cancel" onClick={closeDeleteModal}>
+                  Cancel
+                </button>
+                <button className="at-btn-modal at-btn-modal-delete" onClick={confirmDelete}>
+                  Delete Report
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PatientShell>
   );
