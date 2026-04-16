@@ -50,7 +50,7 @@ export default function DoctorsPage() {
   const [pickedSpecialties, setPickedSpecialties] = useState([]);
   const [ratingFloor, setRatingFloor] = useState(0);
   const [availability, setAvailability] = useState("all");
-  const [maxFee, setMaxFee] = useState(500);
+  const [maxFee, setMaxFee] = useState(10000);
   const [sortBy, setSortBy] = useState("best");
   const [page, setPage] = useState(1);
 
@@ -227,9 +227,9 @@ export default function DoctorsPage() {
             <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70">
               <span className="material-symbols-outlined text-sm">payments</span>Consultation Fee
             </label>
-            <input type="range" min="50" max="500" step="10" value={maxFee} onChange={(e) => setMaxFee(Number(e.target.value))} className="h-1.5 w-full appearance-none rounded-full bg-outline-variant/20 accent-primary" />
+            <input type="range" min="0" max="10000" step="100" value={maxFee} onChange={(e) => setMaxFee(Number(e.target.value))} className="h-1.5 w-full appearance-none rounded-full bg-outline-variant/20 accent-primary" />
             <div className="flex justify-between text-[11px] font-bold text-on-surface-variant">
-              <span>$50</span><span>${maxFee}+</span>
+              <span>LKR 0</span><span>LKR {maxFee}</span>
             </div>
           </div>
 
@@ -239,7 +239,7 @@ export default function DoctorsPage() {
               setPickedSpecialties([]);
               setRatingFloor(0);
               setAvailability("all");
-              setMaxFee(500);
+              setMaxFee(10000);
               setSortBy("best");
               setSearchQuery("");
             }}
@@ -318,7 +318,7 @@ export default function DoctorsPage() {
                           <span className="material-symbols-outlined text-lg text-primary">payments</span>
                           <div>
                             <p className="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Consultation</p>
-                            <p className="text-sm font-bold text-on-surface">${Number(doctor.consultationFeeUsd || 0).toFixed(2)}</p>
+                            <p className="text-sm font-bold text-on-surface">LKR {Number(doctor.consultationFeeUsd || 0).toLocaleString()}</p>
                           </div>
                         </div>
                       </div>
