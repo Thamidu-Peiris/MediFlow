@@ -50,7 +50,7 @@ export default function DoctorsPage() {
   const [pickedSpecialties, setPickedSpecialties] = useState([]);
   const [ratingFloor, setRatingFloor] = useState(0);
   const [availability, setAvailability] = useState("all");
-  const [maxFee, setMaxFee] = useState(500);
+  const [maxFee, setMaxFee] = useState(10000);
   const [sortBy, setSortBy] = useState("best");
   const [page, setPage] = useState(1);
 
@@ -64,11 +64,17 @@ export default function DoctorsPage() {
         const todayName = DAY_NAMES[new Date().getDay()];
         const enriched = uniqueDocs.map((doc) => {
           const seed = String(doc?._id || doc?.userId || "0");
-          const imagePick = seed.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 4;
+          const charSum = seed.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+          const imagePick = charSum % 4;
+          
+          // Generate fake rating (4.0 - 5.0) and review count (10 - 200) based on ID seed
+          const fakeRating = 4.0 + (charSum % 11) / 10;
+          const fakeReviews = 10 + (charSum % 191);
+
           return {
           ...doc,
-          rating: Number(doc.rating || 0),
-          reviewCount: Number(doc.reviewCount || 0),
+          rating: Number(doc.rating || fakeRating),
+          reviewCount: Number(doc.reviewCount || fakeReviews),
           consultationFeeUsd: Number(doc.consultationFee || 0),
           image: doc.image || `https://images.unsplash.com/photo-${[
             "1559839734-2b71ea197ec2",
@@ -164,72 +170,78 @@ export default function DoctorsPage() {
   };
 
   return (
-    <div className="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+    <div className="bg-[#c0fc92] text-[#043927] selection:bg-[#CBF79D] selection:text-[#043927] font-sans">
       <LandingTopBar active="doctors" />
 
-      <main className="mx-auto flex max-w-[1440px] gap-6 px-8 pb-20 pt-28">
-        <aside className="sticky top-28 hidden h-[calc(100vh-140px)] w-64 shrink-0 flex-col gap-4 overflow-y-auto rounded-2xl bg-surface-container-low p-4 lg:flex">
+      <main className="mx-auto flex max-w-[1440px] gap-8 px-8 pb-24 pt-32">
+        <aside className="sticky top-28 hidden h-[calc(100vh-140px)] w-72 shrink-0 flex-col gap-6 overflow-y-auto rounded-[2.5rem] bg-white border border-[#356600]/10 p-6 lg:flex shadow-sm">
           <div>
-            <h2 className="font-headline text-lg font-bold text-primary">Filters</h2>
-            <p className="text-xs font-body text-on-surface-variant">Refine your medical search</p>
+            <h2 className="font-headline text-xl font-extrabold text-[#043927]">Filters</h2>
+            <p className="text-sm font-medium text-[#043927]/50 mt-1">Refine your search</p>
           </div>
 
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70">
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#043927]/40">
               <span className="material-symbols-outlined text-sm">medical_services</span>Specialty
             </label>
-            <div className="space-y-1.5">
-              {SPECIALTIES.slice(0, 3).map((s) => (
-                <label key={s} className="group flex cursor-pointer items-center gap-2.5 rounded-lg p-1.5 transition-colors hover:bg-surface-container-lowest">
-                  <input
-                    type="checkbox"
-                    checked={pickedSpecialties.includes(s)}
-                    onChange={() => toggleSpecialty(s)}
-                    className="h-4 w-4 rounded-md border-outline-variant text-primary focus:ring-primary"
-                  />
-                  <span className="text-xs font-medium text-on-surface group-hover:text-primary">{s.replace("ologist", "ology")}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70">
-              <span className="material-symbols-outlined text-sm">star</span>Rating
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setRatingFloor(4.5)} className="rounded-full border border-outline-variant/30 px-2.5 py-1 text-[11px] font-medium transition-all hover:bg-primary hover:text-white">4.5+</button>
-              <button type="button" onClick={() => setRatingFloor(4.0)} className="rounded-full border border-outline-variant/30 px-2.5 py-1 text-[11px] font-medium transition-all hover:bg-primary hover:text-white">4.0+</button>
-              <button type="button" onClick={() => setRatingFloor(0)} className="rounded-full border border-outline-variant/30 px-2.5 py-1 text-[11px] font-medium transition-all hover:bg-primary hover:text-white">Any</button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70">
-              <span className="material-symbols-outlined text-sm">calendar_today</span>Availability
-            </label>
-            <div className="grid grid-cols-1 gap-1.5">
-              {["all", "today", "week"].map((opt) => (
+            <div className="grid grid-cols-1 gap-2">
+              {SPECIALTIES.map((s) => (
                 <button
-                  key={opt}
-                  type="button"
-                  onClick={() => setAvailability(opt)}
-                  className={`flex items-center justify-between rounded-lg px-2.5 py-2 text-xs ${availability === opt ? "bg-surface-container-lowest font-semibold text-primary shadow-[0px_20px_40px_rgba(0,29,50,0.06)]" : "border border-outline-variant/15 font-medium text-on-surface-variant hover:bg-surface-container-highest"}`}
+                  key={s}
+                  onClick={() => toggleSpecialty(s)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                    pickedSpecialties.includes(s) 
+                      ? "bg-[#CBF79D] text-[#043927] shadow-lg shadow-[#CBF79D]/30" 
+                      : "bg-[#fcfdfa] text-[#043927]/60 hover:bg-[#CBF79D]/10"
+                  }`}
                 >
-                  {opt === "all" ? "All" : opt === "today" ? "Today" : "This Week"}
-                  {availability === opt && <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
+                  <div className={`w-2 h-2 rounded-full ${pickedSpecialties.includes(s) ? "bg-[#437A00]" : "bg-[#356600]/10"}`}></div>
+                  {s.replace("ologist", "ology")}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant/70">
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#043927]/40">
+              <span className="material-symbols-outlined text-sm">star</span>Rating
+            </label>
+            <div className="flex gap-2">
+              {[4.5, 4.0, 0].map((r) => (
+                <button 
+                  key={r}
+                  type="button" 
+                  onClick={() => setRatingFloor(r)} 
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                    ratingFloor === r 
+                    ? "bg-[#043927] text-white border-transparent" 
+                    : "bg-white text-[#043927] border-[#356600]/10 hover:border-[#437A00]/30"
+                  }`}
+                >
+                  {r === 0 ? "Any" : `${r}+`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#043927]/40">
               <span className="material-symbols-outlined text-sm">payments</span>Consultation Fee
             </label>
-            <input type="range" min="50" max="500" step="10" value={maxFee} onChange={(e) => setMaxFee(Number(e.target.value))} className="h-1.5 w-full appearance-none rounded-full bg-outline-variant/20 accent-primary" />
-            <div className="flex justify-between text-[11px] font-bold text-on-surface-variant">
-              <span>$50</span><span>${maxFee}+</span>
+            <div className="px-1">
+              <input 
+                type="range" 
+                min="0" 
+                max="10000" 
+                step="100" 
+                value={maxFee} 
+                onChange={(e) => setMaxFee(Number(e.target.value))} 
+                className="h-1.5 w-full appearance-none rounded-full bg-[#356600]/10 accent-[#437A00]" 
+              />
+              <div className="flex justify-between mt-3 text-xs font-bold text-[#043927]/60">
+                <span>LKR 0</span>
+                <span className="px-2 py-1 rounded-md bg-[#CBF79D]/30 text-[#437A00]">LKR {maxFee}</span>
+              </div>
             </div>
           </div>
 
@@ -239,35 +251,39 @@ export default function DoctorsPage() {
               setPickedSpecialties([]);
               setRatingFloor(0);
               setAvailability("all");
-              setMaxFee(500);
+              setMaxFee(10000);
               setSortBy("best");
               setSearchQuery("");
             }}
-            className="mt-2 rounded-full bg-primary py-3 text-xs font-headline font-bold tracking-wide text-on-primary transition-all active:scale-95"
+            className="mt-4 w-full rounded-2xl bg-[#043927] py-4 text-sm font-bold tracking-wide text-white transition-all hover:bg-[#065036] shadow-lg shadow-[#043927]/20 active:scale-[0.98]"
           >
-            Apply Filters
+            Reset Filters
           </button>
         </aside>
 
-        <div className="flex-1 space-y-12">
-
-          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+        <div className="flex-1 space-y-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-2xl font-headline font-bold">Available Specialists</h3>
-              <p className="font-body text-on-surface-variant">{filteredDoctors.length} qualified doctors match your criteria</p>
+              <h3 className="text-2xl font-headline font-extrabold text-[#043927]">
+                Available <span className="text-[#437A00]">Specialists</span>
+              </h3>
+              <p className="text-[#043927]/50 font-medium">{filteredDoctors.length} qualified doctors found</p>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-outline-variant/10 bg-surface-container-low p-1.5">
+            
+            <div className="flex bg-[#043927]/5 p-1.5 rounded-full border border-[#043927]/10 backdrop-blur-md">
               {[
                 ["best", "Best Match"],
-                ["availability", "Availability"],
                 ["rating", "Rating"],
                 ["price", "Price"]
               ].map(([value, label]) => (
                 <button
                   key={value}
-                  type="button"
                   onClick={() => setSortBy(value)}
-                  className={`rounded-full px-5 py-2.5 text-xs ${sortBy === value ? "bg-white font-bold text-primary shadow-[0px_20px_40px_rgba(0,29,50,0.06)]" : "font-semibold text-on-surface-variant transition-colors hover:text-primary"}`}
+                  className={`px-8 py-3 rounded-full text-xs font-bold transition-all duration-300 ${
+                    sortBy === value 
+                    ? "bg-white text-black shadow-lg shadow-[#043927]/10 scale-105" 
+                    : "text-black/60 hover:text-black hover:bg-white/30"
+                  }`}
                 >
                   {label}
                 </button>
@@ -276,55 +292,88 @@ export default function DoctorsPage() {
           </div>
 
           {loading ? (
-            <div className="py-16 text-center text-on-surface-variant">Loading doctors...</div>
+            <div className="py-32 flex flex-col items-center justify-center gap-4">
+              <div className="w-12 h-12 border-4 border-[#CBF79D] border-t-[#437A00] rounded-full animate-spin"></div>
+              <p className="text-[#043927]/50 font-bold uppercase tracking-widest text-xs">Finding doctors...</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {pagedDoctors.map((doctor) => (
-                <div key={doctor._id} className="group rounded-[2rem] bg-surface-container-lowest p-8 shadow-[0px_20px_40px_rgba(0,29,50,0.06)] transition-transform duration-300 hover:-translate-y-1">
-                  <div className="flex flex-col gap-8 md:flex-row">
-                    <div className="relative shrink-0">
-                      <img src={doctor.image} alt={doctor.fullName} className="h-56 w-full rounded-2xl object-cover md:w-48" />
-                      <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-bold text-primary shadow-sm backdrop-blur-md">
-                        <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                        VERIFIED EXPERT
+                <div key={doctor._id} className="group relative rounded-[2.5rem] bg-white border border-[#356600]/5 p-6 hover:shadow-2xl hover:shadow-[#043927]/10 transition-all duration-500 hover:-translate-y-1">
+                  <div className="flex flex-col gap-6">
+                    <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+                      <div className="relative h-64 w-full md:w-64 shrink-0 overflow-hidden rounded-3xl shadow-md">
+                        <img 
+                          src={doctor.image} 
+                          alt={doctor.fullName} 
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
+                        <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg border border-[#356600]/5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-amber-500 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                            <span className="text-xs font-extrabold text-[#043927]">{doctor.rating.toFixed(1)}</span>
+                            <span className="text-[10px] font-bold text-[#043927]/40">({doctor.reviewCount})</span>
+                          </div>
+                        </div>
+                        <div className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-[#043927] px-3 py-1.5 text-[9px] font-bold text-white uppercase tracking-widest shadow-xl">
+                          <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                          Verified Specialist
+                        </div>
+                      </div>
+
+                      <div className="flex-1 flex flex-col justify-center space-y-4 min-w-0 w-full">
+                        <div>
+                          <h3 className="text-2xl md:text-3xl font-headline font-extrabold text-[#043927] group-hover:text-[#437A00] transition-colors">
+                            {doctor.fullName}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-2">
+                            <span className="text-xs md:text-sm font-bold text-[#437A00] bg-[#CBF79D]/30 px-3 py-1 rounded-full whitespace-nowrap">{doctor.specialization}</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#043927]/20 hidden sm:block"></span>
+                            <span className="text-xs md:text-sm font-medium text-[#043927]/50 whitespace-nowrap">{doctor.yearsExp} Years Experience</span>
+                          </div>
+                        </div>
+                        <p className="text-[#043927]/60 leading-relaxed line-clamp-3 font-medium text-sm">
+                          {doctor.bio || "Dedicated specialist providing personalized healthcare with modern clinical practices and a patient-centered approach."}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex-1 space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-xl font-headline font-bold">{doctor.fullName}</h3>
-                          <p className="font-medium text-on-surface-variant">
-                            {doctor.specialization || "General Practitioner"}
-                            {doctor.yearsExp ? ` • ${doctor.yearsExp} Years Exp.` : ""}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 rounded-lg bg-surface-container px-2 py-1">
-                          <span className="material-symbols-outlined text-lg text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                          <span className="text-sm font-bold">{doctor.rating ? doctor.rating.toFixed(1) : "N/A"}</span>
-                          <span className="text-[10px] text-on-surface-variant">
-                            ({doctor.reviewCount || 0} reviews)
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-4 border-y border-outline-variant/10 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-lg text-primary">event_available</span>
+
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-6 border-y border-[#356600]/5">
+                        <div className="flex items-center gap-4 bg-[#fcfdfa] p-4 rounded-2xl border border-[#356600]/5">
+                          <div className="w-12 h-12 rounded-xl bg-[#CBF79D]/30 flex items-center justify-center text-[#437A00]">
+                            <span className="material-symbols-outlined text-2xl">calendar_today</span>
+                          </div>
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Next Available</p>
-                            <p className="text-sm font-bold text-primary">{nextAvailabilityLabel(doctor)}</p>
+                            <p className="text-[10px] font-bold text-[#043927]/30 uppercase tracking-widest mb-0.5">Next Available</p>
+                            <p className="text-sm font-extrabold text-[#043927]">{nextAvailabilityLabel(doctor)}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-lg text-primary">payments</span>
+                        <div className="flex items-center gap-4 bg-[#fcfdfa] p-4 rounded-2xl border border-[#356600]/5">
+                          <div className="w-12 h-12 rounded-xl bg-[#CBF79D]/30 flex items-center justify-center text-[#437A00]">
+                            <span className="material-symbols-outlined text-2xl">payments</span>
+                          </div>
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Consultation</p>
-                            <p className="text-sm font-bold text-on-surface">${Number(doctor.consultationFeeUsd || 0).toFixed(2)}</p>
+                            <p className="text-[10px] font-bold text-[#043927]/30 uppercase tracking-widest mb-0.5">Consultation Fee</p>
+                            <p className="text-sm font-extrabold text-[#043927]">LKR {Number(doctor.consultationFeeUsd).toLocaleString()}</p>
                           </div>
                         </div>
                       </div>
+
                       <div className="flex gap-4 pt-2">
-                        <button type="button" onClick={() => handleBook(doctor)} className="flex-1 rounded-full bg-primary py-4 text-sm font-headline font-bold text-on-primary transition-all hover:bg-primary-container active:scale-[0.98]">Book Now</button>
-                        <button type="button" onClick={() => navigate(`/doctors/${doctor._id}`)} className="rounded-full bg-secondary-container px-6 py-4 text-sm font-headline font-bold text-on-secondary-fixed-variant transition-all hover:bg-surface-container-high active:scale-[0.98]">View Profile</button>
+                        <button 
+                          onClick={() => handleBook(doctor)}
+                          className="flex-1 rounded-2xl bg-[#437A00] py-5 text-base font-bold text-white shadow-lg shadow-[#437A00]/20 hover:bg-[#043927] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        >
+                          <span className="material-symbols-outlined text-xl">event_upcoming</span>
+                          Book Appointment Now
+                        </button>
+                        <button 
+                          onClick={() => navigate(`/doctors/${doctor._id}`)}
+                          className="px-8 rounded-2xl bg-[#CBF79D] text-[#043927] hover:bg-[#043927] hover:text-white transition-all duration-300 flex items-center justify-center"
+                        >
+                          <span className="material-symbols-outlined">arrow_forward</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -333,24 +382,34 @@ export default function DoctorsPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-4 pt-8">
-            <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} className="flex h-12 w-12 items-center justify-center rounded-full border border-outline-variant/20 transition-all hover:bg-primary hover:text-white">
-              <span className="material-symbols-outlined">chevron_left</span>
+          {/* Pagination */}
+          <div className="flex items-center justify-center gap-3 pt-12">
+            <button 
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="w-12 h-12 rounded-2xl border border-[#356600]/10 flex items-center justify-center hover:bg-[#043927] hover:text-white transition-all group shadow-sm"
+            >
+              <span className="material-symbols-outlined group-active:scale-90">chevron_left</span>
             </button>
             <div className="flex items-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5).map((p) => (
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}
-                  type="button"
                   onClick={() => setPage(p)}
-                  className={`flex h-10 w-10 items-center justify-center rounded-full font-bold ${p === page ? "bg-primary text-on-primary" : "transition-all hover:bg-surface-container-low"}`}
+                  className={`w-12 h-12 rounded-2xl font-extrabold text-sm transition-all ${
+                    p === page 
+                    ? "bg-[#CBF79D] text-[#043927] shadow-lg shadow-[#CBF79D]/30" 
+                    : "hover:bg-[#CBF79D]/10 text-[#043927]/60"
+                  }`}
                 >
                   {p}
                 </button>
               ))}
             </div>
-            <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="flex h-12 w-12 items-center justify-center rounded-full border border-outline-variant/20 transition-all hover:bg-primary hover:text-white">
-              <span className="material-symbols-outlined">chevron_right</span>
+            <button 
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="w-12 h-12 rounded-2xl border border-[#356600]/10 flex items-center justify-center hover:bg-[#043927] hover:text-white transition-all group shadow-sm"
+            >
+              <span className="material-symbols-outlined group-active:scale-90">chevron_right</span>
             </button>
           </div>
         </div>
