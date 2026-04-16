@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import api from "../api/client";
 
 export default function AdminNotificationsPage() {
   const [message] = useState(
@@ -13,6 +14,60 @@ export default function AdminNotificationsPage() {
       return "";
     }
   }, []);
+
+  const [testPayload, setTestPayload] = useState({
+    patientEmail: "",
+    doctorEmail: "",
+    patientPhone: "",
+    doctorPhone: "",
+  });
+  const [testStatus, setTestStatus] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
+
+  const formatTestResult = (res) => {
+    const data = res?.data || {};
+    const lines = [data.message || "Request completed."];
+    const dispatch = data.dispatch;
+    if (dispatch?.hints?.length) {
+      lines.push(...dispatch.hints);
+    } else if (dispatch && (dispatch.email?.mode !== "live" || dispatch.sms?.mode !== "live")) {
+      lines.push(`Channels: email=${dispatch.email?.mode || "?"}, sms=${dispatch.sms?.mode || "?"}.`);
+    }
+    if (Array.isArray(data.failures) && data.failures.length) {
+      lines.push("Failures:");
+      for (const f of data.failures) {
+        const extra = f.hint ? ` — ${f.hint}` : "";
+        lines.push(`• ${f.task}: ${f.message || "Unknown error"}${extra}`);
+      }
+    }
+    return lines.join("\n");
+  };
+
+  const handleTriggerTest = async () => {
+    setSendingTest(true);
+    setTestStatus("");
+    try {
+      const res = await api.post("/notifications/send", {
+        type: "APPOINTMENT_BOOKED",
+        patientEmail: testPayload.patientEmail.trim(),
+        doctorEmail: testPayload.doctorEmail.trim(),
+        patientPhone: testPayload.patientPhone.trim(),
+        doctorPhone: testPayload.doctorPhone.trim(),
+        payload: {
+          date: new Date().toISOString().slice(0, 10),
+          time: "10:00 AM",
+          patientName: "Test Patient",
+          doctorName: "Test Doctor",
+        },
+      });
+      setTestStatus(formatTestResult(res));
+    } catch (err) {
+      const msg = err?.response?.data?.message || "Failed to trigger test notification.";
+      setTestStatus(msg);
+    } finally {
+      setSendingTest(false);
+    }
+  };
 
   return (
     <div className="font-body text-on-surface pb-10">
@@ -104,6 +159,64 @@ export default function AdminNotificationsPage() {
                   Broadcast Message
                 </button>
               </div>
+            </div>
+          </section>
+
+          <section className="mt-8 bg-surface-container-lowest p-6 sm:p-8 rounded-xl shadow-sm border border-outline-variant/20">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+                <span className="material-symbols-outlined text-emerald-800">bolt</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold font-headline text-on-surface">Trigger Test Notification</h3>
+                <p className="text-xs text-on-surface-variant font-medium mt-0.5">
+                  Sends a sample appointment email (Brevo SMTP) and SMS (Twilio). Twilio trial accounts only deliver SMS to numbers you verify in the Twilio console. Use international format (+94771234567) or set{" "}
+                  <span className="font-mono text-[11px]">SMS_DEFAULT_COUNTRY_CODE</span> for local numbers starting with 0.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="email"
+                placeholder="Patient email"
+                value={testPayload.patientEmail}
+                onChange={(e) => setTestPayload((p) => ({ ...p, patientEmail: e.target.value }))}
+                className="w-full bg-white border border-emerald-200/70 rounded-xl py-3 px-4 text-sm text-black placeholder:text-gray-400 shadow-sm ring-1 ring-emerald-100/80 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-400 focus:outline-none transition-all"
+              />
+              <input
+                type="email"
+                placeholder="Doctor email"
+                value={testPayload.doctorEmail}
+                onChange={(e) => setTestPayload((p) => ({ ...p, doctorEmail: e.target.value }))}
+                className="w-full bg-white border border-emerald-200/70 rounded-xl py-3 px-4 text-sm text-black placeholder:text-gray-400 shadow-sm ring-1 ring-emerald-100/80 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-400 focus:outline-none transition-all"
+              />
+              <input
+                type="text"
+                placeholder="Patient phone (+94...)"
+                value={testPayload.patientPhone}
+                onChange={(e) => setTestPayload((p) => ({ ...p, patientPhone: e.target.value }))}
+                className="w-full bg-white border border-emerald-200/70 rounded-xl py-3 px-4 text-sm text-black placeholder:text-gray-400 shadow-sm ring-1 ring-emerald-100/80 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-400 focus:outline-none transition-all"
+              />
+              <input
+                type="text"
+                placeholder="Doctor phone (+94...)"
+                value={testPayload.doctorPhone}
+                onChange={(e) => setTestPayload((p) => ({ ...p, doctorPhone: e.target.value }))}
+                className="w-full bg-white border border-emerald-200/70 rounded-xl py-3 px-4 text-sm text-black placeholder:text-gray-400 shadow-sm ring-1 ring-emerald-100/80 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-400 focus:outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pt-5">
+              <p className="text-xs text-on-surface-variant whitespace-pre-line max-w-[min(100%,42rem)]">{testStatus}</p>
+              <button
+                type="button"
+                onClick={handleTriggerTest}
+                disabled={sendingTest}
+                className="px-6 py-3 bg-[#0C9100] text-white font-bold rounded-xl shadow-md hover:bg-[#097300] hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {sendingTest ? "Sending..." : "Send Test Notification"}
+              </button>
             </div>
           </section>
         </div>
