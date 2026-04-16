@@ -66,10 +66,9 @@ async function notifyConsultationCompleted(session) {
     }
 }
 const { RtcTokenBuilder, RtcRole } = require("agora-token");
-const axios = require("axios");
 
 const DOCTOR_SERVICE_URL = process.env.DOCTOR_SERVICE_URL || "http://doctor-service:8003/api/doctors";
-const APPOINTMENT_SERVICE_URL = process.env.APPOINTMENT_SERVICE_URL || "http://appointment-service:8002/api/appointments";
+const APPOINTMENT_SERVICE_URL = process.env.APPOINTMENT_SERVICE_URL || "http://appointment-service:8004/api/appointments";
 
 exports.getAgoraConfig = (req, res) => {
     const appId = process.env.AGORA_APP_ID || "";

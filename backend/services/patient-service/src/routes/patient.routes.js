@@ -89,8 +89,8 @@ router.post("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
 router.put("/profiles/me", verifyAuth, requirePatientRole, upsertProfile);
 router.put("/update-profile", verifyAuth, requirePatientRole, upsertProfile);
 
-router.get("/reports", verifyAuth, requirePatientRole, listReports);
-router.get("/reports/:id/download", verifyAuth, requirePatientRole, streamReportFile);
+router.get("/reports", verifyAuth, listReports);
+router.get("/reports/:id/download", verifyAuth, streamReportFile);
 router.post(
   "/upload-report",
   verifyAuth,
