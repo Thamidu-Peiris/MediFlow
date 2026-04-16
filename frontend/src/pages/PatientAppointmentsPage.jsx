@@ -4,6 +4,7 @@ import api from "../api/client";
 import PatientShell from "../components/PatientShell";
 import { useAuth } from "../context/AuthContext";
 import { firePaymentSuccessConfetti } from "../utils/paymentConfetti";
+import { resolveApiFileUrl } from "../utils/mediaUrl";
 
 const tabs = [
   { id: "upcoming", label: "Upcoming", icon: "calendar" },
@@ -117,13 +118,27 @@ export default function PatientAppointmentsPage() {
     try {
       // Prefer appointment-service source used by current booking flow.
       // Keep /patients/appointments as graceful fallback.
-      const res = await api.get("/appointments/my", authHeaders).catch(() =>
+      const appointmentsRes = await api.get("/appointments/my", authHeaders).catch(() =>
         api.get("/patients/appointments", authHeaders)
       );
-      const apps = res.data?.appointments || [];
+      const doctorsRes = await api.get("/doctors/public").catch(() => ({ data: { doctors: [] } }));
+      const apps = appointmentsRes.data?.appointments || [];
+      const doctors = Array.isArray(doctorsRes.data?.doctors) ? doctorsRes.data.doctors : [];
+      const doctorByUserId = doctors.reduce((acc, doctor) => {
+        if (doctor?.userId) acc[String(doctor.userId)] = doctor;
+        return acc;
+      }, {});
       const enhanced = apps.map((app) => ({
         ...app,
-        doctorImage: app.doctorImage || "/doctor-placeholder.svg",
+        doctorImage: (() => {
+          const fallbackDoctor =
+            doctorByUserId[String(app.doctorId)] ||
+            doctorByUserId[String(app.doctorUserId)] ||
+            doctorByUserId[String(app.userId)] ||
+            null;
+          const rawImage = app.doctorImage || fallbackDoctor?.image || "";
+          return rawImage ? resolveApiFileUrl(rawImage) : "/doctor-placeholder.svg";
+        })(),
         specialty: app.specialty || app.specialization || "",
         consultationFee: app.consultationFee || 0
       }));
@@ -428,6 +443,7 @@ export default function PatientAppointmentsPage() {
                           src={appointment.doctorImage || "https://via.placeholder.com/150"} 
                           alt={appointment.doctorName} 
                           className="at-doc-img"
+                          onError={(e) => { e.currentTarget.src = "/doctor-placeholder.svg"; }}
                         />
                         <div className="at-type-indicator">
                           <span className="material-symbols-outlined" style={{ fontSize: "14px", fontVariationSettings: "'FILL' 1" }}>
@@ -591,7 +607,12 @@ export default function PatientAppointmentsPage() {
               <div className="rs-current-card">
                 <span className="rs-current-label">Currently booked</span>
                 <div className="rs-current-row">
-                  <img src={selectedAppointment.doctorImage} alt={selectedAppointment.doctorName} className="rs-doctor-avatar" />
+                  <img
+                    src={selectedAppointment.doctorImage || "/doctor-placeholder.svg"}
+                    alt={selectedAppointment.doctorName}
+                    className="rs-doctor-avatar"
+                    onError={(e) => { e.currentTarget.src = "/doctor-placeholder.svg"; }}
+                  />
                   <div className="rs-current-info">
                     <p className="rs-doctor-name">{selectedAppointment.doctorName || "Doctor"}</p>
                     <p className="rs-doctor-spec">{selectedAppointment.specialty || selectedAppointment.specialization}</p>
