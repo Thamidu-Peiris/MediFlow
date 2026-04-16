@@ -3145,16 +3145,16 @@ button, .btn-primary {
 
 /* Symptom Checker Card */
 .symptom-checker-card {
-  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  background: linear-gradient(135deg, #2ed428 0%, #22b322 100%);
   border-radius: 16px;
-  padding: 16px;
+  padding: 12px;
   color: #ffffff;
   text-align: center;
 }
 
 .checker-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   background: rgba(255,255,255,0.2);
   border-radius: 10px;
   display: flex;
@@ -3164,20 +3164,20 @@ button, .btn-primary {
 }
 
 .symptom-checker-card h4 {
-  margin: 0 0 6px;
-  font-size: 15px;
+  margin: 0 0 4px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .symptom-checker-card p {
-  margin: 0 0 12px;
-  font-size: 12px;
+  margin: 0 0 8px;
+  font-size: 11px;
   opacity: 0.9;
 }
 
 .checker-btn {
   width: 100%;
-  padding: 10px;
+  padding: 8px;
   background: #ffffff;
   color: #14b8a6;
   border: none;
@@ -9848,8 +9848,8 @@ button, .btn-primary {
   display: grid;
   grid-template-columns: 1fr 340px;
   gap: 24px;
+  align-items: stretch;
   margin-bottom: 24px;
-  align-items: start;
 }
 
 /* Profile Main Content */
@@ -9882,6 +9882,7 @@ button, .btn-primary {
 .profile-sidebar {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
 
 .health-summary {
@@ -9897,8 +9898,8 @@ button, .btn-primary {
 }
 
 .symptom-checker-card.clickable:hover {
-  border-color: #14b8a6;
-  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.15);
+  border-color: #2ed428;
+  box-shadow: 0 4px 16px rgba(46, 212, 40, 0.25);
   transform: translateY(-2px);
 }
 
