@@ -13,7 +13,7 @@ const TIME_LABELS = [
   "06:00 PM", "07:00 PM", "08:00 PM",
 ];
 
-const HOUR_HEIGHT = 64;          // px per hour row
+const HOUR_HEIGHT = 80;          // px per hour row
 const GRID_START_MINS = 8 * 60;  // 08:00 in minutes
 const GRID_END_MINS   = 20 * 60; // 20:00 in minutes  (08 AM + 12 h = 20:00, but we show 13 rows ending at 21:00)
 // 13 rows → 08:00 .. 20:00 inclusive start labels; last row ends at 21:00
@@ -469,15 +469,14 @@ export default function DoctorAvailabilityPage() {
     const dayConflict = conflictSchedule[di];
 
     return (
-      <div key={DAYS[di]} className="flex-1 relative border-r border-surface-container-low last:border-r-0 min-w-0">
-
+      <div className="h-full relative">
         {/* Clickable hour rows (empty cells) */}
         {TIME_LABELS.map((_, hi) => {
           const occupied = isHourCovered(di, hi) || isConflicted(di, hi) || isBooked(di, hi);
           return (
             <div
               key={hi}
-              className={`h-16 border-b border-surface-container-low/60 transition-colors ${
+              className={`h-20 transition-colors duration-200 ${
                 !occupied ? "hover:bg-primary/[0.04] cursor-pointer" : "cursor-default"
               }`}
               onClick={() => !occupied && toggleHourSlot(di, hi)}
@@ -684,25 +683,59 @@ export default function DoctorAvailabilityPage() {
 
         {/* ── Calendar ─────────────────────────────────────────────────── */}
         <div className="bg-surface-container-lowest rounded-xl shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)] overflow-hidden">
+          
+          {/* Top Integrated Legend & Controls */}
+          <div className="flex flex-wrap items-center justify-between px-6 py-3 border-b border-outline-variant/10 bg-white">
+            <div className="flex flex-wrap items-center gap-5">
+              <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em]">Schedule Key</span>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TAB_LIGHT, border: `1px solid ${TAB_BORDER}` }} />
+                <span className="text-[10px] font-black text-on-surface-variant/80 uppercase tracking-tighter">Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeTab === "physical" ? "#0f766e" : "#7c3aed" }} />
+                <span className="text-[10px] font-black text-on-surface-variant/80 uppercase tracking-tighter">Booked</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(249,115,22,0.4) 2px,rgba(249,115,22,0.4) 4px)", border: "1px solid rgba(251,146,60,0.4)" }} />
+                <span className="text-[10px] font-black text-on-surface-variant/80 uppercase tracking-tighter">Conflict</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary/[0.04] border border-dashed border-primary/30" />
+                <span className="text-[10px] font-black text-on-surface-variant/80 uppercase tracking-tighter">Selectable</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-[1px] h-4 bg-outline-variant/20 mx-1 hidden md:block" />
+              <div className="flex items-center gap-2">
+                <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${activeTab === 'physical' ? 'bg-teal-600' : 'bg-violet-600'}`} />
+                <span className="text-[10px] font-black text-on-surface uppercase tracking-widest">{activeTab} Mode</span>
+              </div>
+            </div>
+          </div>
 
           {/* Days header row */}
-          <div className="flex border-b border-surface-container-low bg-surface-container-lowest sticky top-0 z-10">
+          <div className="flex border-b border-outline-variant/10 bg-white sticky top-0 z-30 shadow-sm">
             {/* Time column header — week nav */}
-            <div className="w-20 flex-shrink-0 border-r border-surface-container-low flex flex-col items-center justify-center py-3 gap-1">
-              <button
-                type="button"
-                onClick={() => setWeekOffset((w) => w - 1)}
-                className="w-6 h-6 flex items-center justify-center rounded-md text-on-surface-variant hover:text-primary hover:bg-primary/[0.06] transition-colors"
-              >
-                <span className="material-symbols-outlined text-base">chevron_left</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setWeekOffset((w) => w + 1)}
-                className="w-6 h-6 flex items-center justify-center rounded-md text-on-surface-variant hover:text-primary hover:bg-primary/[0.06] transition-colors"
-              >
-                <span className="material-symbols-outlined text-base">chevron_right</span>
-              </button>
+            <div className="w-24 flex-shrink-0 border-r border-outline-variant/10 flex flex-col items-center justify-center py-4 gap-2 bg-surface-container-lowest">
+              <div className="flex items-center gap-1.5 bg-surface-container-low/50 p-1 rounded-xl border border-outline-variant/10">
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w - 1)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-white hover:shadow-sm transition-all duration-200 active:scale-90"
+                >
+                  <span className="material-symbols-outlined text-lg font-bold">chevron_left</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w + 1)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-white hover:shadow-sm transition-all duration-200 active:scale-90"
+                >
+                  <span className="material-symbols-outlined text-lg font-bold">chevron_right</span>
+                </button>
+              </div>
+              <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">GMT+5.5</span>
             </div>
 
             {/* Day columns */}
@@ -711,63 +744,73 @@ export default function DoctorAvailabilityPage() {
               return (
                 <div
                   key={idx}
-                  className={`flex-1 py-3.5 text-center border-r border-surface-container-low last:border-r-0 ${today ? "bg-primary/[0.03]" : ""}`}
+                  className={`flex-1 py-4 text-center border-r border-outline-variant/10 last:border-r-0 transition-colors duration-300 ${
+                    today ? "bg-primary/[0.04]" : "bg-white"
+                  }`}
                 >
-                  <p className={`text-[11px] font-bold uppercase tracking-widest ${today ? "text-primary" : "text-on-surface-variant"}`}>
+                  <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${today ? "text-primary" : "text-on-surface-variant/60"}`}>
                     {format(date, "EEE")}
                   </p>
-                  <p className={`text-base font-headline font-bold mt-0.5 ${today ? "text-on-surface" : "text-on-surface-variant"}`}>
-                    {format(date, "d")}
-                  </p>
-                  {today && (
-                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Today</span>
-                  )}
+                  <div className="flex flex-col items-center mt-1">
+                    <p className={`text-xl font-headline font-black leading-none ${today ? "text-on-surface" : "text-on-surface-variant"}`}>
+                      {format(date, "d")}
+                    </p>
+                    {today && (
+                      <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,106,97,0.6)]" />
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
 
           {/* Scrollable grid */}
-          <div className="flex h-[580px] overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          <div className="flex h-[600px] overflow-y-auto relative bg-white" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(0,0,0,0.1) transparent" }}>
 
             {/* Sticky time labels */}
-            <div className="w-20 flex-shrink-0 sticky left-0 z-10 border-r border-surface-container-low bg-surface-container-low/40">
+            <div className="w-24 flex-shrink-0 sticky left-0 z-20 border-r border-outline-variant/10 bg-surface-container-lowest/80 backdrop-blur-md">
               {TIME_LABELS.map((label) => (
-                <div key={label} className="h-16 flex items-center justify-center border-b border-surface-container-low/60">
-                  <span className="text-[10px] font-bold text-outline uppercase tracking-tighter">
-                    {label.replace(":00 ", "\u00A0")}
+                <div key={label} className="h-20 flex flex-col items-center justify-center border-b border-outline-variant/5">
+                  <span className="text-[11px] font-black text-on-surface tracking-tighter">
+                    {label.split(" ")[0]}
+                  </span>
+                  <span className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest">
+                    {label.split(" ")[1]}
                   </span>
                 </div>
               ))}
             </div>
 
-            {/* Day columns */}
-            <div className="flex flex-1">
-              {DAYS.map((_, di) => renderDayColumn(di))}
+            {/* Day columns container */}
+            <div className="flex flex-1 relative min-w-[800px]">
+              {/* Horizontal grid lines */}
+              <div className="absolute inset-0 pointer-events-none">
+                {TIME_LABELS.map((_, hi) => (
+                  <div key={hi} className="h-20 border-b border-outline-variant/5 w-full" />
+                ))}
+              </div>
+              
+              {/* Vertical day columns */}
+              {DAYS.map((_, di) => (
+                <div key={di} className="flex-1 relative border-r border-outline-variant/10 last:border-r-0">
+                  {renderDayColumn(di)}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Calendar legend footer */}
-          <div className="flex items-center gap-6 px-5 py-3 border-t border-surface-container-low/60 bg-surface-container-low/20">
-            <span className="text-[10px] font-bold text-outline uppercase tracking-widest">Legend</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: TAB_LIGHT, border: `1px solid ${TAB_BORDER}` }} />
-              <span className="text-[10px] font-semibold text-on-surface-variant">Available</span>
+          {/* Calendar Status Bar */}
+          <div className="flex items-center justify-between px-6 py-3 border-t border-outline-variant/5 bg-surface-container-lowest/30">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-primary text-[18px]">info</span>
+              <p className="text-[10px] font-black text-on-surface-variant/60 uppercase tracking-widest">
+                Directly interact with the grid to manage your weekly availability
+              </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: "rgba(0,106,97,0.85)" }} />
-              <span className="text-[10px] font-semibold text-on-surface-variant">Booked</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(249,115,22,0.3) 3px,rgba(249,115,22,0.3) 6px)", border: "1px solid rgba(251,146,60,0.4)" }} />
-              <span className="text-[10px] font-semibold text-on-surface-variant">Conflict</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm bg-primary/[0.04] border border-dashed border-primary/30" />
-              <span className="text-[10px] font-semibold text-on-surface-variant">Click to toggle</span>
-            </div>
-            <div className="ml-auto text-[10px] font-bold px-3 py-1 rounded-full" style={{ backgroundColor: TAB_LIGHT, color: TAB_TEXT }}>
-              {activeTab === "physical" ? "Physical" : "Online"} Mode
+            <div className="flex items-center gap-2">
+              <div className="text-[10px] font-black px-4 py-1.5 rounded-full bg-white shadow-sm border border-outline-variant/5 text-on-surface-variant uppercase tracking-widest">
+                GMT+5.5 COLOMBO
+              </div>
             </div>
           </div>
         </div>
