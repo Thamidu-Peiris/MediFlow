@@ -519,6 +519,58 @@ exports.getMyPaymentHistory = async (req, res) => {
   }
 };
 
+// Admin: get all payment history with optional filters
+exports.getAllPayments = async (req, res) => {
+  try {
+    const { status, paymentMethod, from, to, patientSub } = req.query;
+    const filter = {};
+    
+    if (status && ["paid", "refunded"].includes(status)) {
+      filter.status = status;
+    }
+    if (paymentMethod && ["stripe", "helakuru", "unknown"].includes(paymentMethod)) {
+      filter.paymentMethod = paymentMethod;
+    }
+    if (patientSub) {
+      filter.patientSub = patientSub;
+    }
+    if (from || to) {
+      filter.createdAt = {};
+      if (from) filter.createdAt.$gte = new Date(from);
+      if (to) filter.createdAt.$lte = new Date(to);
+    }
+
+    const payments = await PaymentHistory.find(filter)
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    // Calculate metrics
+    const totalRevenueCents = payments
+      .filter(p => p.status === "paid")
+      .reduce((sum, p) => sum + (p.totalCents || 0), 0);
+    const totalRefundedCents = payments
+      .filter(p => p.status === "refunded")
+      .reduce((sum, p) => sum + (p.totalCents || 0), 0);
+    const pendingRefunds = payments.filter(p => p.status === "refunded").length;
+    const successCount = payments.filter(p => p.status === "paid").length;
+    const totalCount = payments.length;
+    const successRate = totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 100;
+
+    return res.json({ 
+      payments,
+      metrics: {
+        totalRevenueCents,
+        totalRefundedCents,
+        pendingRefunds,
+        successRate,
+        totalCount
+      }
+    });
+  } catch (e) {
+    return res.status(500).json({ message: "Failed to load payments" });
+  }
+};
+
 /**
  * Issue a refund for the PendingBooking linked to a cancelled appointment.
  * Called by the appointment service (with the patient's JWT forwarded).
