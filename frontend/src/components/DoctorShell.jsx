@@ -57,10 +57,15 @@ export default function DoctorShell({ children }) {
     navigate("/");
   };
 
-  const portalName = doctorInfo?.clinicName || doctorInfo?.hospitalName || "MediFlow";
-  
   const isDoctorDashboard =
     location.pathname === "/doctor/dashboard" || location.pathname === "/doctor/";
+
+  const currentPageLabel =
+    navItems.find(
+      (item) =>
+        location.pathname === item.to ||
+        location.pathname.startsWith(item.to + "/")
+    )?.label || "Dashboard";
 
   return (
     <div className={`aura-shell${isDoctorDashboard ? " aura-shell--admin-dashboard" : ""} flex flex-col min-h-screen w-full relative overflow-x-hidden`}>
@@ -117,10 +122,10 @@ export default function DoctorShell({ children }) {
       </aside>
 
       <main className="aura-main flex-1 flex flex-col min-w-0">
-        <header className="aura-topbar aura-topbar-admin bg-white border-b border-[#356600]/10 px-4 lg:px-8 h-16 lg:h-20 flex items-center justify-between w-full shadow-sm">
+        <header className="aura-topbar aura-topbar-admin">
+          {/* Left: hamburger (mobile) + current page title */}
           <div className="aura-topbar-left flex items-center gap-3 flex-1 min-w-0">
-            {/* Hamburger Button */}
-            <button 
+            <button
               data-mobile-menu-toggle
               className="lg:hidden p-2 text-[#043927] hover:bg-[#CBF79D]/20 rounded-xl transition-all shrink-0"
               onClick={(e) => {
@@ -130,24 +135,54 @@ export default function DoctorShell({ children }) {
             >
               <span className="material-symbols-outlined text-[28px]">menu</span>
             </button>
-            <span className="aura-logo font-headline font-black text-xl text-[#043927] whitespace-nowrap">
-              Dr. {doctorInfo?.fullName?.split(" ")[doctorInfo?.fullName?.split(" ").length - 1] || "Doctor"}
+            <span className="text-[#0d7a5f] font-bold text-xl tracking-tight whitespace-nowrap">
+              {currentPageLabel}
             </span>
-            {doctorInfo?.specialization && (
-              <span className="hidden sm:inline-flex items-center px-4 py-1.5 rounded-full bg-[#CBF79D] text-[#043927] text-[10px] font-black uppercase tracking-[0.15em] border border-[#043927]/10 whitespace-nowrap shadow-sm">
-                {doctorInfo.specialization}
-              </span>
-            )}
           </div>
-          
-          <div className="aura-topbar-right">
-            <button className="aura-topbar-icon-btn">
-              <span className="material-symbols-outlined">notifications</span>
+
+          {/* Right: icons → doctor info → avatar */}
+          <div className="aura-topbar-right items-center">
+            {/* Notification bell */}
+            <button className="aura-topbar-icon-btn" title="Notifications">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
             </button>
-            <Link to="/doctor/profile" className="aura-topbar-icon-btn">
-              <span className="material-symbols-outlined">settings</span>
+
+            {/* Settings gear */}
+            <Link to="/doctor/profile" className="aura-topbar-icon-btn" title="Settings">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
             </Link>
-            
+
+            {/* Help */}
+            <button className="aura-topbar-icon-btn" title="Help">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </button>
+
+            {/* Divider */}
+            <div className="w-px h-7 bg-gray-200 mx-2 shrink-0" />
+
+            {/* Doctor name + specialization */}
+            <div className="hidden sm:flex flex-col items-end leading-tight mr-3">
+              <span className="text-[#111827] font-semibold text-sm whitespace-nowrap">
+                Dr. {doctorInfo?.fullName || "Doctor"}
+              </span>
+              {doctorInfo?.specialization && (
+                <span className="text-[#0d7a5f] text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
+                  {doctorInfo.specialization}
+                </span>
+              )}
+            </div>
+
+            {/* Avatar with dropdown */}
             <div className="aura-profile-wrap" ref={profileWrapRef}>
               <button
                 type="button"
