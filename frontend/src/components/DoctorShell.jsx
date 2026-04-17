@@ -59,12 +59,15 @@ export default function DoctorShell({ children }) {
 
   const portalName = doctorInfo?.clinicName || doctorInfo?.hospitalName || "MediFlow";
   
+  const isDoctorDashboard =
+    location.pathname === "/doctor/dashboard" || location.pathname === "/doctor/";
+
   return (
-    <div className="aura-shell aura-shell--admin-dashboard flex flex-col md:flex-row min-h-screen w-full relative overflow-x-hidden">
+    <div className={`aura-shell${isDoctorDashboard ? " aura-shell--admin-dashboard" : ""} flex flex-col min-h-screen w-full relative overflow-x-hidden`}>
       {/* Mobile Backdrop */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-[#043927]/60 backdrop-blur-sm z-[60] md:hidden transition-all duration-300"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -72,25 +75,16 @@ export default function DoctorShell({ children }) {
       {/* Sidebar - Desktop & Mobile */}
       <aside 
         ref={mobileSidebarRef}
-        className={`aura-sidebar fixed inset-y-0 left-0 z-[70] w-[280px] bg-[#043927] transition-transform duration-300 transform md:relative md:translate-x-0 !flex ${
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        } pointer-events-auto`}
+        className={`aura-sidebar ${mobileMenuOpen ? "open" : ""}`}
       >
-        <div className="aura-sidebar-header flex items-center justify-between">
+        <div className="aura-sidebar-header">
           <div className="aura-brand">
             <h1 className="aura-brand-title">MediFlow</h1>
-            <p className="aura-brand-subtitle text-[#CBF79D]">CLINICAL PORTAL</p>
+            <p className="aura-brand-subtitle">CLINICAL PORTAL</p>
           </div>
-          {/* Mobile Close Button */}
-          <button 
-            className="md:hidden text-white/60 hover:text-white p-2"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <span className="material-symbols-outlined text-[24px]">close</span>
-          </button>
         </div>
 
-        <nav className="aura-sidebar-nav mt-8">
+        <nav className="aura-sidebar-nav">
           {navItems.map((item) => {
             const isActive =
               location.pathname === item.to || location.pathname.startsWith(item.to + "/");
@@ -111,9 +105,9 @@ export default function DoctorShell({ children }) {
           })}
         </nav>
 
-        <div className="aura-sidebar-footer p-6 mt-auto">
+        <div className="aura-sidebar-footer">
           <button
-            className="aura-logout-btn w-full flex items-center gap-3 px-6 py-3.5 text-white/70 hover:text-white hover:bg-red-500/10 rounded-2xl transition-all font-bold text-sm"
+            className="aura-logout-btn"
             onClick={onLogout}
           >
             <span className="material-symbols-outlined">logout</span>
@@ -122,13 +116,13 @@ export default function DoctorShell({ children }) {
         </div>
       </aside>
 
-      <main className="aura-main flex-1 flex flex-col min-w-0 w-full max-w-none bg-[#c0fc92] ml-0 md:ml-[260px] !w-full md:!w-[calc(100vw-260px)]">
-        <header className="aura-topbar aura-topbar-admin sticky top-0 z-50 bg-white border-b border-[#356600]/10 px-4 md:px-8 h-20 flex items-center justify-between w-full max-w-none mx-0 rounded-none shadow-sm">
-          <div className="aura-topbar-left flex items-center gap-4 flex-1">
+      <main className="aura-main flex-1 flex flex-col min-w-0">
+        <header className="aura-topbar aura-topbar-admin bg-white border-b border-[#356600]/10 px-4 lg:px-8 h-16 lg:h-20 flex items-center justify-between w-full shadow-sm">
+          <div className="aura-topbar-left flex items-center gap-3 flex-1 min-w-0">
             {/* Hamburger Button */}
             <button 
               data-mobile-menu-toggle
-              className="md:hidden p-2 text-[#043927] hover:bg-[#CBF79D]/20 rounded-xl transition-all"
+              className="lg:hidden p-2 text-[#043927] hover:bg-[#CBF79D]/20 rounded-xl transition-all shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 setMobileMenuOpen(true);
@@ -196,7 +190,7 @@ export default function DoctorShell({ children }) {
           </div>
         </header>
 
-        <div className="aura-content aura-content--admin-dashboard flex-1 w-full">
+        <div className={`aura-content${isDoctorDashboard ? " aura-content--admin-dashboard" : ""} flex-1 w-full`}>
           {children}
         </div>
       </main>
