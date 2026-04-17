@@ -1,6 +1,6 @@
 const express = require("express");
 const paymentController = require("../controllers/payment.controller");
-const { verifyAuth, requirePatientRole } = require("../middleware/auth.middleware");
+const { verifyAuth, requirePatientRole, requireAdmin } = require("../middleware/auth.middleware");
 
 const router = express.Router();
 
@@ -17,5 +17,8 @@ router.get("/history", verifyAuth, requirePatientRole, paymentController.getMyPa
 router.post("/refund-by-session", verifyAuth, requirePatientRole, paymentController.refundBySession);
 router.post("/simulate-helapay", verifyAuth, requirePatientRole, paymentController.simulateHelaPayDev);
 router.post("/simulate-helakuru", verifyAuth, requirePatientRole, paymentController.simulateHelaPayDev);
+
+// Admin routes
+router.get("/admin/all-payments", verifyAuth, requireAdmin, paymentController.getAllPayments);
 
 module.exports = router;
