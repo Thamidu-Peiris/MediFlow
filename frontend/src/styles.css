@@ -5486,7 +5486,7 @@ button {
 .aura-shell {
   display: flex;
   min-height: 100vh;
-  background: #f8fafc;
+  background: #cbf79d;
   overflow-x: hidden;
 }
 
@@ -6588,7 +6588,7 @@ button {
 .aura-content {
   flex: 1;
   padding: 88px 32px 24px;
-  background: #f8fafc;
+  background: #cbf79d;
 }
 
 /* Admin dashboard: editorial-style main canvas (sidebar unchanged) */
