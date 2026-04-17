@@ -6331,14 +6331,16 @@ button {
 
 /* Top Navigation Bar */
 .aura-topbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 260px;
+  right: 0;
   z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 32px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid #e5e7eb;
 }
@@ -6579,12 +6581,22 @@ button {
 /* Content Area */
 .aura-content {
   flex: 1;
-  padding: 24px 32px;
+  padding: 88px 32px 24px;
   background: #f8fafc;
 }
 
 /* Admin dashboard: editorial-style main canvas (sidebar unchanged) */
 .aura-content--admin-dashboard {
+  background: #cbf79d;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.aura-shell--admin-dashboard {
+  background: #cbf79d;
+}
+
+.aura-shell--admin-dashboard .aura-main {
   background: #cbf79d;
 }
 
@@ -9210,14 +9222,22 @@ button {
   
   .aura-main {
     margin-left: 0;
+    width: 100%;
+    max-width: 100%;
   }
   
   .aura-topbar {
-    padding: 16px 20px;
+    left: 0;
+    padding: 14px 16px;
   }
   
   .aura-content {
-    padding: 20px;
+    padding: 76px 16px 20px;
+  }
+
+  .aura-content--admin-dashboard {
+    min-height: 100vh;
+    padding: 76px 16px 20px;
   }
 }
 

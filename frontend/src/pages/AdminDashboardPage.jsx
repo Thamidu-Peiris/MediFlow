@@ -271,16 +271,16 @@ export default function AdminDashboardPage() {
   const todayAptCount = todaysAppointments.length;
 
   return (
-    <div className="font-body text-on-surface pb-10">
+    <div className="font-body text-on-surface pb-4">
       {message ? (
         <p className="mb-4 rounded-xl bg-red-50 text-red-800 px-4 py-3 text-sm font-medium border border-red-100">{message}</p>
       ) : null}
 
       {/* Page header — editorial */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-5 sm:mb-8">
         <div>
-          <h2 className="text-3xl font-extrabold font-headline tracking-tighter text-on-surface">Dashboard</h2>
-          <p className="text-on-surface-variant font-medium mt-1">{dateTimeLine}</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold font-headline tracking-tighter text-on-surface">Dashboard</h2>
+          <p className="text-on-surface-variant font-medium mt-1 text-sm sm:text-base">{dateTimeLine}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -303,7 +303,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Search — emerald styling to match metric cards */}
-      <div className="mb-8 max-w-md">
+      <div className="mb-5 sm:mb-8 w-full sm:max-w-md">
         <div className="relative w-full">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-emerald-700 text-[20px] pointer-events-none">
             search
@@ -355,67 +355,67 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Bento metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-b-2 border-emerald-700 transition-all">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
-              <span className="material-symbols-outlined text-emerald-800">group</span>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-6 mb-5 sm:mb-8">
+        <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl shadow-sm border-b-2 border-emerald-700 transition-all">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="p-1.5 sm:p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800 text-[18px] sm:text-[24px]">group</span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Users</span>
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Users</span>
           </div>
-          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{totalUsers}</div>
-          <div className="mt-2 text-xs text-emerald-700 flex items-center gap-1 font-semibold">
+          <div className="text-3xl sm:text-4xl font-black font-headline tracking-tight text-on-surface">{totalUsers}</div>
+          <div className="mt-1.5 sm:mt-2 text-xs text-emerald-700 flex items-center gap-1 font-semibold">
             <span className="material-symbols-outlined text-sm">trending_up</span>
             Active accounts
           </div>
         </div>
 
-        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm transition-all">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
-              <span className="material-symbols-outlined text-emerald-800">medical_services</span>
+        <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl shadow-sm transition-all">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="p-1.5 sm:p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800 text-[18px] sm:text-[24px]">medical_services</span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Doctors</span>
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-on-surface-variant">Doctors</span>
           </div>
-          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{totalDoctors}</div>
-          <div className="mt-2 text-xs text-on-surface-variant">Active specialists</div>
+          <div className="text-3xl sm:text-4xl font-black font-headline tracking-tight text-on-surface">{totalDoctors}</div>
+          <div className="mt-1.5 sm:mt-2 text-xs text-on-surface-variant">Active specialists</div>
         </div>
 
-        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm transition-all">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
-              <span className="material-symbols-outlined text-emerald-800">event_note</span>
+        <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl shadow-sm transition-all">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="p-1.5 sm:p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800 text-[18px] sm:text-[24px]">event_note</span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Appointments</span>
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-on-surface-variant">Appointments</span>
           </div>
-          <div className="text-4xl font-black font-headline tracking-tight text-on-surface">{appointmentsCount}</div>
-          <div className="mt-2 text-xs text-on-surface-variant">
+          <div className="text-3xl sm:text-4xl font-black font-headline tracking-tight text-on-surface">{appointmentsCount}</div>
+          <div className="mt-1.5 sm:mt-2 text-xs text-on-surface-variant">
             {todayAptCount === 0 ? "None scheduled today" : `${todayAptCount} today`}
           </div>
         </div>
 
-        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm col-span-1 md:col-span-2 relative overflow-hidden">
+        <div className="bg-surface-container-lowest p-4 sm:p-6 rounded-xl shadow-sm col-span-2 md:col-span-2 relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-32 h-32 bg-emerald-400/25 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex items-center gap-3 mb-4 relative">
-            <div className="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
-              <span className="material-symbols-outlined text-emerald-800">payments</span>
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 relative">
+            <div className="p-1.5 sm:p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200/80">
+              <span className="material-symbols-outlined text-emerald-800 text-[18px] sm:text-[24px]">payments</span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Revenue</span>
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total Revenue</span>
           </div>
-          <div className="text-4xl font-black font-headline tracking-tight text-on-surface relative">{formatLkr(revenueLkr)}</div>
-          <div className="mt-2 text-xs text-error font-semibold flex items-center gap-1 relative">
+          <div className="text-2xl sm:text-4xl font-black font-headline tracking-tight text-on-surface relative">{formatLkr(revenueLkr)}</div>
+          <div className="mt-1.5 sm:mt-2 text-xs text-error font-semibold flex items-center gap-1 relative">
             <span className="material-symbols-outlined text-sm">trending_flat</span>
             {revenueLkr === 0 ? "0% growth" : "Recorded revenue"}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8">
         {/* Analytics */}
-        <div className="lg:col-span-8 space-y-8">
-          <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl shadow-sm">
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-              <h3 className="text-xl font-bold font-headline text-on-surface">Appointment Trends</h3>
+        <div className="lg:col-span-8 space-y-5 sm:space-y-8">
+          <section className="bg-surface-container-lowest p-4 sm:p-6 lg:p-8 rounded-xl shadow-sm">
+            <div className="flex flex-wrap justify-between items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <h3 className="text-base sm:text-xl font-bold font-headline text-on-surface">Appointment Trends</h3>
               <div className="flex gap-2">
                 <span className="flex items-center gap-1 text-xs font-medium px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full">
                   Weekly
@@ -423,7 +423,7 @@ export default function AdminDashboardPage() {
                 <span className="flex items-center gap-1 text-xs font-medium px-3 py-1 bg-black text-white rounded-full">Monthly</span>
               </div>
             </div>
-            <div className="h-64 w-full">
+            <div className="h-48 sm:h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={charts.appointmentTrends} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e3e5" />
@@ -437,9 +437,9 @@ export default function AdminDashboardPage() {
             </div>
           </section>
 
-          <section className="bg-surface-container-lowest p-6 sm:p-8 rounded-xl shadow-sm">
-            <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-              <h3 className="text-xl font-bold font-headline text-on-surface">Revenue Analytics</h3>
+          <section className="bg-surface-container-lowest p-4 sm:p-6 lg:p-8 rounded-xl shadow-sm">
+            <div className="flex flex-wrap justify-between items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <h3 className="text-base sm:text-xl font-bold font-headline text-on-surface">Revenue Analytics</h3>
               <Link
                 to="/admin/reports"
                 className="px-3 py-1 bg-[#0C9100] text-white text-xs font-bold rounded-lg flex items-center gap-1 hover:bg-[#097300] transition-colors shadow-sm"
@@ -455,7 +455,7 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="h-56 w-full">
+              <div className="h-44 sm:h-56 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={charts.revenueAnalytics} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e3e5" />
@@ -471,8 +471,8 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Sidebar column */}
-        <div className="lg:col-span-4 space-y-6">
-          <section className="bg-white p-6 rounded-xl border border-red-200/70 shadow-sm">
+        <div className="lg:col-span-4 space-y-4 sm:space-y-6">
+          <section className="bg-white p-4 sm:p-6 rounded-xl border border-red-200/70 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
               <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 1" }}>
                 warning
@@ -494,10 +494,10 @@ export default function AdminDashboardPage() {
           </section>
 
           <section 
-            className="p-6 sm:p-8 rounded-[32px] shadow-sm relative overflow-hidden transition-all"
+            className="p-4 sm:p-6 lg:p-8 rounded-[24px] sm:rounded-[32px] shadow-sm relative overflow-hidden transition-all"
             style={{ backgroundColor: '#9ae649' }}
           >
-            <h3 className="text-2xl font-bold font-headline text-[#043927] mb-8">
+            <h3 className="text-xl sm:text-2xl font-bold font-headline text-[#043927] mb-5 sm:mb-8">
               Quick Actions
             </h3>
             
@@ -532,13 +532,13 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Secondary sections — data tables */}
-      <div className="mt-10 space-y-8">
+      <div className="mt-6 sm:mt-10 space-y-5 sm:space-y-8">
         <section>
-          <h3 className="text-lg font-bold font-headline text-on-surface mb-4">Recent Activity</h3>
+          <h3 className="text-base sm:text-lg font-bold font-headline text-on-surface mb-3 sm:mb-4">Recent Activity</h3>
           <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 divide-y divide-outline-variant/20">
             {activity.length ? (
               activity.map((a, idx) => (
-                <div key={`${a.title}-${idx}`} className="flex items-center gap-4 p-4 hover:bg-emerald-50/30 transition-colors">
+                <div key={`${a.title}-${idx}`} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-emerald-50/30 transition-colors">
                   <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 shrink-0">
                     <span className="material-symbols-outlined text-[20px]">{a.icon}</span>
                   </div>
@@ -554,9 +554,9 @@ export default function AdminDashboardPage() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8">
           <section>
-            <h3 className="text-lg font-bold font-headline text-on-surface mb-4">Today&apos;s Appointments</h3>
+            <h3 className="text-base sm:text-lg font-bold font-headline text-on-surface mb-3 sm:mb-4">Today&apos;s Appointments</h3>
             <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
@@ -588,7 +588,7 @@ export default function AdminDashboardPage() {
           </section>
 
           <section>
-            <h3 className="text-lg font-bold font-headline text-on-surface mb-4">Pending Doctor Requests</h3>
+            <h3 className="text-base sm:text-lg font-bold font-headline text-on-surface mb-3 sm:mb-4">Pending Doctor Requests</h3>
             <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 p-4 space-y-3">
               {pendingDoctors.length ? (
                 pendingDoctors.slice(0, 6).map((doc) => {

@@ -50,6 +50,7 @@ export default function AdminShell({ children }) {
   const location = useLocation();
 
   const [profileOpen, setProfileOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const profileWrapRef = useRef(null);
 
   const displayName = useMemo(() => {
@@ -82,7 +83,15 @@ export default function AdminShell({ children }) {
 
   return (
     <div className={`aura-shell${isAdminDashboard ? " aura-shell--admin-dashboard" : ""}`}>
-      <aside className="aura-sidebar">
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside className={`aura-sidebar${sidebarOpen ? " open" : ""}`}>
         <div className="aura-sidebar-header">
           <div className="aura-brand">
             <h1 className="aura-brand-title">MediFlow</h1>
@@ -100,6 +109,7 @@ export default function AdminShell({ children }) {
                 key={item.to}
                 to={item.to}
                 className={`aura-nav-item ${isActive ? "active" : ""}`}
+                onClick={() => setSidebarOpen(false)}
               >
                 <span className="aura-nav-icon">{sidebarIcons[item.icon]}</span>
                 <span className="aura-nav-label">{item.label}</span>
@@ -125,6 +135,15 @@ export default function AdminShell({ children }) {
       <main className="aura-main">
         <header className="aura-topbar aura-topbar-admin">
           <div className="aura-topbar-left">
+            <button
+              className="aura-topbar-icon-btn lg:hidden mr-2"
+              onClick={() => setSidebarOpen((v) => !v)}
+              aria-label="Toggle menu"
+            >
+              <span className="material-symbols-outlined">
+                {sidebarOpen ? "close" : "menu"}
+              </span>
+            </button>
             <span className="aura-logo">Admin Panel</span>
           </div>
           <div className="aura-topbar-right">
