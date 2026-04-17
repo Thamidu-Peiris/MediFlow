@@ -3,16 +3,26 @@ import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 export default function AdminUsersPage() {
-  const { authHeaders } = useAuth();
+  const { authHeaders, user } = useAuth();
   const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  // New state for search, filter, and pagination
+  // Search, filter, and pagination
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  // Modal states
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  // Edit form state
+  const [editForm, setEditForm] = useState({ name: "", email: "", role: "patient", isDoctorVerified: false });
 
   const loadUsers = async () => {
     setLoading(true);
@@ -31,6 +41,83 @@ export default function AdminUsersPage() {
     loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authHeaders]);
+
+  const handleView = async (userId) => {
+    try {
+      setActionLoading(true);
+      const res = await api.get(`/auth/admin/users/${userId}`, authHeaders);
+      setSelectedUser(res.data.user);
+      setViewModalOpen(true);
+    } catch (err) {
+      setMessage(err?.response?.data?.message || "Failed to load user details");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEditClick = async (userId) => {
+    try {
+      setActionLoading(true);
+      const res = await api.get(`/auth/admin/users/${userId}`, authHeaders);
+      const u = res.data.user;
+      setSelectedUser(u);
+      setEditForm({
+        name: u.name || "",
+        email: u.email || "",
+        role: u.role || "patient",
+        isDoctorVerified: u.isDoctorVerified || false
+      });
+      setEditModalOpen(true);
+    } catch (err) {
+      setMessage(err?.response?.data?.message || "Failed to load user details");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+    try {
+      setActionLoading(true);
+      const payload = { ...editForm };
+      if (payload.role !== "doctor") {
+        delete payload.isDoctorVerified;
+      }
+      await api.patch(`/auth/admin/users/${selectedUser._id}`, payload, authHeaders);
+      setMessage("User updated successfully");
+      setEditModalOpen(false);
+      loadUsers();
+    } catch (err) {
+      setMessage(err?.response?.data?.message || "Failed to update user");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (targetUser) => {
+    if (targetUser._id === user?.id) {
+      setMessage("Cannot delete your own account");
+      return;
+    }
+    setSelectedUser(targetUser);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedUser) return;
+    try {
+      setActionLoading(true);
+      await api.delete(`/auth/admin/users/${selectedUser._id}`, authHeaders);
+      setMessage("User deleted successfully");
+      setDeleteModalOpen(false);
+      loadUsers();
+    } catch (err) {
+      setMessage(err?.response?.data?.message || "Failed to delete user");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const dateTimeLine = useMemo(() => {
     try {
@@ -71,7 +158,13 @@ export default function AdminUsersPage() {
     setCurrentPage(1);
   }, [searchQuery, roleFilter]);
 
-  const notSupported = () => setMessage("This action is not implemented in the current backend/API.");
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+    } catch {
+      return "-";
+    }
+  };
 
   return (
     <div className="font-body text-on-surface pb-10">
@@ -197,7 +290,8 @@ export default function AdminUsersPage() {
                     <button
                       type="button"
                       className="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all active:scale-95"
-                      onClick={notSupported}
+                      onClick={() => handleView(item._id)}
+                      disabled={actionLoading}
                       title="View Details"
                     >
                       <span className="material-symbols-outlined text-[20px]">visibility</span>
@@ -205,7 +299,8 @@ export default function AdminUsersPage() {
                     <button
                       type="button"
                       className="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all active:scale-95"
-                      onClick={notSupported}
+                      onClick={() => handleEditClick(item._id)}
+                      disabled={actionLoading}
                       title="Edit User"
                     >
                       <span className="material-symbols-outlined text-[20px]">edit</span>
@@ -213,7 +308,8 @@ export default function AdminUsersPage() {
                     <button
                       type="button"
                       className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all active:scale-95"
-                      onClick={notSupported}
+                      onClick={() => handleDeleteClick(item)}
+                      disabled={actionLoading || item._id === user?.id}
                       title="Delete User"
                     >
                       <span className="material-symbols-outlined text-[20px]">delete</span>
@@ -266,6 +362,176 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      {/* View Modal */}
+      {viewModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">User Details</h3>
+                <button onClick={() => setViewModalOpen(false)} className="p-1 rounded-lg hover:bg-gray-100">
+                  <span className="material-symbols-outlined text-gray-500">close</span>
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center text-2xl font-bold text-emerald-700">
+                  {selectedUser.name?.charAt(0).toUpperCase() || "?"}
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg text-gray-900">{selectedUser.name}</h4>
+                  <p className="text-gray-500">{selectedUser.email}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <span className="text-xs text-gray-500 uppercase font-bold">Role</span>
+                  <p className={`font-semibold ${
+                    selectedUser.role === 'doctor' ? 'text-emerald-700' : 
+                    selectedUser.role === 'admin' ? 'text-purple-700' : 'text-blue-700'
+                  }`}>
+                    {selectedUser.role.toUpperCase()}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <span className="text-xs text-gray-500 uppercase font-bold">Joined</span>
+                  <p className="font-semibold text-gray-700">{formatDate(selectedUser.createdAt)}</p>
+                </div>
+              </div>
+              {selectedUser.role === "doctor" && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <span className="text-xs text-gray-500 uppercase font-bold">Verification Status</span>
+                  <p className={`font-semibold ${selectedUser.isDoctorVerified ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {selectedUser.isDoctorVerified ? "Verified" : "Pending Verification"}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-gray-100">
+              <button
+                onClick={() => setViewModalOpen(false)}
+                className="w-full py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">Edit User</h3>
+                <button onClick={() => setEditModalOpen(false)} className="p-1 rounded-lg hover:bg-gray-100">
+                  <span className="material-symbols-outlined text-gray-500">close</span>
+                </button>
+              </div>
+            </div>
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Role</label>
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                >
+                  <option value="patient">Patient</option>
+                  <option value="doctor">Doctor</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              {editForm.role === "doctor" && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isDoctorVerified"
+                    checked={editForm.isDoctorVerified}
+                    onChange={(e) => setEditForm({ ...editForm, isDoctorVerified: e.target.checked })}
+                    className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                  />
+                  <label htmlFor="isDoctorVerified" className="text-sm font-semibold text-gray-700">
+                    Doctor Verified
+                  </label>
+                </div>
+              )}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all disabled:opacity-50"
+                >
+                  {actionLoading ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-red-600 text-3xl">warning</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Delete User?</h3>
+              <p className="text-gray-500 mb-1">Are you sure you want to delete</p>
+              <p className="font-semibold text-gray-900 mb-6">{selectedUser.name}?</p>
+              <p className="text-xs text-red-500 mb-6">This action cannot be undone.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteModalOpen(false)}
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={actionLoading}
+                  className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all disabled:opacity-50"
+                >
+                  {actionLoading ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

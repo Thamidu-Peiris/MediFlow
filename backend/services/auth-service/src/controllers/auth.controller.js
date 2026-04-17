@@ -286,3 +286,83 @@ exports.verifyDoctor = async (req, res) => {
     return res.status(500).json({ message: "Failed to update doctor verification" });
   }
 };
+
+exports.getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).select("_id name email role isDoctorVerified createdAt");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json({ user });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to fetch user" });
+  }
+};
+
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, role, isDoctorVerified } = req.body;
+    
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email.toLowerCase();
+    if (role !== undefined) {
+      updateData.role = role;
+      if (role === "doctor") {
+        updateData.isDoctorVerified = isDoctorVerified !== undefined ? isDoctorVerified : false;
+      } else {
+        updateData.isDoctorVerified = true;
+      }
+    }
+    if (role === "doctor" && isDoctorVerified !== undefined) {
+      updateData.isDoctorVerified = Boolean(isDoctorVerified);
+    }
+
+    const user = await User.findByIdAndUpdate(id, { $set: updateData }, { new: true }).select("_id name email role isDoctorVerified createdAt");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Sync doctor verification status if user is a doctor
+    if (user.role === "doctor" && isDoctorVerified !== undefined) {
+      await DoctorRef.updateOne(
+        { userId: user._id.toString() },
+        { $set: { isVerified: Boolean(isDoctorVerified) } }
+      );
+    }
+
+    return res.status(200).json({ user });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Email already in use" });
+    }
+    return res.status(500).json({ message: "Failed to update user" });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Prevent admin from deleting themselves
+    if (req.user.sub === id) {
+      return res.status(400).json({ message: "Cannot delete your own account" });
+    }
+
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Delete from doctors collection if user was a doctor
+    if (user.role === "doctor") {
+      await DoctorRef.deleteOne({ userId: id });
+    }
+
+    return res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to delete user" });
+  }
+};

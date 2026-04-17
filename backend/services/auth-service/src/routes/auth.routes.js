@@ -9,6 +9,9 @@ const {
   bootstrapAdmin,
   adminOverview,
   listUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
   verifyDoctor,
   changePassword
 } = require("../controllers/auth.controller");
@@ -26,6 +29,9 @@ router.post("/admin/bootstrap", bootstrapAdmin);
 router.get("/me", verifyAuth, me);
 router.get("/admin/overview", verifyAuth, requireAdmin, adminOverview);
 router.get("/admin/users", verifyAuth, requireAdmin, listUsers);
+router.get("/admin/users/:id", verifyAuth, requireAdmin, getUserById);
+router.patch("/admin/users/:id", verifyAuth, requireAdmin, updateUser);
+router.delete("/admin/users/:id", verifyAuth, requireAdmin, deleteUser);
 router.patch("/admin/doctors/:id/verify", verifyAuth, requireAdmin, verifyDoctor);
 
 module.exports = router;
