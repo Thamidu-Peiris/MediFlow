@@ -13,7 +13,7 @@ const TIME_LABELS = [
   "06:00 PM", "07:00 PM", "08:00 PM",
 ];
 
-const HOUR_HEIGHT = 64;          // px per hour row
+const HOUR_HEIGHT = 80;          // px per hour row
 const GRID_START_MINS = 8 * 60;  // 08:00 in minutes
 const GRID_END_MINS   = 20 * 60; // 20:00 in minutes  (08 AM + 12 h = 20:00, but we show 13 rows ending at 21:00)
 // 13 rows → 08:00 .. 20:00 inclusive start labels; last row ends at 21:00
@@ -180,10 +180,10 @@ export default function DoctorAvailabilityPage() {
   const bookedSlots      = allBooked.filter((b) => (b.appointmentType || "physical") === activeTab);
   const endpoint         = activeTab === "physical" ? "/doctors/physical-availability" : "/doctors/online-availability";
 
-  const TAB_COLOR  = activeTab === "physical" ? "#006a61" : "#7c3aed";
-  const TAB_LIGHT  = activeTab === "physical" ? "rgba(137,245,231,0.35)" : "rgba(221,214,254,0.5)";
-  const TAB_BORDER = activeTab === "physical" ? "rgba(0,106,97,0.2)"     : "rgba(124,58,237,0.2)";
-  const TAB_TEXT   = activeTab === "physical" ? "#005c54"                 : "#5b21b6";
+  const TAB_COLOR  = activeTab === "physical" ? "#0f766e" : "#7c3aed";
+  const TAB_LIGHT  = activeTab === "physical" ? "rgba(15,118,110,0.08)" : "rgba(124,58,237,0.08)";
+  const TAB_BORDER = activeTab === "physical" ? "rgba(15,118,110,0.15)" : "rgba(124,58,237,0.15)";
+  const TAB_TEXT   = activeTab === "physical" ? "#0f766e"                 : "#6d28d9";
 
   /* ── stats ───────────────────────────────────────────────────────────── */
   const physHours  = useMemo(() => calcHours(physicalSchedule), [physicalSchedule]);
@@ -469,15 +469,14 @@ export default function DoctorAvailabilityPage() {
     const dayConflict = conflictSchedule[di];
 
     return (
-      <div key={DAYS[di]} className="flex-1 relative border-r border-surface-container-low last:border-r-0 min-w-0">
-
+      <div className="h-full relative">
         {/* Clickable hour rows (empty cells) */}
         {TIME_LABELS.map((_, hi) => {
           const occupied = isHourCovered(di, hi) || isConflicted(di, hi) || isBooked(di, hi);
           return (
             <div
               key={hi}
-              className={`h-16 border-b border-surface-container-low/60 transition-colors ${
+              className={`h-20 transition-colors duration-200 ${
                 !occupied ? "hover:bg-primary/[0.04] cursor-pointer" : "cursor-default"
               }`}
               onClick={() => !occupied && toggleHourSlot(di, hi)}
@@ -489,18 +488,21 @@ export default function DoctorAvailabilityPage() {
         {dayItem.slots.map((slot, si) => (
           <div
             key={si}
-            className="absolute left-1 right-1 rounded-lg p-2 flex flex-col cursor-pointer overflow-hidden z-10"
-            style={{ ...slotStyle(slot.start, slot.end), backgroundColor: TAB_LIGHT, border: `1px solid ${TAB_BORDER}` }}
+            className="absolute left-1 right-1 rounded-xl p-2.5 flex flex-col cursor-pointer overflow-hidden z-10 group transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
+            style={{ ...slotStyle(slot.start, slot.end), backgroundColor: TAB_LIGHT, border: `1.5px solid ${TAB_BORDER}` }}
             onClick={(e) => {
               e.stopPropagation();
               setContextMenu({ di, si, slot, x: e.clientX, y: e.clientY });
             }}
           >
-            <span className="text-[10px] font-bold uppercase tracking-tight leading-none" style={{ color: TAB_TEXT }}>
-              Available
-            </span>
-            <span className="text-[9px] mt-0.5 opacity-60 leading-none" style={{ color: TAB_TEXT }}>
-              {slot.start}–{slot.end}
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: TAB_COLOR }} />
+              <span className="text-[10px] font-black uppercase tracking-wider leading-none" style={{ color: TAB_TEXT }}>
+                Available
+              </span>
+            </div>
+            <span className="text-[11px] font-bold mt-0.5 leading-none" style={{ color: TAB_TEXT }}>
+              {slot.start} – {slot.end}
             </span>
           </div>
         ))}
@@ -509,17 +511,25 @@ export default function DoctorAvailabilityPage() {
         {dayConflict.slots.map((slot, si) => (
           <div
             key={`cx-${si}`}
-            className="absolute left-1 right-1 rounded-lg p-2 pointer-events-none overflow-hidden z-10"
+            className="absolute left-1.5 right-1.5 rounded-xl p-3 pointer-events-none overflow-hidden z-10 group transition-all duration-300 shadow-sm border-l-4"
             style={{
               ...slotStyle(slot.start, slot.end),
-              backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(249,115,22,0.12) 8px,rgba(249,115,22,0.12) 16px)",
-              border: "1px solid rgba(251,146,60,0.4)",
+              backgroundColor: "rgba(255, 247, 237, 0.95)",
+              backgroundImage: "repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(249, 115, 22, 0.05) 10px, rgba(249, 115, 22, 0.05) 20px)",
+              border: "1px solid rgba(251, 146, 60, 0.3)",
+              borderLeftColor: "#f97316"
             }}
           >
-            <span className="text-[10px] font-bold text-orange-700 uppercase tracking-tight">
-              {activeTab === "physical" ? "Online" : "Physical"} Conflict
-            </span>
-            <span className="text-[9px] text-orange-500 leading-none">Dual booking alert</span>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="material-symbols-outlined text-[16px] text-orange-600 animate-pulse">warning</span>
+              <span className="text-[10px] font-black text-orange-700 uppercase tracking-widest leading-none">
+                {activeTab === "physical" ? "Online" : "Physical"} Overlap
+              </span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[11px] font-black text-orange-900 leading-tight">Dual Booking Alert</span>
+              <span className="text-[9px] font-bold text-orange-600/70">{slot.start} – {slot.end}</span>
+            </div>
           </div>
         ))}
 
@@ -527,15 +537,26 @@ export default function DoctorAvailabilityPage() {
         {dayBooked.map((bk, bi) => (
           <div
             key={`bk-${bi}`}
-            className="absolute left-1 right-1 rounded-lg p-2 flex flex-col group overflow-hidden z-20 shadow-sm"
-            style={{ ...bookedStyle(bk.time), backgroundColor: "rgba(0,106,97,0.85)", border: "1px solid rgba(0,106,97,0.4)" }}
+            className="absolute left-1.5 right-1.5 rounded-xl p-2.5 flex flex-col group overflow-hidden z-20 shadow-md transition-all duration-200 hover:shadow-xl hover:scale-[1.02] border-l-4"
+            style={{ 
+              ...bookedStyle(bk.time), 
+              backgroundColor: "white", 
+              border: "1px solid rgba(0,0,0,0.05)",
+              borderLeftColor: activeTab === "physical" ? "#0f766e" : "#7c3aed"
+            }}
           >
-            <span className="text-[9px] font-bold text-white/70 uppercase tracking-tight">Booked</span>
-            <span className="text-xs font-bold text-white truncate">{bk.patientName}</span>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[9px] font-black text-on-surface-variant/60 uppercase tracking-widest">Booked</span>
+              <span className="material-symbols-outlined text-[14px] text-on-surface-variant/40">lock</span>
+            </div>
+            <span className="text-[11px] font-bold text-on-surface truncate">{bk.patientName}</span>
+            <span className="text-[9px] font-medium text-on-surface-variant mt-0.5">{bk.time}</span>
+            
             {/* Tooltip */}
-            <div className="hidden group-hover:flex absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 bg-on-surface text-white px-3 py-2 rounded-xl text-[10px] whitespace-nowrap flex-col gap-0.5 shadow-xl min-w-max">
-              <span className="font-bold">{bk.patientName}</span>
-              <span className="opacity-70">{bk.time}</span>
+            <div className="hidden group-hover:flex absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 bg-surface-container-highest text-on-surface px-3 py-2 rounded-xl text-[10px] whitespace-nowrap flex-col gap-0.5 shadow-2xl border border-outline-variant/20">
+              <span className="font-black">{bk.patientName}</span>
+              <span className="font-bold opacity-70">{bk.time}</span>
+              <span className="text-[9px] text-primary mt-1 font-black uppercase tracking-tighter">View Details</span>
             </div>
           </div>
         ))}
@@ -557,42 +578,44 @@ export default function DoctorAvailabilityPage() {
   /* ═════════════════════════════ JSX ════════════════════════════════════ */
   return (
     <DoctorShell>
-      <div className="px-8 py-8 max-w-[1400px] mx-auto space-y-5 bg-surface min-h-screen">
+      <div className="px-10 py-10 max-w-[1500px] mx-auto space-y-8 bg-surface/30 min-h-screen">
 
         {/* ── Page header ─────────────────────────────────────────────── */}
-        <div className="flex items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-headline font-extrabold text-on-surface tracking-tight">
-              Availability Management
+            <h1 className="text-4xl font-headline font-black text-on-surface tracking-tight">
+              Clinical Schedule
             </h1>
-            <p className="text-on-surface-variant mt-1 text-sm">
-              Orchestrate your clinical hours across physical and digital channels.
+            <p className="text-on-surface-variant/80 mt-2 text-base font-medium">
+              Optimize your workflow across physical and virtual consultations.
             </p>
           </div>
 
           {/* Tab switcher */}
-          <div className="bg-surface-container-low p-1 rounded-xl flex gap-1 flex-shrink-0">
+          <div className="bg-surface-container-low/50 backdrop-blur-sm p-1.5 rounded-2xl flex gap-1.5 border border-outline-variant/10 shadow-sm">
             <button
               type="button"
               onClick={() => setActiveTab("physical")}
-              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
                 activeTab === "physical"
-                  ? "bg-surface-container-lowest text-primary shadow-sm"
-                  : "text-on-surface-variant hover:text-on-surface"
+                  ? "bg-white text-teal-800 shadow-md scale-[1.02]"
+                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest/50"
               }`}
             >
-              Physical Appointments
+              <span className="material-symbols-outlined text-[20px]">local_hospital</span>
+              Physical
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("online")}
-              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
                 activeTab === "online"
-                  ? "bg-surface-container-lowest text-violet-700 shadow-sm"
-                  : "text-on-surface-variant hover:text-on-surface"
+                  ? "bg-white text-violet-700 shadow-md scale-[1.02]"
+                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest/50"
               }`}
             >
-              Online Appointments
+              <span className="material-symbols-outlined text-[20px]">videocam</span>
+              Virtual
             </button>
           </div>
         </div>
@@ -626,67 +649,101 @@ export default function DoctorAvailabilityPage() {
         )}
 
         {/* ── Quick actions bar ────────────────────────────────────────── */}
-        <div className="bg-surface-container-lowest rounded-xl px-5 py-3.5 flex items-center justify-between shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)]">
-          <div className="flex items-center gap-3">
+        <div className="bg-surface-container-lowest rounded-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-[0px_16px_48px_-8px_rgba(42,52,57,0.08)] border border-outline-variant/10">
+          <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={handleMarkAllAvailable}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-bold hover:bg-primary-dim transition-all"
+              className="flex items-center gap-2.5 px-6 py-3 rounded-xl bg-on-surface text-white text-xs font-black hover:bg-on-surface/90 transition-all duration-300 shadow-sm active:scale-95"
             >
-              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-              Mark All Available
+              <span className="material-symbols-outlined text-[18px]">verified</span>
+              Set All Available
             </button>
             <button
               type="button"
               onClick={handleMarkAllUnavailable}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary-container text-on-secondary-container text-xs font-bold hover:bg-surface-variant transition-all"
+              className="flex items-center gap-2.5 px-6 py-3 rounded-xl bg-surface-container-low text-on-surface-variant text-xs font-black hover:bg-surface-container-high transition-all duration-300 active:scale-95"
             >
-              <span className="material-symbols-outlined text-sm">block</span>
-              Mark All Unavailable
+              <span className="material-symbols-outlined text-[18px]">do_not_disturb_on</span>
+              Clear All
             </button>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleCopyMonday}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-primary hover:bg-primary/[0.06] text-xs font-semibold transition-all"
+              className="group flex items-center gap-2 px-5 py-3 rounded-xl text-on-surface hover:bg-surface-container-low text-xs font-bold transition-all duration-300"
             >
-              <span className="material-symbols-outlined text-sm">content_copy</span>
-              Copy Monday to All Days
+              <span className="material-symbols-outlined text-[18px] group-hover:rotate-12 transition-transform">content_copy</span>
+              Copy Monday
             </button>
             <button
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-primary hover:bg-primary/[0.06] text-xs font-semibold transition-all disabled:opacity-50"
+              className="group flex items-center gap-2 px-6 py-3 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white text-xs font-bold transition-all duration-500 disabled:opacity-50 active:scale-95"
             >
-              <span className="material-symbols-outlined text-sm">event_repeat</span>
-              {saving ? "Saving…" : "Apply to Future Weeks"}
+              <span className="material-symbols-outlined text-[18px] group-hover:animate-spin-slow">sync</span>
+              {saving ? "Syncing..." : "Publish Schedule"}
             </button>
           </div>
         </div>
 
         {/* ── Calendar ─────────────────────────────────────────────────── */}
         <div className="bg-surface-container-lowest rounded-xl shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)] overflow-hidden">
+          
+          {/* Top Integrated Legend & Controls */}
+          <div className="flex flex-wrap items-center justify-between px-6 py-3 border-b border-outline-variant/10 bg-white">
+            <div className="flex flex-wrap items-center gap-5">
+              <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em]">Schedule Key</span>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TAB_LIGHT, border: `1px solid ${TAB_BORDER}` }} />
+                <span className="text-[10px] font-black text-on-surface-variant/80 uppercase tracking-tighter">Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeTab === "physical" ? "#0f766e" : "#7c3aed" }} />
+                <span className="text-[10px] font-black text-on-surface-variant/80 uppercase tracking-tighter">Booked</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(249,115,22,0.4) 2px,rgba(249,115,22,0.4) 4px)", border: "1px solid rgba(251,146,60,0.4)" }} />
+                <span className="text-[10px] font-black text-on-surface-variant/80 uppercase tracking-tighter">Conflict</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary/[0.04] border border-dashed border-primary/30" />
+                <span className="text-[10px] font-black text-on-surface-variant/80 uppercase tracking-tighter">Selectable</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="w-[1px] h-4 bg-outline-variant/20 mx-1 hidden md:block" />
+              <div className="flex items-center gap-2">
+                <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${activeTab === 'physical' ? 'bg-teal-600' : 'bg-violet-600'}`} />
+                <span className="text-[10px] font-black text-on-surface uppercase tracking-widest">{activeTab} Mode</span>
+              </div>
+            </div>
+          </div>
 
           {/* Days header row */}
-          <div className="flex border-b border-surface-container-low bg-surface-container-lowest sticky top-0 z-10">
+          <div className="flex border-b-2 border-outline-variant bg-white sticky top-0 z-30 shadow-md">
             {/* Time column header — week nav */}
-            <div className="w-20 flex-shrink-0 border-r border-surface-container-low flex flex-col items-center justify-center py-3 gap-1">
-              <button
-                type="button"
-                onClick={() => setWeekOffset((w) => w - 1)}
-                className="w-6 h-6 flex items-center justify-center rounded-md text-on-surface-variant hover:text-primary hover:bg-primary/[0.06] transition-colors"
-              >
-                <span className="material-symbols-outlined text-base">chevron_left</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setWeekOffset((w) => w + 1)}
-                className="w-6 h-6 flex items-center justify-center rounded-md text-on-surface-variant hover:text-primary hover:bg-primary/[0.06] transition-colors"
-              >
-                <span className="material-symbols-outlined text-base">chevron_right</span>
-              </button>
+            <div className="w-24 flex-shrink-0 border-r-2 border-outline-variant flex flex-col items-center justify-center py-4 gap-2 bg-surface-container-lowest">
+              <div className="flex items-center gap-1.5 bg-surface-container-low/50 p-1 rounded-xl border border-outline-variant/20">
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w - 1)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-white hover:shadow-sm transition-all duration-200 active:scale-90"
+                >
+                  <span className="material-symbols-outlined text-lg font-bold">chevron_left</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w + 1)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-primary hover:bg-white hover:shadow-sm transition-all duration-200 active:scale-90"
+                >
+                  <span className="material-symbols-outlined text-lg font-bold">chevron_right</span>
+                </button>
+              </div>
+              <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">GMT+5.5</span>
             </div>
 
             {/* Day columns */}
@@ -695,301 +752,324 @@ export default function DoctorAvailabilityPage() {
               return (
                 <div
                   key={idx}
-                  className={`flex-1 py-3.5 text-center border-r border-surface-container-low last:border-r-0 ${today ? "bg-primary/[0.03]" : ""}`}
+                  className={`flex-1 py-4 text-center border-r-2 border-outline-variant last:border-r-0 transition-colors duration-300 ${
+                    today ? "bg-primary/[0.04]" : "bg-white"
+                  }`}
                 >
-                  <p className={`text-[11px] font-bold uppercase tracking-widest ${today ? "text-primary" : "text-on-surface-variant"}`}>
+                  <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${today ? "text-primary" : "text-on-surface-variant/60"}`}>
                     {format(date, "EEE")}
                   </p>
-                  <p className={`text-base font-headline font-bold mt-0.5 ${today ? "text-on-surface" : "text-on-surface-variant"}`}>
-                    {format(date, "d")}
-                  </p>
-                  {today && (
-                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Today</span>
-                  )}
+                  <div className="flex flex-col items-center mt-1">
+                    <p className={`text-xl font-headline font-black leading-none ${today ? "text-on-surface" : "text-on-surface-variant"}`}>
+                      {format(date, "d")}
+                    </p>
+                    {today && (
+                      <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,106,97,0.6)]" />
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
 
           {/* Scrollable grid */}
-          <div className="flex h-[580px] overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          <div className="flex h-[600px] overflow-y-auto relative bg-white" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(0,0,0,0.1) transparent" }}>
 
             {/* Sticky time labels */}
-            <div className="w-20 flex-shrink-0 sticky left-0 z-10 border-r border-surface-container-low bg-surface-container-low/40">
+            <div className="w-24 flex-shrink-0 sticky left-0 z-20 border-r-2 border-outline-variant bg-surface-container-lowest/90 backdrop-blur-md">
               {TIME_LABELS.map((label) => (
-                <div key={label} className="h-16 flex items-center justify-center border-b border-surface-container-low/60">
-                  <span className="text-[10px] font-bold text-outline uppercase tracking-tighter">
-                    {label.replace(":00 ", "\u00A0")}
+                <div key={label} className="h-20 flex flex-col items-center justify-center border-b-2 border-outline-variant/40">
+                  <span className="text-[11px] font-black text-on-surface tracking-tighter">
+                    {label.split(" ")[0]}
+                  </span>
+                  <span className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest">
+                    {label.split(" ")[1]}
                   </span>
                 </div>
               ))}
             </div>
 
-            {/* Day columns */}
-            <div className="flex flex-1">
-              {DAYS.map((_, di) => renderDayColumn(di))}
+            {/* Day columns container */}
+            <div className="flex flex-1 relative min-w-[800px]">
+              {/* Horizontal grid lines */}
+              <div className="absolute inset-0 pointer-events-none">
+                {TIME_LABELS.map((_, hi) => (
+                  <div key={hi} className="h-20 border-b-2 border-outline-variant/40 w-full" />
+                ))}
+              </div>
+              
+              {/* Vertical day columns */}
+              {DAYS.map((_, di) => (
+                <div key={di} className="flex-1 relative border-r-2 border-outline-variant last:border-r-0">
+                  {renderDayColumn(di)}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Calendar legend footer */}
-          <div className="flex items-center gap-6 px-5 py-3 border-t border-surface-container-low/60 bg-surface-container-low/20">
-            <span className="text-[10px] font-bold text-outline uppercase tracking-widest">Legend</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: TAB_LIGHT, border: `1px solid ${TAB_BORDER}` }} />
-              <span className="text-[10px] font-semibold text-on-surface-variant">Available</span>
+          {/* Calendar Status Bar */}
+          <div className="flex items-center justify-between px-6 py-3 border-t border-outline-variant/5 bg-surface-container-lowest/30">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-primary text-[18px]">info</span>
+              <p className="text-[10px] font-black text-on-surface-variant/60 uppercase tracking-widest">
+                Directly interact with the grid to manage your weekly availability
+              </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: "rgba(0,106,97,0.85)" }} />
-              <span className="text-[10px] font-semibold text-on-surface-variant">Booked</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(249,115,22,0.3) 3px,rgba(249,115,22,0.3) 6px)", border: "1px solid rgba(251,146,60,0.4)" }} />
-              <span className="text-[10px] font-semibold text-on-surface-variant">Conflict</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm bg-primary/[0.04] border border-dashed border-primary/30" />
-              <span className="text-[10px] font-semibold text-on-surface-variant">Click to toggle</span>
-            </div>
-            <div className="ml-auto text-[10px] font-bold px-3 py-1 rounded-full" style={{ backgroundColor: TAB_LIGHT, color: TAB_TEXT }}>
-              {activeTab === "physical" ? "Physical" : "Online"} Mode
+            <div className="flex items-center gap-2">
+              <div className="text-[10px] font-black px-4 py-1.5 rounded-full bg-white shadow-sm border border-outline-variant/5 text-on-surface-variant uppercase tracking-widest">
+                GMT+5.5 COLOMBO
+              </div>
             </div>
           </div>
         </div>
 
         {/* ── Block time panel ─────────────────────────────────────────── */}
         {showBlockPanel && (
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-error text-base">timer_off</span>
-                <h3 className="font-headline font-bold text-base text-on-surface">Block Time Range</h3>
+          <div className="bg-white/60 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-[0px_32px_80px_-16px_rgba(42,52,57,0.15)] border border-white relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-1 bg-error/20" />
+            
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-error/10 text-error flex items-center justify-center shadow-inner">
+                  <span className="material-symbols-outlined text-[24px]">event_busy</span>
+                </div>
+                <div>
+                  <h3 className="font-headline font-black text-xl text-on-surface tracking-tight">Block Schedule</h3>
+                  <p className="text-xs text-on-surface-variant/60 mt-1 font-medium italic">Define periods of unavailability</p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => { setShowBlockPanel(false); setEditingBlockId(null); }}
-                className="text-on-surface-variant hover:text-on-surface transition-colors p-1"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all duration-300"
               >
-                <span className="material-symbols-outlined text-base">close</span>
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
-            <div className="flex flex-wrap items-end gap-4">
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Day</label>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 items-end gap-6">
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-on-surface-variant/50 uppercase tracking-[0.2em] ml-2">Day of Week</label>
                 <select
                   value={blockDay}
                   onChange={(e) => setBlockDay(e.target.value)}
-                  className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-2xl border-0 bg-white px-5 py-3 text-sm font-bold text-on-surface shadow-sm ring-1 ring-outline-variant/10 focus:ring-2 focus:ring-error/20 transition-all duration-300 appearance-none"
                 >
                   {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">From</label>
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-on-surface-variant/50 uppercase tracking-[0.2em] ml-2">Start Time</label>
                 <input type="time" value={blockStart} onChange={(e) => setBlockStart(e.target.value)}
-                  className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  className="w-full rounded-2xl border-0 bg-white px-5 py-3 text-sm font-bold text-on-surface shadow-sm ring-1 ring-outline-variant/10 focus:ring-2 focus:ring-error/20 transition-all duration-300" />
               </div>
-              <div>
-                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">To</label>
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-on-surface-variant/50 uppercase tracking-[0.2em] ml-2">End Time</label>
                 <input type="time" value={blockEnd} onChange={(e) => setBlockEnd(e.target.value)}
-                  className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  className="w-full rounded-2xl border-0 bg-white px-5 py-3 text-sm font-bold text-on-surface shadow-sm ring-1 ring-outline-variant/10 focus:ring-2 focus:ring-error/20 transition-all duration-300" />
               </div>
               <button
                 type="button"
                 onClick={handleBlockTime}
                 disabled={saving}
-                className="px-5 py-2 rounded-lg bg-error text-on-error text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                className="w-full py-3.5 rounded-2xl bg-on-surface text-white text-sm font-black hover:bg-error transition-all duration-500 shadow-lg shadow-error/10 disabled:opacity-50 active:scale-95 flex items-center justify-center gap-2"
               >
-                {editingBlockId ? "Update Block" : "Apply Block"}
+                <span className="material-symbols-outlined text-[18px]">lock</span>
+                {editingBlockId ? "Update Restriction" : "Apply Restriction"}
               </button>
             </div>
           </div>
         )}
 
         {/* ── Day-wise slot editor ─────────────────────────────────────── */}
-        <div className="bg-surface-container-lowest rounded-2xl shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)] overflow-hidden">
+        <div className="bg-white/60 backdrop-blur-xl rounded-[3rem] shadow-[0px_32px_96px_-16px_rgba(42,52,57,0.12)] border border-white overflow-hidden transition-all duration-500 hover:shadow-[0px_40px_120px_-20px_rgba(42,52,57,0.15)]">
 
           {/* Section header */}
-          <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: TAB_LIGHT }}>
-                <span className="material-symbols-outlined text-[18px]" style={{ color: TAB_COLOR }}>calendar_month</span>
+          <div className="px-10 py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-outline-variant/10 bg-white/40">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-xl bg-gradient-to-br from-white to-surface-container-low border border-white" style={{ color: TAB_COLOR }}>
+                <span className="material-symbols-outlined text-[28px] drop-shadow-sm">auto_schedule</span>
               </div>
               <div>
-                <h3 className="font-headline font-bold text-[15px] text-on-surface leading-tight">
-                  {activeTab === "physical" ? "Physical" : "Online"} Day-wise Slots
+                <h3 className="font-headline font-black text-2xl text-on-surface tracking-tight leading-none">
+                  Day-by-Day Configuration
                 </h3>
-                <p className="text-[10px] text-on-surface-variant mt-0.5">
-                  Configure available hours for each day of the week
+                <p className="text-sm text-on-surface-variant/70 mt-2 font-medium flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${activeTab === 'physical' ? 'bg-teal-500' : 'bg-violet-500'}`} />
+                  Precision control for your {activeTab} consultation blocks
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setShowBlockPanel((s) => !s)}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-error hover:bg-error/[0.07] transition-all"
+                className="group flex items-center gap-2.5 px-6 py-3 rounded-2xl text-xs font-black text-error bg-error/5 hover:bg-error hover:text-white transition-all duration-500 shadow-sm"
               >
-                <span className="material-symbols-outlined text-sm">timer_off</span>
-                Block Time
+                <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">event_busy</span>
+                Restrict Hours
               </button>
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50 shadow-sm"
+                className="flex items-center gap-3 px-8 py-3 rounded-2xl text-white text-sm font-black hover:opacity-95 transition-all duration-500 shadow-xl disabled:opacity-50 active:scale-95 border border-white/20"
                 style={{ backgroundColor: TAB_COLOR }}
               >
-                <span className="material-symbols-outlined text-sm">{saving ? "hourglass_top" : "save"}</span>
-                {saving ? "Saving…" : "Save Schedule"}
+                <span className="material-symbols-outlined text-[20px]">{saving ? "hourglass_top" : "published_with_changes"}</span>
+                {saving ? "Publishing..." : "Update Availability"}
               </button>
             </div>
           </div>
 
           {/* Day rows */}
-          <div>
+          <div className="p-6 md:p-8 space-y-4">
             {schedule.map((dayItem, di) => {
               const hasSlots = dayItem.slots.length > 0;
               const dayHours = dayItem.slots.reduce(
                 (acc, s) => acc + (toMinutes(s.end) - toMinutes(s.start)) / 60, 0
               );
               const SHORT_DAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][di];
+              const FULL_DAY = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][di];
               const GRID_S = 8 * 60, GRID_T = 13 * 60;
 
               return (
                 <div
                   key={dayItem.day}
-                  className="flex items-start gap-4 px-6 py-4"
-                  style={{ background: di % 2 !== 0 ? "rgba(0,0,0,0.015)" : "transparent" }}
+                  className={`group relative flex flex-col lg:flex-row items-start lg:items-center gap-8 p-6 md:p-8 rounded-[2.5rem] transition-all duration-500 ${
+                    hasSlots ? "bg-white shadow-md border border-outline-variant/5" : "bg-surface-container-low/30 grayscale opacity-40 border border-transparent"
+                  } hover:shadow-2xl hover:border-outline-variant/20 hover:-translate-y-1`}
                 >
-                  {/* Day badge */}
-                  <div
-                    className="flex-shrink-0 w-[60px] h-[60px] rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all"
-                    style={{
-                      backgroundColor: hasSlots ? TAB_LIGHT : "rgba(0,0,0,0.04)",
-                    }}
-                  >
-                    <span
-                      className="text-[9px] font-extrabold uppercase tracking-widest leading-none"
-                      style={{ color: hasSlots ? TAB_TEXT : "#94a3b8" }}
-                    >
-                      {SHORT_DAY}
-                    </span>
-                    <span
-                      className="text-sm font-headline font-extrabold leading-none mt-1"
-                      style={{ color: hasSlots ? TAB_COLOR : "#cbd5e1" }}
-                    >
-                      {hasSlots ? `${Math.round(dayHours * 10) / 10}h` : "—"}
-                    </span>
-                  </div>
-
-                  {/* Slots + timeline */}
-                  <div className="flex-1 flex flex-col gap-2 min-w-0 pt-0.5">
-
-                    {/* Empty state */}
-                    {!hasSlots && (
-                      <div className="flex items-center gap-2 h-9">
-                        <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface-container-low text-xs text-on-surface-variant">
-                          <span className="material-symbols-outlined text-sm text-on-surface-variant/50">do_not_disturb</span>
-                          Unavailable — no slots configured
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Slot rows */}
-                    {dayItem.slots.map((slot, si) => {
-                      const durMins = toMinutes(slot.end) - toMinutes(slot.start);
-                      const durLabel = durMins > 0
-                        ? durMins >= 60
-                          ? `${Math.floor(durMins / 60)}h${durMins % 60 ? ` ${durMins % 60}m` : ""}`
-                          : `${durMins}m`
-                        : "—";
-
-                      return (
-                        <div
-                          key={si}
-                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
-                          style={{ backgroundColor: TAB_LIGHT, border: `1.5px solid ${TAB_BORDER}` }}
-                        >
-                          <span
-                            className="material-symbols-outlined text-[16px] flex-shrink-0"
-                            style={{ color: TAB_COLOR, fontVariationSettings: "'FILL' 1" }}
-                          >
-                            schedule
-                          </span>
-
-                          <input
-                            type="time"
-                            value={slot.start}
-                            onChange={(e) => updateSlot(di, si, "start", e.target.value)}
-                            className="rounded-lg px-2.5 py-1 text-sm font-bold text-on-surface border-0 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            style={{ backgroundColor: "rgba(255,255,255,0.75)", width: "108px" }}
-                          />
-
-                          <span className="material-symbols-outlined text-sm flex-shrink-0" style={{ color: TAB_COLOR }}>
-                            arrow_forward
-                          </span>
-
-                          <input
-                            type="time"
-                            value={slot.end}
-                            onChange={(e) => updateSlot(di, si, "end", e.target.value)}
-                            className="rounded-lg px-2.5 py-1 text-sm font-bold text-on-surface border-0 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            style={{ backgroundColor: "rgba(255,255,255,0.75)", width: "108px" }}
-                          />
-
-                          {/* Duration badge */}
-                          <span
-                            className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: "rgba(255,255,255,0.65)", color: TAB_TEXT }}
-                          >
-                            {durLabel}
-                          </span>
-
-                          <button
-                            type="button"
-                            onClick={() => removeSlot(di, si)}
-                            className="ml-auto p-1.5 rounded-lg transition-all hover:bg-error/10 flex-shrink-0"
-                          >
-                            <span className="material-symbols-outlined text-sm text-error">close</span>
-                          </button>
-                        </div>
-                      );
-                    })}
-
-                    {/* Mini timeline bar */}
-                    {hasSlots && (
-                      <div className="relative h-1 rounded-full bg-surface-container-low overflow-hidden">
-                        {dayItem.slots.map((slot, si) => {
-                          const left = Math.max(0, ((toMinutes(slot.start) - GRID_S) / GRID_T) * 100);
-                          const width = Math.min(
-                            100 - left,
-                            ((toMinutes(slot.end) - toMinutes(slot.start)) / GRID_T) * 100
-                          );
-                          return (
-                            <div
-                              key={si}
-                              className="absolute h-full rounded-full"
-                              style={{ left: `${left}%`, width: `${width}%`, backgroundColor: TAB_COLOR }}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Add slot button */}
-                    <button
-                      type="button"
-                      onClick={() => addSlot(di)}
-                      className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-80"
+                  {/* Day Identity Section */}
+                  <div className="flex items-center gap-5 lg:w-48 flex-shrink-0">
+                    <div
+                      className="flex-shrink-0 w-16 h-16 rounded-[1.25rem] flex flex-col items-center justify-center gap-1 transition-all duration-700 group-hover:rotate-3 shadow-inner"
                       style={{
-                        color: TAB_COLOR,
-                        border: `1.5px dashed ${TAB_BORDER}`,
-                        backgroundColor: "transparent",
+                        backgroundColor: hasSlots ? TAB_LIGHT : "rgba(0,0,0,0.03)",
                       }}
                     >
-                      <span className="material-symbols-outlined text-sm">add</span>
-                      Add time slot
-                    </button>
+                      <span
+                        className="text-[10px] font-black uppercase tracking-[0.2em] leading-none"
+                        style={{ color: hasSlots ? TAB_TEXT : "#94a3b8" }}
+                      >
+                        {SHORT_DAY}
+                      </span>
+                      <span
+                        className="text-xl font-headline font-black leading-none mt-1"
+                        style={{ color: hasSlots ? TAB_COLOR : "#cbd5e1" }}
+                      >
+                        {hasSlots ? `${Math.round(dayHours * 10) / 10}` : "0"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className={`text-base font-black tracking-tight ${hasSlots ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+                            {FULL_DAY}
+                        </span>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${hasSlots ? 'text-primary' : 'text-on-surface-variant/40'}`}>
+                            {hasSlots ? `${dayItem.slots.length} Active Slots` : 'Offline'}
+                        </span>
+                    </div>
+                  </div>
+
+                  {/* Slots Interface */}
+                  <div className="flex-1 flex flex-col gap-4 min-w-0 w-full">
+                    <div className="flex flex-wrap gap-3">
+                      {dayItem.slots.map((slot, si) => {
+                        const durMins = toMinutes(slot.end) - toMinutes(slot.start);
+                        const durLabel = durMins > 0
+                          ? durMins >= 60
+                            ? `${Math.floor(durMins / 60)}h ${durMins % 60 ? `${durMins % 60}m` : ""}`
+                            : `${durMins}m`
+                          : "—";
+
+                        return (
+                          <div
+                            key={si}
+                            className="flex items-center gap-3 pl-3 pr-2 py-2 rounded-2xl bg-white border border-outline-variant/20 hover:border-primary/50 transition-all duration-300 shadow-sm group/slot"
+                          >
+                            <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[18px]" style={{ color: TAB_COLOR }}>schedule</span>
+                                <div className="relative">
+                                  <input
+                                    type="time"
+                                    value={slot.start}
+                                    onChange={(e) => updateSlot(di, si, "start", e.target.value)}
+                                    className="bg-surface-container-lowest border border-outline-variant/10 rounded-lg px-2 py-1.5 text-sm font-black text-on-surface focus:ring-2 focus:ring-primary/20 w-[115px] text-center appearance-none relative z-10"
+                                    style={{ colorScheme: 'light' }}
+                                  />
+                                </div>
+                                <span className="text-on-surface-variant/30 font-black text-xs px-1">to</span>
+                                <div className="relative">
+                                  <input
+                                    type="time"
+                                    value={slot.end}
+                                    onChange={(e) => updateSlot(di, si, "end", e.target.value)}
+                                    className="bg-surface-container-lowest border border-outline-variant/10 rounded-lg px-2 py-1.5 text-sm font-black text-on-surface focus:ring-2 focus:ring-primary/20 w-[115px] text-center appearance-none relative z-10"
+                                    style={{ colorScheme: 'light' }}
+                                  />
+                                </div>
+                            </div>
+                            <div className="h-8 w-[1px] bg-outline-variant/20 mx-1" />
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black px-3 py-1.5 rounded-xl bg-white text-on-surface-variant shadow-inner border border-outline-variant/5">
+                                  {durLabel}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeSlot(di, si)}
+                                  className="p-1.5 rounded-xl text-on-surface-variant/30 hover:text-error hover:bg-error/10 transition-all duration-300 opacity-0 group-hover/slot:opacity-100"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      <button
+                        type="button"
+                        onClick={() => addSlot(di)}
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-2xl text-[11px] font-black transition-all duration-500 hover:scale-105 active:scale-95 border-2 border-dashed shadow-sm"
+                        style={{
+                          color: TAB_COLOR,
+                          borderColor: TAB_BORDER,
+                          backgroundColor: `${TAB_COLOR}08`,
+                        }}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                        NEW SLOT
+                      </button>
+                    </div>
+
+                    {/* Progressive Timeline Visualizer */}
+                    {hasSlots && (
+                      <div className="flex items-center gap-4 w-full">
+                        <span className="text-[9px] font-black text-on-surface-variant/30 uppercase">08 AM</span>
+                        <div className="relative h-2 rounded-full bg-surface-container-low shadow-inner overflow-hidden flex-1">
+                          {dayItem.slots.map((slot, si) => {
+                            const left = Math.max(0, ((toMinutes(slot.start) - GRID_S) / GRID_T) * 100);
+                            const width = Math.min(100 - left, ((toMinutes(slot.end) - toMinutes(slot.start)) / GRID_T) * 100);
+                            return (
+                              <div
+                                key={si}
+                                className="absolute h-full rounded-full shadow-[0_0_12px_rgba(0,0,0,0.1)] transition-all duration-1000"
+                                style={{ left: `${left}%`, width: `${width}%`, backgroundColor: TAB_COLOR }}
+                              />
+                            );
+                          })}
+                        </div>
+                        <span className="text-[9px] font-black text-on-surface-variant/30 uppercase">08 PM</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Status Indicator */}
+                  <div className="hidden lg:flex flex-col items-center gap-2 px-6 border-l border-outline-variant/10 self-stretch justify-center">
+                     <div className={`w-3 h-3 rounded-full ${hasSlots ? 'animate-pulse shadow-[0_0_12px_rgba(0,106,97,0.5)]' : 'bg-on-surface-variant/20'}`} 
+                          style={{ backgroundColor: hasSlots ? TAB_COLOR : '' }} />
+                     <span className={`text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap ${hasSlots ? 'text-on-surface' : 'text-on-surface-variant/40'}`}>
+                        {hasSlots ? 'In Schedule' : 'Inactive'}
+                     </span>
                   </div>
                 </div>
               );
@@ -999,27 +1079,35 @@ export default function DoctorAvailabilityPage() {
 
         {/* ── Blocked time entries ─────────────────────────────────────── */}
         {blockedEntries.length > 0 && (
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-[0px_12px_32px_-4px_rgba(42,52,57,0.06)]">
-            <h4 className="font-headline font-bold text-sm text-on-surface mb-3">Blocked Time Entries</h4>
-            <div className="space-y-2">
+          <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] p-8 shadow-[0px_24px_64px_-12px_rgba(42,52,57,0.1)] border border-white/60">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="material-symbols-outlined text-error">event_busy</span>
+              <h4 className="font-headline font-black text-lg text-on-surface tracking-tight">Active Schedule Restrictions</h4>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {blockedEntries.map((entry) => (
                 <div key={entry.id}
-                  className="flex items-center justify-between rounded-lg px-4 py-2.5 bg-error-container/20">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-error text-sm">block</span>
-                    <span className="text-sm font-medium text-error">
-                      {entry.day} · {entry.start} – {entry.end}
-                    </span>
+                  className="group flex flex-col justify-between rounded-3xl p-5 bg-white border border-error/10 hover:border-error/30 hover:shadow-xl hover:shadow-error/5 transition-all duration-500">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-error/5 text-error flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[20px]">block</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => handleEditBlock(entry)}
+                        className="p-2 rounded-xl text-on-surface-variant/40 hover:text-primary hover:bg-primary/5 transition-all">
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <button type="button" onClick={() => handleDeleteBlock(entry)}
+                        className="p-2 rounded-xl text-on-surface-variant/40 hover:text-error hover:bg-error/5 transition-all">
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => handleEditBlock(entry)}
-                      className="px-3 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/20 text-xs font-semibold text-on-surface-variant hover:text-on-surface transition-colors">
-                      Edit
-                    </button>
-                    <button type="button" onClick={() => handleDeleteBlock(entry)}
-                      className="px-3 py-1 rounded-lg border border-error/20 text-xs font-semibold text-error hover:bg-error/[0.08] transition-colors">
-                      Remove
-                    </button>
+                  <div>
+                    <span className="block text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest mb-1">{entry.day}</span>
+                    <span className="text-base font-black text-on-surface">
+                      {entry.start} – {entry.end}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -1027,78 +1115,46 @@ export default function DoctorAvailabilityPage() {
           </div>
         )}
 
-        {/* ── Footer stats ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            {
-              label: "Weekly Utilization",
-              value: `${utilization}%`,
-              sub: `+${Math.max(0, utilization - 64)}% from last week`,
-              subColor: "text-primary",
-            },
-            {
-              label: "In-Person Slots",
-              value: Math.round(physHours),
-              sub: "Hours available",
-              subColor: "text-on-surface-variant",
-            },
-            {
-              label: "Virtual Slots",
-              value: Math.round(onlineHours),
-              sub: "Hours available",
-              subColor: "text-on-surface-variant",
-            },
-            {
-              label: "Next Conflict",
-              value: conflictDays[0] ? conflictDays[0].slice(0, 3) : "—",
-              sub: conflictDays[0] ? "Physical/Online overlap" : "No conflicts",
-              subColor: conflictDays[0] ? "text-error" : "text-tertiary",
-              valueColor: conflictDays[0] ? "text-error" : "text-on-surface",
-            },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-surface-container-low p-5 rounded-xl">
-              <p className="text-[10px] font-bold text-outline uppercase tracking-widest mb-2">{stat.label}</p>
-              <div className="flex items-end gap-2">
-                <span className={`text-2xl font-headline font-extrabold ${stat.valueColor || "text-on-surface"}`}>
-                  {stat.value}
-                </span>
-                <span className={`text-[10px] font-semibold mb-0.5 leading-tight ${stat.subColor}`}>{stat.sub}</span>
-              </div>
+        {/* ── Context menu ────────────────────────────────────────────────── */}
+        {contextMenu && (
+          <div
+            ref={ctxRef}
+            className="fixed z-50 bg-white/90 backdrop-blur-xl rounded-3xl w-60 p-2 shadow-[0px_32px_80px_-16px_rgba(42,52,57,0.25)] border border-white/60 animate-in fade-in zoom-in duration-200"
+            style={{
+              left: Math.min(contextMenu.x + 8, window.innerWidth - 256),
+              top:  Math.min(contextMenu.y + 4, window.innerHeight - 180),
+            }}
+          >
+            <div className="px-4 py-3 mb-1 border-b border-surface-container-low/30">
+              <span className="block text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em]">Quick Actions</span>
+              <span className="text-xs font-black text-on-surface">{contextMenu.slot.start} – {contextMenu.slot.end}</span>
             </div>
-          ))}
-        </div>
+            <button type="button" onClick={ctxMarkUnavailable}
+              className="w-full text-left px-4 py-3 text-sm font-bold text-on-surface hover:bg-error/5 hover:text-error rounded-2xl transition-all flex items-center gap-3 group">
+              <div className="w-8 h-8 rounded-xl bg-error/5 text-error flex items-center justify-center group-hover:bg-error group-hover:text-white transition-all">
+                <span className="material-symbols-outlined text-[18px]">block</span>
+              </div>
+              Mark unavailable
+            </button>
+            <button type="button" onClick={ctxBlockTime}
+              className="w-full text-left px-4 py-3 text-sm font-bold text-on-surface hover:bg-surface-container-low rounded-2xl transition-all flex items-center gap-3 group">
+              <div className="w-8 h-8 rounded-xl bg-surface-container-low text-on-surface-variant flex items-center justify-center group-hover:bg-on-surface group-hover:text-white transition-all">
+                <span className="material-symbols-outlined text-[18px]">timer_off</span>
+              </div>
+              Block time range
+            </button>
+            <button type="button" onClick={ctxMoveType}
+              className="w-full text-left px-4 py-3 text-sm font-bold text-on-surface hover:bg-surface-container-low rounded-2xl transition-all flex items-center gap-3 group">
+              <div className="w-8 h-8 rounded-xl bg-surface-container-low text-on-surface-variant flex items-center justify-center group-hover:bg-on-surface group-hover:text-white transition-all">
+                <span className="material-symbols-outlined text-[18px]">
+                  {activeTab === "physical" ? "videocam" : "local_hospital"}
+                </span>
+              </div>
+              Set as {activeTab === "physical" ? "Online" : "Physical"}
+            </button>
+          </div>
+        )}
       </div>
-
-      {/* ── Context menu ────────────────────────────────────────────────── */}
-      {contextMenu && (
-        <div
-          ref={ctxRef}
-          className="fixed z-50 bg-surface-container-lowest rounded-xl w-52 p-1.5"
-          style={{
-            boxShadow: "0px 12px 32px -4px rgba(42,52,57,0.18)",
-            left: Math.min(contextMenu.x + 8, window.innerWidth - 224),
-            top:  Math.min(contextMenu.y + 4, window.innerHeight - 160),
-          }}
-        >
-          <button type="button" onClick={ctxMarkUnavailable}
-            className="w-full text-left px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low rounded-lg transition-colors flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-on-surface-variant">block</span>
-            Mark unavailable
-          </button>
-          <button type="button" onClick={ctxBlockTime}
-            className="w-full text-left px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low rounded-lg transition-colors flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-on-surface-variant">timer_off</span>
-            Block time
-          </button>
-          <button type="button" onClick={ctxMoveType}
-            className="w-full text-left px-3 py-2 text-sm text-on-surface hover:bg-surface-container-low rounded-lg transition-colors flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm text-on-surface-variant">
-              {activeTab === "physical" ? "videocam" : "local_hospital"}
-            </span>
-            {activeTab === "physical" ? "Set as online" : "Set as physical"}
-          </button>
-        </div>
-      )}
     </DoctorShell>
   );
 }
