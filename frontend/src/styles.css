@@ -6345,7 +6345,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 32px;
+  padding: 0 32px;
+  height: 72px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid #e5e7eb;
@@ -6378,49 +6379,53 @@ button {
 .aura-topbar-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 2px;
 }
 
 .aura-topbar-icon-btn {
   background: none;
   border: none;
-  color: #1a2b3c;
+  color: #374151;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  transition: opacity 0.2s;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  transition: background 0.18s, color 0.18s;
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .aura-topbar-icon-btn:hover {
-  opacity: 0.7;
+  background: #f3f4f6;
+  color: #043927;
 }
 
-.aura-topbar-icon-btn .material-symbols-outlined {
-  font-size: 24px;
+.aura-topbar-icon-btn svg {
+  display: block;
 }
 
 .aura-topbar-profile-btn {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: #f1f5f9;
-  border: 1.5px solid #e2e8f0;
+  border: 2px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: #1a2b3c;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
   padding: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
 .aura-topbar-profile-btn:hover {
-  background: #e2e8f0;
-  border-color: #cbd5e1;
+  border-color: #043927;
+  box-shadow: 0 2px 8px rgba(4,57,39,0.15);
 }
 
 .aura-topbar-profile-btn .material-symbols-outlined {
