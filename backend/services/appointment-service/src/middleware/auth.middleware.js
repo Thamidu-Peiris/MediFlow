@@ -31,4 +31,11 @@ const requireDoctorRole = (req, res, next) => {
     return next();
 };
 
-module.exports = { verifyAuth, requirePatientRole, requireDoctorRole };
+const requireAdmin = (req, res, next) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+    }
+    return next();
+};
+
+module.exports = { verifyAuth, requirePatientRole, requireDoctorRole, requireAdmin };
