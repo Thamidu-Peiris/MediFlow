@@ -1,0 +1,29 @@
+================================================================================
+                        MediFlow - Project Submission
+                  SE3040 | Application Frameworks | Y3 S2
+================================================================================
+
+GITHUB REPOSITORY LINK
+----------------------
+https://github.com/Thamidu-Peiris/MediFlow
+
+NOTE: The repository contains the full source code including:
+  - backend/           : All microservices (auth, doctor, patient, appointment,
+                         notification, payment, telemedicine, ai-symptom-checker)
+  - frontend/          : React client application
+  - database/          : Database scripts and seed data
+  - docker-compose.yml : Container orchestration configuration
+
+================================================================================
+
+YOUTUBE PRESENTATION / DEMO VIDEO LINK
+---------------------------------------
+[Paste YouTube video URL here]
+
+Video Breakdown (max 3 minutes per member = max 12 minutes total):
+  00:00 - 03:00  |  M.S.N. Peiris     (IT23201132) - Payment Service & AI Symptom Checker
+  03:00 - 06:00  |  M.T.C. Peiris     (IT23201200) - Patient Management & Auth Service
+  06:00 - 09:00  |  W A D A K Appuhamy(IT23479746) - Notification Service
+  09:00 - 12:00  |  Dilshan.N         (IT23250574) - Appointment & Telemedicine Service
+
+================================================================================

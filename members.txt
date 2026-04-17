@@ -1,0 +1,48 @@
+================================================================================
+                        MediFlow - Group Members
+                  SE3040 | Application Frameworks | Y3 S2
+================================================================================
+
+No.  | Registration No. | Name                    | Contribution
+-----|------------------|-------------------------|------------------------------------
+  1  | IT23201132       | M.S.N. Peiris           | Payment Service
+     |                  |                         | AI Symptom Checker Service (Optional)
+-----|------------------|-------------------------|------------------------------------
+  2  | IT23201200       | M.T.C. Peiris           | Patient Management Service
+     |                  |                         | Auth Service
+     |                  |                         | Admin Role Management
+-----|------------------|-------------------------|------------------------------------
+  3  | IT23479746       | W A D A K Appuhamy      | Notification Service
+     |                  |                         | (SMS & Email via third-party APIs)
+-----|------------------|-------------------------|------------------------------------
+  4  | IT23250574       | Dilshan.N               | Appointment Service
+     |                  |                         | Telemedicine Service
+     |                  |                         | (Video Session - Agora Integration)
+================================================================================
+
+SERVICE RESPONSIBILITIES SUMMARY
+---------------------------------
+
+1. M.S.N. Peiris (IT23201132)
+   - Payment Service   : Integrated Stripe (sandbox) for secure consultation fee payments.
+   - AI Symptom Checker: AI-powered symptom input with health suggestions and recommended
+                         doctor specialties using an AI/ML API.
+
+2. M.T.C. Peiris (IT23201200)
+   - Auth Service           : JWT-based authentication and role management (Patient, Doctor, Admin).
+   - Patient Management     : Patient registration, profile management, medical report uploads,
+                              medical history, past prescription viewing.
+   - Admin Role             : User account management, doctor registration verification,
+                              platform operations and financial transaction oversight.
+
+3. W A D A K Appuhamy (IT23479746)
+   - Notification Service   : SMS and email confirmations on appointment booking and
+                              consultation completion using third-party services.
+
+4. Dilshan.N (IT23250574)
+   - Appointment Service    : Doctor search by specialty, appointment booking, modification,
+                              cancellation, and real-time status tracking.
+   - Telemedicine Service   : Secure real-time video consultation module integrated with
+                              Agora RTC API for patient-doctor video sessions.
+
+================================================================================
