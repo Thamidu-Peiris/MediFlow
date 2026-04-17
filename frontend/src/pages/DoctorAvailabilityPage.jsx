@@ -511,17 +511,25 @@ export default function DoctorAvailabilityPage() {
         {dayConflict.slots.map((slot, si) => (
           <div
             key={`cx-${si}`}
-            className="absolute left-1 right-1 rounded-lg p-2 pointer-events-none overflow-hidden z-10"
+            className="absolute left-1.5 right-1.5 rounded-xl p-3 pointer-events-none overflow-hidden z-10 group transition-all duration-300 shadow-sm border-l-4"
             style={{
               ...slotStyle(slot.start, slot.end),
-              backgroundImage: "repeating-linear-gradient(45deg,transparent,transparent 8px,rgba(249,115,22,0.12) 8px,rgba(249,115,22,0.12) 16px)",
-              border: "1px solid rgba(251,146,60,0.4)",
+              backgroundColor: "rgba(255, 247, 237, 0.95)",
+              backgroundImage: "repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(249, 115, 22, 0.05) 10px, rgba(249, 115, 22, 0.05) 20px)",
+              border: "1px solid rgba(251, 146, 60, 0.3)",
+              borderLeftColor: "#f97316"
             }}
           >
-            <span className="text-[10px] font-bold text-orange-700 uppercase tracking-tight">
-              {activeTab === "physical" ? "Online" : "Physical"} Conflict
-            </span>
-            <span className="text-[9px] text-orange-500 leading-none">Dual booking alert</span>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="material-symbols-outlined text-[16px] text-orange-600 animate-pulse">warning</span>
+              <span className="text-[10px] font-black text-orange-700 uppercase tracking-widest leading-none">
+                {activeTab === "physical" ? "Online" : "Physical"} Overlap
+              </span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[11px] font-black text-orange-900 leading-tight">Dual Booking Alert</span>
+              <span className="text-[9px] font-bold text-orange-600/70">{slot.start} – {slot.end}</span>
+            </div>
           </div>
         ))}
 
@@ -716,10 +724,10 @@ export default function DoctorAvailabilityPage() {
           </div>
 
           {/* Days header row */}
-          <div className="flex border-b border-outline-variant/10 bg-white sticky top-0 z-30 shadow-sm">
+          <div className="flex border-b-2 border-outline-variant bg-white sticky top-0 z-30 shadow-md">
             {/* Time column header — week nav */}
-            <div className="w-24 flex-shrink-0 border-r border-outline-variant/10 flex flex-col items-center justify-center py-4 gap-2 bg-surface-container-lowest">
-              <div className="flex items-center gap-1.5 bg-surface-container-low/50 p-1 rounded-xl border border-outline-variant/10">
+            <div className="w-24 flex-shrink-0 border-r-2 border-outline-variant flex flex-col items-center justify-center py-4 gap-2 bg-surface-container-lowest">
+              <div className="flex items-center gap-1.5 bg-surface-container-low/50 p-1 rounded-xl border border-outline-variant/20">
                 <button
                   type="button"
                   onClick={() => setWeekOffset((w) => w - 1)}
@@ -744,7 +752,7 @@ export default function DoctorAvailabilityPage() {
               return (
                 <div
                   key={idx}
-                  className={`flex-1 py-4 text-center border-r border-outline-variant/10 last:border-r-0 transition-colors duration-300 ${
+                  className={`flex-1 py-4 text-center border-r-2 border-outline-variant last:border-r-0 transition-colors duration-300 ${
                     today ? "bg-primary/[0.04]" : "bg-white"
                   }`}
                 >
@@ -768,9 +776,9 @@ export default function DoctorAvailabilityPage() {
           <div className="flex h-[600px] overflow-y-auto relative bg-white" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(0,0,0,0.1) transparent" }}>
 
             {/* Sticky time labels */}
-            <div className="w-24 flex-shrink-0 sticky left-0 z-20 border-r border-outline-variant/10 bg-surface-container-lowest/80 backdrop-blur-md">
+            <div className="w-24 flex-shrink-0 sticky left-0 z-20 border-r-2 border-outline-variant bg-surface-container-lowest/90 backdrop-blur-md">
               {TIME_LABELS.map((label) => (
-                <div key={label} className="h-20 flex flex-col items-center justify-center border-b border-outline-variant/5">
+                <div key={label} className="h-20 flex flex-col items-center justify-center border-b-2 border-outline-variant/40">
                   <span className="text-[11px] font-black text-on-surface tracking-tighter">
                     {label.split(" ")[0]}
                   </span>
@@ -786,13 +794,13 @@ export default function DoctorAvailabilityPage() {
               {/* Horizontal grid lines */}
               <div className="absolute inset-0 pointer-events-none">
                 {TIME_LABELS.map((_, hi) => (
-                  <div key={hi} className="h-20 border-b border-outline-variant/5 w-full" />
+                  <div key={hi} className="h-20 border-b-2 border-outline-variant/40 w-full" />
                 ))}
               </div>
               
               {/* Vertical day columns */}
               {DAYS.map((_, di) => (
-                <div key={di} className="flex-1 relative border-r border-outline-variant/10 last:border-r-0">
+                <div key={di} className="flex-1 relative border-r-2 border-outline-variant last:border-r-0">
                   {renderDayColumn(di)}
                 </div>
               ))}
