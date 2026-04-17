@@ -1090,100 +1090,46 @@ export default function DoctorAvailabilityPage() {
           </div>
         )}
 
-        {/* ── Footer stats ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            {
-              label: "Weekly Utilization",
-              value: `${utilization}%`,
-              sub: `+${Math.max(0, utilization - 64)}% Performance`,
-              icon: "trending_up",
-              color: "text-teal-600",
-              bg: "bg-teal-50",
-            },
-            {
-              label: "In-Person Hours",
-              value: Math.round(physHours),
-              sub: "Clinic Availability",
-              icon: "location_on",
-              color: "text-blue-600",
-              bg: "bg-blue-50",
-            },
-            {
-              label: "Virtual Hours",
-              value: Math.round(onlineHours),
-              sub: "Digital Availability",
-              icon: "videocam",
-              color: "text-violet-600",
-              bg: "bg-violet-50",
-            },
-            {
-              label: "Schedule Health",
-              value: conflictDays[0] ? "Alert" : "Stable",
-              sub: conflictDays[0] ? `${conflictDays.length} overlaps` : "No conflicts",
-              icon: conflictDays[0] ? "warning" : "verified_user",
-              color: conflictDays[0] ? "text-error" : "text-emerald-600",
-              bg: conflictDays[0] ? "bg-error/10" : "bg-emerald-50",
-            },
-          ].map((stat) => (
-            <div key={stat.label} className="group bg-white p-6 rounded-[2rem] shadow-sm border border-outline-variant/5 hover:shadow-xl hover:-translate-y-1 transition-all duration-500">
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-12 h-12 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center transition-transform duration-500 group-hover:scale-110`}>
-                  <span className="material-symbols-outlined text-[24px]">{stat.icon}</span>
-                </div>
-                <span className="material-symbols-outlined text-on-surface-variant/20 group-hover:text-on-surface-variant/40 transition-colors">north_east</span>
+        {/* ── Context menu ────────────────────────────────────────────────── */}
+        {contextMenu && (
+          <div
+            ref={ctxRef}
+            className="fixed z-50 bg-white/90 backdrop-blur-xl rounded-3xl w-60 p-2 shadow-[0px_32px_80px_-16px_rgba(42,52,57,0.25)] border border-white/60 animate-in fade-in zoom-in duration-200"
+            style={{
+              left: Math.min(contextMenu.x + 8, window.innerWidth - 256),
+              top:  Math.min(contextMenu.y + 4, window.innerHeight - 180),
+            }}
+          >
+            <div className="px-4 py-3 mb-1 border-b border-surface-container-low/30">
+              <span className="block text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em]">Quick Actions</span>
+              <span className="text-xs font-black text-on-surface">{contextMenu.slot.start} – {contextMenu.slot.end}</span>
+            </div>
+            <button type="button" onClick={ctxMarkUnavailable}
+              className="w-full text-left px-4 py-3 text-sm font-bold text-on-surface hover:bg-error/5 hover:text-error rounded-2xl transition-all flex items-center gap-3 group">
+              <div className="w-8 h-8 rounded-xl bg-error/5 text-error flex items-center justify-center group-hover:bg-error group-hover:text-white transition-all">
+                <span className="material-symbols-outlined text-[18px]">block</span>
               </div>
-              <p className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-[0.15em] mb-1">{stat.label}</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-headline font-black text-on-surface tracking-tighter">
-                  {stat.value}
+              Mark unavailable
+            </button>
+            <button type="button" onClick={ctxBlockTime}
+              className="w-full text-left px-4 py-3 text-sm font-bold text-on-surface hover:bg-surface-container-low rounded-2xl transition-all flex items-center gap-3 group">
+              <div className="w-8 h-8 rounded-xl bg-surface-container-low text-on-surface-variant flex items-center justify-center group-hover:bg-on-surface group-hover:text-white transition-all">
+                <span className="material-symbols-outlined text-[18px]">timer_off</span>
+              </div>
+              Block time range
+            </button>
+            <button type="button" onClick={ctxMoveType}
+              className="w-full text-left px-4 py-3 text-sm font-bold text-on-surface hover:bg-surface-container-low rounded-2xl transition-all flex items-center gap-3 group">
+              <div className="w-8 h-8 rounded-xl bg-surface-container-low text-on-surface-variant flex items-center justify-center group-hover:bg-on-surface group-hover:text-white transition-all">
+                <span className="material-symbols-outlined text-[18px]">
+                  {activeTab === "physical" ? "videocam" : "local_hospital"}
                 </span>
-                <span className={`text-[10px] font-bold ${stat.color} opacity-80`}>{stat.sub}</span>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Context menu ────────────────────────────────────────────────── */}
-      {contextMenu && (
-        <div
-          ref={ctxRef}
-          className="fixed z-50 bg-white/90 backdrop-blur-xl rounded-3xl w-60 p-2 shadow-[0px_32px_80px_-16px_rgba(42,52,57,0.25)] border border-white/60 animate-in fade-in zoom-in duration-200"
-          style={{
-            left: Math.min(contextMenu.x + 8, window.innerWidth - 256),
-            top:  Math.min(contextMenu.y + 4, window.innerHeight - 180),
-          }}
-        >
-          <div className="px-4 py-3 mb-1 border-b border-surface-container-low/30">
-            <span className="block text-[10px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em]">Quick Actions</span>
-            <span className="text-xs font-black text-on-surface">{contextMenu.slot.start} – {contextMenu.slot.end}</span>
+              Set as {activeTab === "physical" ? "Online" : "Physical"}
+            </button>
           </div>
-          <button type="button" onClick={ctxMarkUnavailable}
-            className="w-full text-left px-4 py-3 text-sm font-bold text-on-surface hover:bg-error/5 hover:text-error rounded-2xl transition-all flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-xl bg-error/5 text-error flex items-center justify-center group-hover:bg-error group-hover:text-white transition-all">
-              <span className="material-symbols-outlined text-[18px]">block</span>
-            </div>
-            Mark unavailable
-          </button>
-          <button type="button" onClick={ctxBlockTime}
-            className="w-full text-left px-4 py-3 text-sm font-bold text-on-surface hover:bg-surface-container-low rounded-2xl transition-all flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-xl bg-surface-container-low text-on-surface-variant flex items-center justify-center group-hover:bg-on-surface group-hover:text-white transition-all">
-              <span className="material-symbols-outlined text-[18px]">timer_off</span>
-            </div>
-            Block time range
-          </button>
-          <button type="button" onClick={ctxMoveType}
-            className="w-full text-left px-4 py-3 text-sm font-bold text-on-surface hover:bg-surface-container-low rounded-2xl transition-all flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-xl bg-surface-container-low text-on-surface-variant flex items-center justify-center group-hover:bg-on-surface group-hover:text-white transition-all">
-              <span className="material-symbols-outlined text-[18px]">
-                {activeTab === "physical" ? "videocam" : "local_hospital"}
-              </span>
-            </div>
-            Set as {activeTab === "physical" ? "Online" : "Physical"}
-          </button>
-        </div>
-      )}
+        )}
+      </div>
     </DoctorShell>
   );
 }
