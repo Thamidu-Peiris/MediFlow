@@ -7,7 +7,6 @@ const navItems = [
   { to: "/admin/analytics", label: "Analytics", icon: "insights" },
   { to: "/admin/users", label: "Users", icon: "group" },
   { to: "/admin/doctors-verification", label: "Doctors", icon: "verified_user" },
-  { to: "/admin/reports", label: "Reports", icon: "description" },
   { to: "/admin/appointments", label: "Appointments", icon: "event" },
   { to: "/admin/payments", label: "Payments", icon: "payments" },
   { to: "/admin/notifications", label: "Notifications", icon: "notifications" },
@@ -29,9 +28,6 @@ const sidebarIcons = {
   ),
   payments: (
     <span className="material-symbols-outlined">payments</span>
-  ),
-  description: (
-    <span className="material-symbols-outlined">description</span>
   ),
   notifications: (
     <span className="material-symbols-outlined">notifications</span>
@@ -75,7 +71,6 @@ export default function AdminShell({ children }) {
     location.pathname === "/admin/analytics" ||
     location.pathname === "/admin/users" ||
     location.pathname === "/admin/doctors-verification" ||
-    location.pathname === "/admin/reports" ||
     location.pathname === "/admin/appointments" ||
     location.pathname === "/admin/payments" ||
     location.pathname === "/admin/notifications" ||

@@ -8,9 +8,10 @@ const {
     listDoctorAppointments,
     acceptAppointment,
     rejectAppointment,
-    completeAppointment
+    completeAppointment,
+    getAllAppointments
 } = require("../controllers/appointment.controller");
-const { verifyAuth, requirePatientRole, requireDoctorRole } = require("../middleware/auth.middleware");
+const { verifyAuth, requirePatientRole, requireDoctorRole, requireAdmin } = require("../middleware/auth.middleware");
 
 const router = express.Router();
 
@@ -28,5 +29,8 @@ router.get("/doctor", verifyAuth, requireDoctorRole, listDoctorAppointments);
 router.patch("/:id/accept", verifyAuth, requireDoctorRole, acceptAppointment);
 router.patch("/:id/reject", verifyAuth, requireDoctorRole, rejectAppointment);
 router.patch("/:id/complete", verifyAuth, requireDoctorRole, completeAppointment);
+
+// Admin routes
+router.get("/admin/all", verifyAuth, requireAdmin, getAllAppointments);
 
 module.exports = router;

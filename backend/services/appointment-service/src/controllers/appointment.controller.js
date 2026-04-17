@@ -496,3 +496,70 @@ exports.completeAppointment = async (req, res) => {
         return res.status(500).json({ message: "Failed to complete appointment" });
     }
 };
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+exports.getAllAppointments = async (req, res) => {
+    try {
+        const { status, date, patientId, doctorId } = req.query;
+        const filter = {};
+        
+        if (status && ["pending", "accepted", "rejected", "cancelled", "completed"].includes(status)) {
+            filter.status = status;
+        }
+        if (date) filter.date = date;
+        if (patientId) filter.patientId = patientId;
+        if (doctorId) filter.doctorId = doctorId;
+
+        const appointments = await Appointment.find(filter).sort({ createdAt: -1 }).lean();
+
+        // Enrich with patient and doctor details
+        const patientIds = Array.from(new Set(appointments.map((a) => a.patientId).filter(Boolean)));
+        const doctorIds = Array.from(new Set(appointments.map((a) => a.doctorId).filter(Boolean)));
+
+        const [patientRows, doctorRows] = await Promise.all([
+            patientIds.length ? PatientRef.find({ userId: { $in: patientIds } }).select("userId fullName avatar email").lean() : [],
+            doctorIds.length ? DoctorRef.find({ userId: { $in: doctorIds } }).select("userId fullName email").lean() : []
+        ]);
+
+        const patientById = {};
+        for (const p of patientRows) patientById[String(p.userId)] = p;
+
+        const doctorById = {};
+        for (const d of doctorRows) doctorById[String(d.userId)] = d;
+
+        for (const a of appointments) {
+            const patient = patientById[String(a.patientId)];
+            const doctor = doctorById[String(a.doctorId)];
+            a.patientName = patient?.fullName || a.patientName || "Unknown Patient";
+            a.patientEmail = patient?.email || "";
+            a.patientImage = patient?.avatar || "";
+            a.doctorName = doctor?.fullName || a.doctorName || "Unknown Doctor";
+            a.doctorEmail = doctor?.email || "";
+        }
+
+        // Calculate metrics
+        const today = new Date().toISOString().split("T")[0];
+        const total = appointments.length;
+        const todayCount = appointments.filter(a => a.date === today).length;
+        const completed = appointments.filter(a => a.status === "completed").length;
+        const pending = appointments.filter(a => a.status === "pending").length;
+        const accepted = appointments.filter(a => a.status === "accepted").length;
+        const cancelled = appointments.filter(a => a.status === "cancelled" || a.status === "rejected").length;
+
+        return res.status(200).json({
+            appointments,
+            metrics: {
+                total,
+                today: todayCount,
+                completed,
+                pending,
+                accepted,
+                cancelled
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Failed to fetch appointments" });
+    }
+};
