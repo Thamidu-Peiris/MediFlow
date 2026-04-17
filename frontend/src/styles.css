@@ -4951,6 +4951,14 @@ button {
   grid-column: span 9;
 }
 
+.aura-col-8 {
+  grid-column: span 8;
+}
+
+.aura-col-4 {
+  grid-column: span 4;
+}
+
 .aura-col-3 {
   grid-column: span 3;
 }
@@ -5414,23 +5422,21 @@ button {
   color: #374151;
 }
 
-/* Responsive */
+/* Responsive — grid column collapse (base col styles are above this block so these apply correctly) */
 @media (max-width: 1024px) {
+  .aura-col-9,
   .aura-col-8,
   .aura-col-4,
+  .aura-col-3,
   .aura-col-7,
   .aura-col-5 {
     grid-column: span 12;
   }
 
-  .aura-col-right {
-    grid-column: span 12;
+  .aura-grid {
+    gap: 16px;
   }
 
-  .aura-report-left-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .aura-consultation-content {
     flex-direction: column;
     text-align: center;
@@ -7148,15 +7154,15 @@ button {
 }
 
 .aura-col-right {
-  grid-column: 10 / span 3;
+  grid-column: span 4;
 }
 
 .aura-quick-side {
   background: #8fe043;
   border-radius: 28px;
   padding: 16px;
-  max-width: 320px;
-  margin-left: auto;
+  width: 100%;
+  max-width: 100%;
 }
 
 .aura-quick-side__title {
@@ -9211,33 +9217,97 @@ button {
 
 
 @media (max-width: 1024px) {
+  /* Sidebar — slides off screen, shown when .open */
   .aura-sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
   }
-  
   .aura-sidebar.open {
     transform: translateX(0);
   }
-  
+
+  /* Main content — full width, no sidebar offset */
   .aura-main {
     margin-left: 0;
     width: 100%;
     max-width: 100%;
   }
-  
+
+  /* Topbar — spans full width, reduced padding */
   .aura-topbar {
     left: 0;
-    padding: 14px 16px;
+    padding: 10px 14px;
   }
-  
-  .aura-content {
-    padding: 76px 16px 20px;
+  .aura-topbar-right {
+    gap: 6px;
+  }
+  .aura-logo {
+    font-size: 17px;
+  }
+  .aura-topbar-profile-btn {
+    width: 36px;
+    height: 36px;
   }
 
+  /* Content areas — push below the fixed topbar (~60px) */
+  .aura-content {
+    padding: 72px 14px 24px;
+  }
   .aura-content--admin-dashboard {
     min-height: 100vh;
-    padding: 76px 16px 20px;
+    padding: 72px 14px 24px;
+  }
+
+  /* Patient Dashboard grid — base styles defined later so must override in this block */
+  .aura-col-right {
+    grid-column: span 12;
+  }
+  .aura-report-left-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .aura-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .aura-chart-card {
+    height: 260px;
+  }
+  .aura-quick-side {
+    max-width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* Patient Dashboard small-screen overrides (≤640px) — must come after base styles */
+@media (max-width: 640px) {
+  .aura-report-left-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .aura-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .aura-chart-card {
+    height: 220px;
+  }
+  .aura-summary-card {
+    padding: 12px;
+    gap: 10px;
+  }
+  .aura-summary-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .aura-summary-label {
+    font-size: 10px;
+  }
+  .aura-quick-side {
+    padding: 14px;
+  }
+  .aura-quick-side__item {
+    padding: 8px 10px;
   }
 }
 

@@ -75,6 +75,7 @@ export default function PatientShell({ children }) {
 
   const [profileOpen, setProfileOpen] = useState(false);
   const profileWrapRef = useRef(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const onDocClick = (e) => {
@@ -126,11 +127,19 @@ export default function PatientShell({ children }) {
     return "Dashboard";
   })();
 
-  const isPatientDashboard = location.pathname.startsWith("/patient/");
+  const isPatientDashboard =
+    location.pathname === "/patient/dashboard" || location.pathname === "/patient/";
 
   return (
     <div className={`aura-shell${isPatientDashboard ? " aura-shell--admin-dashboard" : ""}`}>
-      <aside className="aura-sidebar">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <aside className={`aura-sidebar${sidebarOpen ? " open" : ""}`}>
         <div className="aura-sidebar-header">
           <div className="aura-brand">
             <h1 className="aura-brand-title">MediFlow</h1>
@@ -159,6 +168,7 @@ export default function PatientShell({ children }) {
                 key={item.to}
                 to={item.to}
                 className={`aura-nav-item ${isActive ? "active" : ""}`}
+                onClick={() => setSidebarOpen(false)}
               >
                 <span className="aura-nav-icon">
                   <span className="material-symbols-outlined">{item.icon}</span>
@@ -184,6 +194,14 @@ export default function PatientShell({ children }) {
       <main className="aura-main">
         <header className="aura-topbar aura-topbar-admin">
           <div className="aura-topbar-left">
+            <button
+              type="button"
+              className="aura-topbar-icon-btn lg:hidden mr-2"
+              onClick={() => setSidebarOpen((v) => !v)}
+              aria-label="Toggle menu"
+            >
+              <span className="material-symbols-outlined">menu</span>
+            </button>
             <span className="aura-logo" style={{ fontSize: "24px", fontWeight: 400 }}>
               {activePageTitle}
             </span>
