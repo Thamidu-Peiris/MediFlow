@@ -882,20 +882,21 @@ export default function DoctorAvailabilityPage() {
         )}
 
         {/* ── Day-wise slot editor ─────────────────────────────────────── */}
-        <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] shadow-[0px_24px_64px_-12px_rgba(42,52,57,0.1)] border border-white/60 overflow-hidden">
+        <div className="bg-white/60 backdrop-blur-xl rounded-[3rem] shadow-[0px_32px_96px_-16px_rgba(42,52,57,0.12)] border border-white overflow-hidden transition-all duration-500 hover:shadow-[0px_40px_120px_-20px_rgba(42,52,57,0.15)]">
 
           {/* Section header */}
-          <div className="px-8 py-6 flex items-center justify-between border-b border-surface-container-low/30 bg-white/40">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-[1.25rem] flex items-center justify-center flex-shrink-0 shadow-inner" style={{ backgroundColor: TAB_LIGHT }}>
-                <span className="material-symbols-outlined text-[24px]" style={{ color: TAB_COLOR }}>auto_schedule</span>
+          <div className="px-10 py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-outline-variant/10 bg-white/40">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-xl bg-gradient-to-br from-white to-surface-container-low border border-white" style={{ color: TAB_COLOR }}>
+                <span className="material-symbols-outlined text-[28px] drop-shadow-sm">auto_schedule</span>
               </div>
               <div>
-                <h3 className="font-headline font-black text-lg text-on-surface tracking-tight">
+                <h3 className="font-headline font-black text-2xl text-on-surface tracking-tight leading-none">
                   Day-by-Day Configuration
                 </h3>
-                <p className="text-xs text-on-surface-variant/70 mt-1 font-medium">
-                  Fine-tune your {activeTab} consultation slots with precision.
+                <p className="text-sm text-on-surface-variant/70 mt-2 font-medium flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${activeTab === 'physical' ? 'bg-teal-500' : 'bg-violet-500'}`} />
+                  Precision control for your {activeTab} consultation blocks
                 </p>
               </div>
             </div>
@@ -903,66 +904,75 @@ export default function DoctorAvailabilityPage() {
               <button
                 type="button"
                 onClick={() => setShowBlockPanel((s) => !s)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-black text-error hover:bg-error/5 transition-all duration-300"
+                className="group flex items-center gap-2.5 px-6 py-3 rounded-2xl text-xs font-black text-error bg-error/5 hover:bg-error hover:text-white transition-all duration-500 shadow-sm"
               >
-                <span className="material-symbols-outlined text-[18px]">event_busy</span>
-                Block Hours
+                <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">event_busy</span>
+                Restrict Hours
               </button>
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2.5 px-6 py-2.5 rounded-2xl text-white text-xs font-black hover:opacity-90 transition-all duration-300 shadow-lg disabled:opacity-50 active:scale-95"
+                className="flex items-center gap-3 px-8 py-3 rounded-2xl text-white text-sm font-black hover:opacity-95 transition-all duration-500 shadow-xl disabled:opacity-50 active:scale-95 border border-white/20"
                 style={{ backgroundColor: TAB_COLOR }}
               >
-                <span className="material-symbols-outlined text-[18px]">{saving ? "hourglass_top" : "published_with_changes"}</span>
+                <span className="material-symbols-outlined text-[20px]">{saving ? "hourglass_top" : "published_with_changes"}</span>
                 {saving ? "Publishing..." : "Update Availability"}
               </button>
             </div>
           </div>
 
           {/* Day rows */}
-          <div className="p-4 space-y-3">
+          <div className="p-6 md:p-8 space-y-4">
             {schedule.map((dayItem, di) => {
               const hasSlots = dayItem.slots.length > 0;
               const dayHours = dayItem.slots.reduce(
                 (acc, s) => acc + (toMinutes(s.end) - toMinutes(s.start)) / 60, 0
               );
               const SHORT_DAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][di];
+              const FULL_DAY = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][di];
               const GRID_S = 8 * 60, GRID_T = 13 * 60;
 
               return (
                 <div
                   key={dayItem.day}
-                  className={`group relative flex flex-col md:flex-row items-center gap-6 p-4 rounded-[2rem] transition-all duration-300 ${
-                    hasSlots ? "bg-white shadow-sm border border-outline-variant/5" : "bg-transparent grayscale opacity-60"
-                  } hover:shadow-md hover:border-outline-variant/20`}
+                  className={`group relative flex flex-col lg:flex-row items-start lg:items-center gap-8 p-6 md:p-8 rounded-[2.5rem] transition-all duration-500 ${
+                    hasSlots ? "bg-white shadow-md border border-outline-variant/5" : "bg-surface-container-low/30 grayscale opacity-40 border border-transparent"
+                  } hover:shadow-2xl hover:border-outline-variant/20 hover:-translate-y-1`}
                 >
-                  {/* Day badge */}
-                  <div
-                    className="flex-shrink-0 w-20 h-20 rounded-[1.75rem] flex flex-col items-center justify-center gap-1 transition-all duration-500 group-hover:scale-105 shadow-inner"
-                    style={{
-                      backgroundColor: hasSlots ? TAB_LIGHT : "rgba(0,0,0,0.03)",
-                    }}
-                  >
-                    <span
-                      className="text-[10px] font-black uppercase tracking-[0.2em] leading-none"
-                      style={{ color: hasSlots ? TAB_TEXT : "#94a3b8" }}
+                  {/* Day Identity Section */}
+                  <div className="flex items-center gap-5 lg:w-48 flex-shrink-0">
+                    <div
+                      className="flex-shrink-0 w-16 h-16 rounded-[1.25rem] flex flex-col items-center justify-center gap-1 transition-all duration-700 group-hover:rotate-3 shadow-inner"
+                      style={{
+                        backgroundColor: hasSlots ? TAB_LIGHT : "rgba(0,0,0,0.03)",
+                      }}
                     >
-                      {SHORT_DAY}
-                    </span>
-                    <span
-                      className="text-xl font-headline font-black leading-none mt-1"
-                      style={{ color: hasSlots ? TAB_COLOR : "#cbd5e1" }}
-                    >
-                      {hasSlots ? `${Math.round(dayHours * 10) / 10}` : "0"}
-                    </span>
-                    <span className="text-[8px] font-bold uppercase opacity-50">Hours</span>
+                      <span
+                        className="text-[10px] font-black uppercase tracking-[0.2em] leading-none"
+                        style={{ color: hasSlots ? TAB_TEXT : "#94a3b8" }}
+                      >
+                        {SHORT_DAY}
+                      </span>
+                      <span
+                        className="text-xl font-headline font-black leading-none mt-1"
+                        style={{ color: hasSlots ? TAB_COLOR : "#cbd5e1" }}
+                      >
+                        {hasSlots ? `${Math.round(dayHours * 10) / 10}` : "0"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className={`text-base font-black tracking-tight ${hasSlots ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+                            {FULL_DAY}
+                        </span>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${hasSlots ? 'text-primary' : 'text-on-surface-variant/40'}`}>
+                            {hasSlots ? `${dayItem.slots.length} Active Slots` : 'Offline'}
+                        </span>
+                    </div>
                   </div>
 
-                  {/* Slots + timeline */}
-                  <div className="flex-1 flex flex-col gap-3 min-w-0 w-full">
-                    {/* Slot rows */}
+                  {/* Slots Interface */}
+                  <div className="flex-1 flex flex-col gap-4 min-w-0 w-full">
                     <div className="flex flex-wrap gap-3">
                       {dayItem.slots.map((slot, si) => {
                         const durMins = toMinutes(slot.end) - toMinutes(slot.start);
@@ -975,76 +985,91 @@ export default function DoctorAvailabilityPage() {
                         return (
                           <div
                             key={si}
-                            className="flex items-center gap-2.5 pl-2 pr-1.5 py-1.5 rounded-2xl bg-surface-container-low/40 border border-outline-variant/10 hover:border-outline-variant/30 hover:bg-white transition-all duration-300 shadow-sm"
+                            className="flex items-center gap-3 pl-3 pr-2 py-2 rounded-2xl bg-white border border-outline-variant/20 hover:border-primary/50 transition-all duration-300 shadow-sm group/slot"
                           >
-                            <input
-                              type="time"
-                              value={slot.start}
-                              onChange={(e) => updateSlot(di, si, "start", e.target.value)}
-                              className="bg-transparent border-0 p-0 text-sm font-black text-on-surface focus:ring-0 w-[70px] text-center"
-                            />
-                            <div className="w-1.5 h-[1.5px] bg-outline-variant/40 rounded-full" />
-                            <input
-                              type="time"
-                              value={slot.end}
-                              onChange={(e) => updateSlot(di, si, "end", e.target.value)}
-                              className="bg-transparent border-0 p-0 text-sm font-black text-on-surface focus:ring-0 w-[70px] text-center"
-                            />
-                            <div className="h-6 w-[1px] bg-outline-variant/20 mx-1" />
-                            <span className="text-[10px] font-black px-2.5 py-1 rounded-xl bg-white text-on-surface-variant shadow-inner whitespace-nowrap">
-                              {durLabel}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeSlot(di, si)}
-                              className="p-1.5 rounded-xl text-on-surface-variant/40 hover:text-error hover:bg-error/5 transition-all duration-300"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">close</span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[18px]" style={{ color: TAB_COLOR }}>schedule</span>
+                                <div className="relative">
+                                  <input
+                                    type="time"
+                                    value={slot.start}
+                                    onChange={(e) => updateSlot(di, si, "start", e.target.value)}
+                                    className="bg-surface-container-lowest border border-outline-variant/10 rounded-lg px-2 py-1.5 text-sm font-black text-on-surface focus:ring-2 focus:ring-primary/20 w-[115px] text-center appearance-none relative z-10"
+                                    style={{ colorScheme: 'light' }}
+                                  />
+                                </div>
+                                <span className="text-on-surface-variant/30 font-black text-xs px-1">to</span>
+                                <div className="relative">
+                                  <input
+                                    type="time"
+                                    value={slot.end}
+                                    onChange={(e) => updateSlot(di, si, "end", e.target.value)}
+                                    className="bg-surface-container-lowest border border-outline-variant/10 rounded-lg px-2 py-1.5 text-sm font-black text-on-surface focus:ring-2 focus:ring-primary/20 w-[115px] text-center appearance-none relative z-10"
+                                    style={{ colorScheme: 'light' }}
+                                  />
+                                </div>
+                            </div>
+                            <div className="h-8 w-[1px] bg-outline-variant/20 mx-1" />
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black px-3 py-1.5 rounded-xl bg-white text-on-surface-variant shadow-inner border border-outline-variant/5">
+                                  {durLabel}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeSlot(di, si)}
+                                  className="p-1.5 rounded-xl text-on-surface-variant/30 hover:text-error hover:bg-error/10 transition-all duration-300 opacity-0 group-hover/slot:opacity-100"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                            </div>
                           </div>
                         );
                       })}
 
-                      {/* Add slot button */}
                       <button
                         type="button"
                         onClick={() => addSlot(di)}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[11px] font-black transition-all duration-300 hover:scale-105 active:scale-95 border border-dashed"
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-2xl text-[11px] font-black transition-all duration-500 hover:scale-105 active:scale-95 border-2 border-dashed shadow-sm"
                         style={{
                           color: TAB_COLOR,
                           borderColor: TAB_BORDER,
-                          backgroundColor: `${TAB_COLOR}05`,
+                          backgroundColor: `${TAB_COLOR}08`,
                         }}
                       >
                         <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                        Add Slot
+                        NEW SLOT
                       </button>
                     </div>
 
-                    {/* Timeline bar */}
+                    {/* Progressive Timeline Visualizer */}
                     {hasSlots && (
-                      <div className="relative h-1.5 rounded-full bg-surface-container-lowest shadow-inner mt-2 overflow-hidden w-full max-w-md">
-                        {dayItem.slots.map((slot, si) => {
-                          const left = Math.max(0, ((toMinutes(slot.start) - GRID_S) / GRID_T) * 100);
-                          const width = Math.min(100 - left, ((toMinutes(slot.end) - toMinutes(slot.start)) / GRID_T) * 100);
-                          return (
-                            <div
-                              key={si}
-                              className="absolute h-full rounded-full shadow-sm"
-                              style={{ left: `${left}%`, width: `${width}%`, backgroundColor: TAB_COLOR }}
-                            />
-                          );
-                        })}
+                      <div className="flex items-center gap-4 w-full">
+                        <span className="text-[9px] font-black text-on-surface-variant/30 uppercase">08 AM</span>
+                        <div className="relative h-2 rounded-full bg-surface-container-low shadow-inner overflow-hidden flex-1">
+                          {dayItem.slots.map((slot, si) => {
+                            const left = Math.max(0, ((toMinutes(slot.start) - GRID_S) / GRID_T) * 100);
+                            const width = Math.min(100 - left, ((toMinutes(slot.end) - toMinutes(slot.start)) / GRID_T) * 100);
+                            return (
+                              <div
+                                key={si}
+                                className="absolute h-full rounded-full shadow-[0_0_12px_rgba(0,0,0,0.1)] transition-all duration-1000"
+                                style={{ left: `${left}%`, width: `${width}%`, backgroundColor: TAB_COLOR }}
+                              />
+                            );
+                          })}
+                        </div>
+                        <span className="text-[9px] font-black text-on-surface-variant/30 uppercase">08 PM</span>
                       </div>
                     )}
                   </div>
                   
                   {/* Status Indicator */}
-                  <div className="hidden md:flex flex-col items-end gap-1 px-4">
-                     <span className={`text-[10px] font-black uppercase tracking-widest ${hasSlots ? 'text-primary' : 'text-on-surface-variant/40'}`}>
-                        {hasSlots ? 'Active' : 'Inactive'}
+                  <div className="hidden lg:flex flex-col items-center gap-2 px-6 border-l border-outline-variant/10 self-stretch justify-center">
+                     <div className={`w-3 h-3 rounded-full ${hasSlots ? 'animate-pulse shadow-[0_0_12px_rgba(0,106,97,0.5)]' : 'bg-on-surface-variant/20'}`} 
+                          style={{ backgroundColor: hasSlots ? TAB_COLOR : '' }} />
+                     <span className={`text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap ${hasSlots ? 'text-on-surface' : 'text-on-surface-variant/40'}`}>
+                        {hasSlots ? 'In Schedule' : 'Inactive'}
                      </span>
-                     <div className={`w-2 h-2 rounded-full ${hasSlots ? 'bg-primary shadow-[0_0_10px_rgba(0,106,97,0.4)]' : 'bg-on-surface-variant/20'}`} />
                   </div>
                 </div>
               );
