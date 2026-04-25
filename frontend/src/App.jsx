@@ -41,6 +41,7 @@ import DoctorDashboardPage from "./pages/DoctorDashboardPage";
 import DoctorProfilePage from "./pages/DoctorProfilePage";
 import DoctorAvailabilityPage from "./pages/DoctorAvailabilityPage";
 import DoctorAppointmentsPage from "./pages/DoctorAppointmentsPage";
+import DoctorCalendarPage from "./pages/DoctorCalendarPage";
 import DoctorPrescriptionsPage from "./pages/DoctorPrescriptionsPage";
 import DoctorPatientsPage from "./pages/DoctorPatientsPage";
 import TelemedicinePage from "./pages/TelemedicinePage";
@@ -173,6 +174,7 @@ export default function App() {
       <Route path="/doctor/profile" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorProfilePage /></ProtectedRoute>} />
       <Route path="/doctor/availability" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorAvailabilityPage /></ProtectedRoute>} />
       <Route path="/doctor/appointments" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorAppointmentsPage /></ProtectedRoute>} />
+      <Route path="/doctor/calendar" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorCalendarPage /></ProtectedRoute>} />
       <Route path="/doctor/prescriptions" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorPrescriptionsPage /></ProtectedRoute>} />
       <Route path="/doctor/patients" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><DoctorPatientsPage /></ProtectedRoute>} />
       <Route path="/doctor/telemedicine" element={<ProtectedRoute allowedRoles={["doctor", "admin"]}><TelemedicinePage /></ProtectedRoute>} />

@@ -7,6 +7,7 @@ const navItems = [
   { to: "/doctor/dashboard", label: "Dashboard", icon: "grid_view" },
   { to: "/doctor/availability", label: "Schedule", icon: "calendar_month" },
   { to: "/doctor/appointments", label: "Appointments", icon: "calendar_today" },
+  { to: "/doctor/calendar", label: "Calendar", icon: "event" },
   { to: "/doctor/patients", label: "Patients", icon: "group" },
   { to: "/doctor/telemedicine", label: "Telemedicine", icon: "video_call" },
   { to: "/doctor/profile", label: "Settings", icon: "settings" },
