@@ -18,6 +18,8 @@ export default function AdminAppointmentsPage() {
 
   // Filters
   const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
 
   const dateTimeLine = useMemo(() => {
     try {
@@ -92,6 +94,14 @@ export default function AdminAppointmentsPage() {
     return type === "online" ? "videocam" : "person";
   };
 
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((apt) => {
+      if (typeFilter !== "all" && (apt.appointmentType || "physical").toLowerCase() !== typeFilter) return false;
+      if (dateFilter && apt.date !== dateFilter) return false;
+      return true;
+    });
+  }, [appointments, typeFilter, dateFilter]);
+
   return (
     <div className="font-body text-on-surface pb-10">
       {message ? (
@@ -143,7 +153,7 @@ export default function AdminAppointmentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-3 mb-6 flex-wrap">
         <select
           className="bg-white border border-emerald-200/70 rounded-xl px-4 py-2 text-sm font-semibold text-emerald-950 focus:ring-2 focus:ring-emerald-600 focus:outline-none shadow-sm cursor-pointer appearance-none min-w-[140px]"
           value={statusFilter}
@@ -156,6 +166,34 @@ export default function AdminAppointmentsPage() {
           <option value="cancelled">Cancelled</option>
           <option value="rejected">Rejected</option>
         </select>
+
+        <select
+          className="bg-white border border-emerald-200/70 rounded-xl px-4 py-2 text-sm font-semibold text-emerald-950 focus:ring-2 focus:ring-emerald-600 focus:outline-none shadow-sm cursor-pointer appearance-none min-w-[160px]"
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+        >
+          <option value="all">All Appointments</option>
+          <option value="online">Online</option>
+          <option value="physical">Physical</option>
+        </select>
+
+        <div className="relative flex items-center">
+          <input
+            type="date"
+            className="bg-white border border-emerald-200/70 rounded-xl px-4 py-2 text-sm font-semibold text-emerald-950 focus:ring-2 focus:ring-emerald-600 focus:outline-none shadow-sm cursor-pointer min-w-[160px]"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+          />
+          {dateFilter && (
+            <button
+              onClick={() => setDateFilter("")}
+              className="absolute right-3 text-emerald-400 hover:text-emerald-700 transition-colors"
+              title="Clear date"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden">
@@ -179,7 +217,7 @@ export default function AdminAppointmentsPage() {
                   </div>
                 </td>
               </tr>
-            ) : appointments.length === 0 ? (
+            ) : filteredAppointments.length === 0 ? (
               <tr>
                 <td colSpan={5} className="p-12 text-center text-on-surface-variant font-medium">
                   <div className="flex flex-col items-center gap-2">
@@ -189,7 +227,7 @@ export default function AdminAppointmentsPage() {
                 </td>
               </tr>
             ) : (
-              appointments.map((apt) => (
+              filteredAppointments.map((apt) => (
                 <tr key={apt._id} className="hover:bg-emerald-50/30 transition-colors">
                   <td className="p-4">
                     <div className="flex items-center gap-2">

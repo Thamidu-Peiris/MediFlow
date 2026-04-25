@@ -141,10 +141,14 @@ export default function PatientDoctorBookingPage() {
     const dayAvailability = avail.find((a) => a.day === dayName);
     if (!dayAvailability?.slots?.length) return [];
     const blocked = new Set(blockedTimes.map(normalizeTime));
+    const todayIso = format(new Date(), "yyyy-MM-dd");
+    const isToday = isoDate === todayIso;
+    const nowMins = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
     return TIME_SLOTS.filter(
       (slotLabel) =>
         dayAvailability.slots.some((slot) => slotContainsTime(slot, slotLabel)) &&
-        !blocked.has(normalizeTime(slotLabel))
+        !blocked.has(normalizeTime(slotLabel)) &&
+        (!isToday || toMinutes12h(slotLabel) > nowMins)
     );
   };
 

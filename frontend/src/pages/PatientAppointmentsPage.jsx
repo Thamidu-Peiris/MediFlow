@@ -313,10 +313,14 @@ export default function PatientAppointmentsPage() {
           blocked.delete(String(selectedAppointment.time).trim().toUpperCase());
         }
 
+        const todayIso = new Date().toISOString().split("T")[0];
+        const isToday = newDate === todayIso;
+        const nowMins = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
         const allowed = timeSlots.filter(
           (slotLabel) =>
             dayAvailability.slots.some((slot) => slotContainsTime(slot, slotLabel)) &&
-            !blocked.has(String(slotLabel).trim().toUpperCase())
+            !blocked.has(String(slotLabel).trim().toUpperCase()) &&
+            (!isToday || toMinutes12h(slotLabel) > nowMins)
         );
 
         setRescheduleAvailableTimes(allowed);
