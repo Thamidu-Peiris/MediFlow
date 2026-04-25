@@ -5695,7 +5695,7 @@ button {
 
 .at-hero-title {
   font-family: 'Manrope', sans-serif;
-  font-size: 3rem;
+  font-size: 2.25rem;
   font-weight: 800;
   color: var(--at-on-surface);
   letter-spacing: -0.03em;
@@ -5704,7 +5704,7 @@ button {
 }
 
 .at-hero-lead {
-  font-size: 1.125rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: var(--at-on-surface-variant);
   line-height: 1.6;
@@ -5731,7 +5731,7 @@ button {
 .at-tab-btn {
   padding: 0.75rem 1.5rem;
   border-radius: 0.85rem;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
@@ -5750,7 +5750,7 @@ button {
 }
 
 .at-tab-count {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   opacity: 0.6;
   font-weight: 500;
 }
@@ -5761,7 +5761,7 @@ button {
   gap: 0.5rem;
   color: var(--at-primary);
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -5846,14 +5846,14 @@ button {
 }
 
 .at-doc-name {
-  font-size: 1.625rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--at-on-surface);
   letter-spacing: -0.01em;
 }
 
 .at-status-pill {
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -5866,7 +5866,7 @@ button {
 .at-specialty {
   color: #006766;
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   margin-bottom: 0.75rem;
 }
 
@@ -5874,7 +5874,7 @@ button {
   display: flex;
   gap: 1.5rem;
   color: var(--at-on-surface-variant);
-  font-size: 0.9375rem;
+  font-size: 0.8rem;
   font-weight: 500;
 }
 
@@ -5885,7 +5885,7 @@ button {
 }
 
 .at-meta-item .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 16px;
   color: #94a3b8;
 }
 
@@ -5903,7 +5903,7 @@ button {
   padding: 1rem 1.5rem;
   border-radius: 1rem;
   font-weight: 800;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   border: none;
   cursor: pointer;
   display: flex;
@@ -5932,7 +5932,7 @@ button {
   padding: 0.8rem 1.25rem;
   border-radius: 0.8rem;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   border: none;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -5945,7 +5945,7 @@ button {
 .at-btn-cancel {
   color: #ba1a1a;
   font-weight: 800;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -8730,7 +8730,7 @@ button {
 }
 
 .rs-modal-title {
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 800;
   color: #111827;
   margin: 0;
@@ -8738,7 +8738,7 @@ button {
 }
 
 .rs-modal-sub {
-  font-size: 13px;
+  font-size: 11px;
   color: #9ca3af;
   margin: 2px 0 0 0;
 }
@@ -8776,7 +8776,7 @@ button {
 }
 
 .rs-current-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: #94a3b8;
   text-transform: uppercase;
@@ -8806,7 +8806,7 @@ button {
 }
 
 .rs-doctor-name {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
@@ -8816,7 +8816,7 @@ button {
 }
 
 .rs-doctor-spec {
-  font-size: 12px;
+  font-size: 10px;
   color: #64748b;
   margin: 2px 0 0 0;
 }
@@ -8834,7 +8834,7 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   color: #475569;
 }
@@ -8863,7 +8863,7 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   color: #6b7280;
   text-transform: uppercase;
@@ -8883,7 +8883,7 @@ button {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: #374151;
   text-transform: uppercase;
@@ -8897,7 +8897,7 @@ button {
 
 .rs-slots-badge {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   color: #0d9488;
   background: #f0fdfa;
@@ -8914,7 +8914,7 @@ button {
   padding: 13px 16px;
   border: 1.5px solid #e5e7eb;
   border-radius: 14px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: #111827;
   background: white;
@@ -8938,7 +8938,7 @@ button {
   gap: 8px;
   padding: 14px 16px;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
 }
 
@@ -8990,7 +8990,7 @@ button {
   border: 1.5px solid #e5e7eb;
   border-radius: 12px;
   background: white;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #374151;
   cursor: pointer;
@@ -9065,7 +9065,7 @@ button {
 }
 
 .rs-preview-heading {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   color: #059669;
   text-transform: uppercase;
@@ -9073,7 +9073,7 @@ button {
 }
 
 .rs-preview-value {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: #065f46;
 }
@@ -9091,7 +9091,7 @@ button {
   border: 1.5px solid #e5e7eb;
   border-radius: 14px;
   background: white;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: #6b7280;
   cursor: pointer;
@@ -9116,7 +9116,7 @@ button {
   border: none;
   border-radius: 14px;
   background: linear-gradient(135deg, #0d9488, #0f766e);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: white;
   cursor: pointer;
